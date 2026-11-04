@@ -176,23 +176,26 @@ module.exports = async function handler(req, res) {
       const cleanDate = String(date).trim();
       const cleanTime = String(time).trim();
 
-      // Validar día de la semana de forma segura frente a zonas horarias (Lunes cerrado)
-      const dateParts = cleanDate.split('-');
-      if (dateParts.length === 3) {
-        const testDate = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 12, 0, 0);
-        if (testDate.getDay() === 1) {
+      const businessSlug = body.business || 'bodhi';
+
+      // Validaciones específicas para Bodhi (Lunes cerrado, horario de tarde/noche)
+      if (businessSlug === 'bodhi') {
+        const dateParts = cleanDate.split('-');
+        if (dateParts.length === 3) {
+          const testDate = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 12, 0, 0);
+          if (testDate.getDay() === 1) {
+            return res.status(400).json({
+              error: 'Los lunes la tetería permanece cerrada por descanso del personal. Por favor selecciona una fecha de martes a domingo.'
+            });
+          }
+        }
+
+        const [h, m] = cleanTime.split(':').map(Number);
+        if (!isNaN(h) && (h >= 4 && h < 16)) {
           return res.status(400).json({
-            error: 'Los lunes la tetería permanece cerrada por descanso del personal. Por favor selecciona una fecha de martes a domingo.'
+            error: 'Nuestro horario de apertura es de 18:00 a 02:00 h (hasta las 03:00 h los fines de semana).'
           });
         }
-      }
-
-      // Validar franja horaria (desde 16:00 tarde hasta las 03:00 madrugada)
-      const [h, m] = cleanTime.split(':').map(Number);
-      if (!isNaN(h) && (h >= 4 && h < 16)) {
-        return res.status(400).json({
-          error: 'Nuestro horario de apertura es de 18:00 a 02:00 h (hasta las 03:00 h los fines de semana).'
-        });
       }
 
       const newReservation = await db.createReservation({

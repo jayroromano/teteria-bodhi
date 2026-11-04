@@ -1,0 +1,185 @@
+[
+  {
+    "id": "te-moruno",
+    "category": "Tés",
+    "name": "Té Verde Moruno Tradicional",
+    "description": "Té verde gunpowder seleccionado, hierbabuena fresca de la huerta andaluza y azúcar moreno en tetera de plata.",
+    "price": 3.8,
+    "badge": "Especialidad",
+    "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "chai-pakistani",
+    "category": "Tés",
+    "name": "Té Pakistaní Especiado",
+    "description": "Mezcla secreta de té negro, canela en rama, cardamomo verde, clavo y leche cremosa emulsionada.",
+    "price": 4.2,
+    "badge": "Top Ventas",
+    "image": "https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "rooibos-azahar",
+    "category": "Tés",
+    "name": "Rooibos Flor de Azahar & Naranja",
+    "description": "Infusión sudafricana sin teína, corteza de naranja amarga, pétalos de azahar y toque de vainilla Bourbon.",
+    "price": 3.9,
+    "badge": "Sin Teína",
+    "image": "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "te-blanco-jazmin",
+    "category": "Tés",
+    "name": "Té Blanco Agujas de Plata & Jazmín",
+    "description": "Primer brote de té blanco con aroma natural de flores nocturnas de jazmín. Suave, floral y antioxidante.",
+    "price": 4.5,
+    "badge": "Premium",
+    "image": "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "cachimba-bodhi",
+    "category": "Otro",
+    "name": "Bodhi Signature Velvet",
+    "description": "Nuestra mezcla de la casa: frutos del bosque silvestres, toque glacial de menta suave y base de agua perfumada.",
+    "price": 14,
+    "badge": "Top Ventas",
+    "image": "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "cachimba-love66",
+    "category": "Otro",
+    "name": "Love 66 Passion",
+    "description": "Sensación exótica de melón cantalupo, fruta de la pasión, sandía jugosa y menta helada.",
+    "price": 13.5,
+    "badge": "Favorito",
+    "image": "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "cachimba-doble-manzana",
+    "category": "Otro",
+    "name": "Doble Manzana Tradicional",
+    "description": "El sabor clásico oriental por excelencia: manzana roja y verde con notas anisadas profundas.",
+    "price": 13,
+    "badge": "Clásico",
+    "image": "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "coctel-bodhi-spritz",
+    "category": "Cócteles",
+    "name": "Bodhi Tea Spritz",
+    "description": "Reducción artesanal de té Earl Grey, flor de saúco St. Germain, cava andaluz brut y twist de pomelo.",
+    "price": 7.5,
+    "badge": "Autor",
+    "image": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "mojito-andalusi",
+    "category": "Cócteles",
+    "name": "Mojito Andalusí de Hierbabuena",
+    "description": "Ron blanco caribeño macerado en tetería, hierbabuena fresca, azúcar de caña tostado y ginger ale.",
+    "price": 7,
+    "badge": "Recomendado",
+    "image": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "mocktail-oasis",
+    "category": "Cócteles",
+    "name": "Mocktail Oasis (Sin Alcohol)",
+    "description": "Zumo de maracuyá fresco, puré de mango, infusión fría de hibisco y espuma de jengibre.",
+    "price": 5.5,
+    "badge": "Sin Alcohol",
+    "image": "https://images.unsplash.com/photo-1621263764928-df1444c5e859?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "surtido-baklava",
+    "category": "Otro",
+    "name": "Surtido Artesano de Baklavas",
+    "description": "Finas capas de masa filo crujiente rellenas de pistacho iraní, nueces y bañadas en almíbar de azahar y miel.",
+    "price": 5,
+    "badge": "Casero",
+    "image": "https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "pastas-arabes",
+    "category": "Otro",
+    "name": "Cuernos de Gacela & Pastas Árabes",
+    "description": "Repostería tradicional de almendra marcona, canela y agua de rosas. El maridaje perfecto para tu té.",
+    "price": 4.5,
+    "badge": "Artesano",
+    "image": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "tarta-zanahoria",
+    "category": "Otro",
+    "name": "Tarta Especiada de Zanahoria & Nueces",
+    "description": "Bizcocho húmedo con canela de Ceilán, nueces de Ronda y suave frosting de mascarpone al limón.",
+    "price": 4.8,
+    "badge": "Favorito",
+    "image": "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "hummus-pita",
+    "category": "Otro",
+    "name": "Hummus Bodhi con Pan de Pita Caliente",
+    "description": "Crema suave de garbanzos con tahini tostado, aceite de oliva virgen extra de Jaén, pimentón de la Vera y pan recién horneado.",
+    "price": 6.5,
+    "badge": "Vegano",
+    "image": "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "tabla-quesos-sierra",
+    "category": "Otro",
+    "name": "Tabla de Quesos Payoyo de la Sierra",
+    "description": "Selección de quesos gaditanos de cabra payoya y oveja curada, acompañados de nueces, mermelada de higos y tostas.",
+    "price": 9.5,
+    "badge": "Local Cádiz",
+    "image": "https://images.unsplash.com/photo-1631379578550-7038263db699?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "te-matcha-ceremonial-67351",
+    "category": "Tés",
+    "name": "Té Matcha Ceremonial",
+    "description": "Té verde japonés en polvo batido tradicionalmente.",
+    "price": 4.8,
+    "badge": null,
+    "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80",
+    "available": true,
+    "created_at": "2026-11-04T17:09:27.880065+00:00"
+  },
+  {
+    "id": "mojito-marroqui-50158",
+    "category": "Cócteles",
+    "name": "Mojito Marroquí",
+    "description": "Ron añejo, hierbabuena fresca, azúcar de caña y toque de canela.",
+    "price": 6.5,
+    "badge": "Recomendado",
+    "image": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80",
+    "available": true,
+    "created_at": "2026-11-04T17:12:30.767283+00:00"
+  },
+  {
+    "id": "mojito-marroqui-71834",
+    "category": "Cócteles",
+    "name": "Mojito Marroquí",
+    "description": "Ron añejo, hierbabuena fresca, azúcar de caña y toque de canela.",
+    "price": 6.5,
+    "badge": "Recomendado",
+    "image": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80",
+    "available": true,
+    "created_at": "2026-11-04T17:12:52.257055+00:00"
+  }
+]

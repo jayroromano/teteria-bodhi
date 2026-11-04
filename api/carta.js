@@ -37,6 +37,27 @@ module.exports = async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
+      const url = new URL(req.url, 'http://localhost');
+      const b = req.query?.b || url.searchParams.get('b');
+      if (b && b !== 'bodhi') {
+        const fs = require('fs');
+        const path = require('path');
+        const cleanB = b.replace(/[^a-z0-9_-]/g, '');
+        const candidates = [
+          path.join(process.cwd(), 'businesses', cleanB, 'catalog.json'),
+          path.join(__dirname, '..', 'businesses', cleanB, 'catalog.json'),
+          path.join(process.cwd(), 'public', 'businesses', cleanB, 'catalog.json')
+        ];
+        for (const catPath of candidates) {
+          if (fs.existsSync(catPath)) {
+            try {
+              const customItems = JSON.parse(fs.readFileSync(catPath, 'utf8'));
+              return res.status(200).json({ success: true, items: customItems, business: b });
+            } catch (e) {}
+          }
+        }
+      }
+
       const items = await db.getMenuItems();
       return res.status(200).json({ success: true, items });
     }

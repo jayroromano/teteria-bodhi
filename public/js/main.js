@@ -302,14 +302,10 @@
   }
 
   function getCategories() {
-    const defaultOrder = ['Tés', 'Cócteles', 'Otro'];
+    const defaultOrder = ['Tés', 'Cócteles', 'Otro', 'Cortes', 'Barba', 'Tratamientos'];
     const set = new Set();
     cartaData.forEach(item => {
-      let cat = item.category || 'Otro';
-      if (/t[eé]/i.test(cat)) cat = 'Tés';
-      else if (/c[oó]ctel/i.test(cat)) cat = 'Cócteles';
-      else cat = 'Otro';
-      item.category = cat;
+      let cat = (item.category || 'General').trim();
       set.add(cat);
     });
     const all = Array.from(set);
@@ -321,8 +317,18 @@
       if (idxB !== -1) return 1;
       return a.localeCompare(b);
     });
-    return all.length ? all : defaultOrder;
+    return all.length ? all : ['General'];
   }
+
+  window.updateCartaData = function (newItems) {
+    if (Array.isArray(newItems) && newItems.length > 0) {
+      cartaData = newItems;
+      const cats = getCategories();
+      currentCategory = cats[0] || '';
+      renderTabs();
+      renderCartaItems();
+    }
+  };
 
   function renderTabs() {
     const tabsBox = $('#tabs');
@@ -478,12 +484,25 @@
 
   function populateTimeSlots() {
     if (!timeSelect) return;
+    const currentVal = timeSelect.value;
+    timeSelect.innerHTML = '';
+
+    // Si el negocio define franjas horarias personalizadas (ej. barberías, consultas, etc.)
+    if (Array.isArray(window.customTimeSlots) && window.customTimeSlots.length > 0) {
+      window.customTimeSlots.forEach(slot => {
+        const opt = document.createElement('option');
+        opt.value = slot;
+        opt.textContent = `${slot} h`;
+        if (slot === currentVal) opt.selected = true;
+        timeSelect.appendChild(opt);
+      });
+      if (!timeSelect.value) timeSelect.value = window.customTimeSlots[0];
+      return;
+    }
+
     const val = dateInput ? dateInput.value : '';
     const day = val ? new Date(val + 'T12:00:00').getDay() : 2;
     const isWeekend = day === 5 || day === 6;
-
-    const currentVal = timeSelect.value;
-    timeSelect.innerHTML = '';
 
     // Franjas de 18:00 a 23:30
     for (let h = 18; h <= 23; h++) {
@@ -510,6 +529,8 @@
 
     timeSelect.value = currentVal || '20:30';
   }
+
+  window.populateTimeSlots = populateTimeSlots;
 
   // Envío del formulario
   if (form) {

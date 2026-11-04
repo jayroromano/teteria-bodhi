@@ -1,0 +1,190 @@
+{
+  "identity": {
+    "name": "Barbería & Spa Élite",
+    "slug": "barberia-elite",
+    "businessType": "services",
+    "categoryLabel": "Grooming & Barber Club",
+    "city": "Madrid",
+    "logoEmoji": "💈",
+    "logoText": "Élite Barber Club",
+    "tagline": "El arte clásico del corte y afeitado tradicional",
+    "seoTitle": "Barbería & Spa Élite | Barbería Clásica y Cuidado Masculino",
+    "seoDescription": "Descubre Barbería & Spa Élite: cortes de autor, afeitados tradicionales con toalla caliente, perfilado de barba y tratamientos faciales premium.",
+    "primaryCta": { "text": "Reservar cita previa", "href": "#reservas" },
+    "secondaryCta": { "text": "Ver servicios y tarifas", "href": "#carta" }
+  },
+  "hero": {
+    "tag": "Grooming & Barber Club",
+    "title": "Barbería & Spa Élite",
+    "subtitle": "Precisión, toalla caliente y navaja japonesa. Un espacio exclusivo pensado para el caballero moderno que aprecia los detalles y el trato impecable.",
+    "badges": [
+      "💈 Corte clásico & degradados fade",
+      "🔥 Ritual de barba con toalla caliente",
+      "✂️ Afeitado a navaja tradicional",
+      "🥃 Café espresso o bourbon de cortesía"
+    ],
+    "mainImage": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80",
+    "floatingCard": {
+      "tag": "Servicio Estrella",
+      "title": "Ritual Imperial: Corte + Barba + Toalla Caliente",
+      "price": "34,00 €",
+      "sub": "Incluye lavado y masaje capilar"
+    }
+  },
+  "about": {
+    "tag": "Maestría & Estilo",
+    "title": "La excelencia de la barbería tradicional con técnicas de vanguardia",
+    "description": "En Élite recuperamos la liturgia del auténtico club de caballeros: sillones de cuero de época, navajas de precisión, aceites esenciales de cedro y bergamota, y un equipo de maestros barberos dedicados a esculpir tu mejor imagen.",
+    "features": [
+      {
+        "icon": "✂️",
+        "title": "Cortes de Autor",
+        "description": "Degradados milimétricos skin fade, pompadour clásico y texturizados actuales."
+      },
+      {
+        "icon": "🔥",
+        "title": "Toalla Caliente & Vapor",
+        "description": "Apertura de poros y aceites pre-shave botánicos para un afeitado sin irritación."
+      },
+      {
+        "icon": "🧴",
+        "title": "Cosmética Premium",
+        "description": "Trabajamos únicamente con pomadas al agua, bálsamos orgánicos y tónicos capilares."
+      },
+      {
+        "icon": "☕",
+        "title": "Lounge de Espera",
+        "description": "Café de especialidad, prensa diaria y selección musical jazz/lo-fi mientras te relajas."
+      }
+    ],
+    "image": "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=700&q=80"
+  },
+  "catalog": {
+    "sectionTag": "Nuestros Servicios",
+    "title": "Tarifas & Tratamientos",
+    "subtitle": "Selecciona el servicio que deseas o consulta nuestra carta de tratamientos.",
+    "searchPlaceholder": "Buscar corte, barba, afeitado, tinte, mascarilla...",
+    "defaultCategories": ["Cortes", "Barba", "Tratamientos"]
+  },
+  "gallery": {
+    "sectionTag": "Nuestros Trabajos",
+    "title": "Galería de Estilo",
+    "subtitle": "Resultados reales en nuestros sillones. Cada cliente es un proyecto de imagen único.",
+    "items": [
+      {
+        "url": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80",
+        "caption": "Degradado medio con acabado mate natural",
+        "tag": "Mid Fade"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=800&q=80",
+        "caption": "Afeitado clásico a navaja con espuma caliente",
+        "tag": "Traditional Shave"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=800&q=80",
+        "caption": "Perfilado geométrico de barba y peinado",
+        "tag": "Beard Sculpt"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80",
+        "caption": "Ambiente del salón y puestos de trabajo artesanales",
+        "tag": "El Salón"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1517832606589-7629c3395909?auto=format&fit=crop&w=800&q=80",
+        "caption": "Detalle de corte a tijera sobre peine de precisión",
+        "tag": "Scissor Work"
+      }
+    ]
+  },
+  "booking": {
+    "type": "appointment",
+    "title": "Reserva de Cita Previa",
+    "stepBadge": "Confirmación Inmediata",
+    "personLabel": "Especialista / Barbero",
+    "zoneLabel": "Servicio principal",
+    "zones": [
+      { "value": "corte", "label": "Corte de Pelo Completo" },
+      { "value": "barba", "label": "Arreglo y Perfilado de Barba" },
+      { "value": "completo", "label": "Ritual Imperial (Corte + Barba)" }
+    ],
+    "guestsOptions": [
+      { "value": "1", "label": "Cualquier barbero disponible" },
+      { "value": "marcos", "label": "Marcos (Master Barber)" },
+      { "value": "david", "label": "David (Fade Specialist)" },
+      { "value": "alvaro", "label": "Álvaro (Beard Stylist)" }
+    ],
+    "defaultGuests": "1",
+    "hintSmall": "✓ Tu cita quedará reservada en la agenda del barbero seleccionado.",
+    "hintLarge": "🔔 Te enviaremos un recordatorio por WhatsApp 2 horas antes de tu turno.",
+    "timeSlots": [
+      "10:00", "10:45", "11:30", "12:15", "13:00", "13:45",
+      "16:00", "16:45", "17:30", "18:15", "19:00", "19:45"
+    ]
+  },
+  "contact": {
+    "address": "Calle Velázquez, 42, Barrio de Salamanca, 28001 Madrid",
+    "phone": "+34 912 34 56 78",
+    "phoneDisplay": "+34 912 34 56 78",
+    "whatsapp": "34611223344",
+    "whatsappDisplay": "+34 611 22 33 44 (Citas WhatsApp)",
+    "mapsUrl": "https://maps.google.com/?q=Calle+Velazquez+42+Madrid",
+    "mapsEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.1!2d-3.6845!3d40.4285!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd4228996655!2sCalle+de+Vel%C3%A1zquez%2C+Madrid!5e0!3m2!1ses!2ses!4v1710000000000!5m2!1ses!2ses"
+  },
+  "schedule": {
+    "openHour": 10,
+    "closeHour": 20,
+    "days": [
+      { "day": "Lunes a Viernes", "hours": "10:00 a 20:30 h", "dayIndices": [1, 2, 3, 4, 5] },
+      { "day": "Sábados", "hours": "10:00 a 15:00 h", "dayIndices": [6] },
+      { "day": "Domingos", "hours": "Cerrado", "dayIndices": [0] }
+    ]
+  },
+  "theme": {
+    "fontTitle": "'Cinzel', Georgia, serif",
+    "fontBody": "'Inter', -apple-system, sans-serif",
+    "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap",
+    "borderRadius": "8px",
+    "borderRadiusSmall": "4px",
+    "light": {
+      "bg": "#F8FAFC",
+      "paper": "#FFFFFF",
+      "cardBg": "#FFFFFF",
+      "ink": "#0F172A",
+      "mut": "#64748B",
+      "tost": "#B45309",
+      "line": "#E2E8F0",
+      "btn": "#0F172A",
+      "btnInk": "#FFFFFF",
+      "gold": "#D97706",
+      "sand": "#F1F5F9",
+      "sand2": "#E2E8F0"
+    },
+    "dark": {
+      "bg": "#0B1120",
+      "paper": "#111827",
+      "cardBg": "#1F2937",
+      "ink": "#F9FAFB",
+      "mut": "#9CA3AF",
+      "tost": "#F59E0B",
+      "line": "#374151",
+      "btn": "#F59E0B",
+      "btnInk": "#0B1120",
+      "gold": "#FBBF24",
+      "sand": "#1E293B",
+      "sand2": "#334155"
+    }
+  },
+  "sections": {
+    "header": true,
+    "hero": true,
+    "about": true,
+    "catalog": true,
+    "gallery": true,
+    "booking": true,
+    "contact": true,
+    "map": true,
+    "footer": true
+  }
+}

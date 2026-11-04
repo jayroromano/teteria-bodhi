@@ -1,0 +1,186 @@
+{
+  "identity": {
+    "name": "Tetería Bodhi",
+    "slug": "bodhi",
+    "businessType": "hospitality",
+    "categoryLabel": "Tetería & Chill-out",
+    "city": "Jerez de la Frontera",
+    "logoEmoji": "☕",
+    "logoText": "Tetería Bodhi",
+    "tagline": "Oasis Andalusí & Chill-out",
+    "seoTitle": "Tetería Bodhi | Tés del Mundo, Cachimbas y Cócteles en Jerez",
+    "seoDescription": "Descubre Tetería Bodhi en Jerez de la Frontera: tés e infusiones del mundo, cachimbas premium, cócteles de autor y sofás lounge.",
+    "primaryCta": { "text": "Reservar mesa online", "href": "#reservas" },
+    "secondaryCta": { "text": "Ver la carta", "href": "#carta" }
+  },
+  "hero": {
+    "tag": "Oasis Andalusí & Chill-out",
+    "title": "Tetería Bodhi",
+    "subtitle": "El aroma del té moruno recién servido, el susurro del agua y la calidez de nuestras cachimbas en el corazón de Jerez de la Frontera.",
+    "badges": [
+      "🌿 Tés e infusiones del mundo",
+      "💨 Shishas premium artesanales",
+      "🍸 Cócteles de autor",
+      "🛋️ Sofás lounge y terraza"
+    ],
+    "mainImage": "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=800&q=80",
+    "floatingCard": {
+      "tag": "Especialidad de la casa",
+      "title": "Té Verde Moruno con Hierbabuena Fresca",
+      "price": "3,80 €",
+      "sub": "En tetera tradicional andalusí"
+    }
+  },
+  "about": {
+    "tag": "Nuestra Esencia",
+    "title": "Un refugio andalusí para desconectar del tiempo",
+    "description": "Inspirados en la tradición andalusí y oriental, combinamos una cuidada selección de tés importados de Marruecos, India y Japón con cachimbas de tabaco premium, cócteles de autor y los clásicos bocados y dulces de hojaldre, pistacho y miel.",
+    "features": [
+      {
+        "icon": "🛋️",
+        "title": "Zona Lounge Interior",
+        "description": "Banqueta de terciopelo, cojines marroquíes y luz tenue para desconectar sin prisa."
+      },
+      {
+        "icon": "🌿",
+        "title": "Terraza Árabe",
+        "description": "Espacio al aire libre con vegetación para disfrutar de las noches templadas de Jerez."
+      },
+      {
+        "icon": "🍸",
+        "title": "Cócteles Premium",
+        "description": "Combinaciones exclusivas de té macerado, frutas frescas y licores seleccionados."
+      },
+      {
+        "icon": "🫖",
+        "title": "Ceremonia del Té",
+        "description": "Servicio en tetera artesanal de metal plateado con hierbabuena fresca andaluza."
+      }
+    ],
+    "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=700&q=80"
+  },
+  "catalog": {
+    "sectionTag": "Sabores & Experiencias",
+    "title": "Nuestra carta digital",
+    "subtitle": "Selecciona una categoría o busca por ingrediente.",
+    "searchPlaceholder": "Buscar té, cóctel, cachimba, baklava...",
+    "defaultCategories": ["Tés", "Cócteles", "Otro"]
+  },
+  "gallery": {
+    "sectionTag": "Rincones & Detalles",
+    "title": "Atmósfera Bodhi",
+    "subtitle": "Cada rincón está pensado para envolverte en aromas, calma y buena compañía.",
+    "items": [
+      {
+        "url": "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=800&q=80",
+        "caption": "Maceración lenta de té verde con hierbabuena fresca",
+        "tag": "Té & Tradición"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=800&q=80",
+        "caption": "Coctelería artesanal fusionada con flores y especias",
+        "tag": "Coctelería"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80",
+        "caption": "Shishas con carbón natural y esencias de primera línea",
+        "tag": "Shishas Lounge"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=800&q=80",
+        "caption": "Repostería árabe artesana con pistacho y azahar",
+        "tag": "Dulces Árabes"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?auto=format&fit=crop&w=800&q=80",
+        "caption": "Té Chai pakistaní especiado con leche emulsionada",
+        "tag": "Chai & Especias"
+      }
+    ]
+  },
+  "booking": {
+    "type": "table",
+    "title": "Reserva de Mesa",
+    "stepBadge": "Paso único · Online",
+    "personLabel": "Personas",
+    "zoneLabel": "Zona deseada",
+    "zones": [
+      { "value": "interior", "label": "Interior Lounge" },
+      { "value": "terraza", "label": "Terraza Andalusí" },
+      { "value": "indiferente", "label": "Indiferente" }
+    ],
+    "guestsOptions": [1, 2, 3, 4, 5, 6, 8, 10, 12],
+    "defaultGuests": 2,
+    "hintSmall": "✓ Para mesas de hasta 4 personas la confirmación suele ser automática.",
+    "hintLarge": "⏳ Para grupos de más de 4 personas revisamos el aforo antes de confirmar tu mesa.",
+    "timeSlots": [
+      "18:00", "18:30", "19:00", "19:30", "20:00", "20:30",
+      "21:00", "21:30", "22:00", "22:30", "23:00", "23:30", "00:00", "00:30"
+    ]
+  },
+  "contact": {
+    "address": "Av. de Méjico, 3, Local 1, 11405 Jerez de la Frontera, Cádiz",
+    "phone": "+34 956 00 00 00",
+    "phoneDisplay": "+34 956 00 00 00",
+    "whatsapp": "34600000000",
+    "whatsappDisplay": "+34 600 00 00 00 (Atención rápida)",
+    "mapsUrl": "https://maps.app.goo.gl/H2KiVLzKZJ9Xpcpn9",
+    "mapsEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3199.176!2d-6.130892!3d36.692342!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd0dc6c103ff59fd%3A0xfbbe188e1fadbe7e!2sTeter%C3%ADa%20Bodhi!5e0!3m2!1ses!2ses!4v1710000000000!5m2!1ses!2ses"
+  },
+  "schedule": {
+    "openHour": 18,
+    "closeHour": 2,
+    "days": [
+      { "day": "Lunes", "hours": "Cerrado (Descanso)", "dayIndices": [1] },
+      { "day": "Martes, Miércoles y Jueves", "hours": "18:00 a 02:00", "dayIndices": [2, 3, 4] },
+      { "day": "Viernes y Sábado", "hours": "18:00 a 03:00", "dayIndices": [5, 6] },
+      { "day": "Domingo", "hours": "18:00 a 02:00", "dayIndices": [0] }
+    ]
+  },
+  "theme": {
+    "fontTitle": "'Abril Fatface', Georgia, serif",
+    "fontBody": "'Figtree', sans-serif",
+    "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Figtree:wght@400;500;600;700;800&display=swap",
+    "borderRadius": "16px",
+    "borderRadiusSmall": "10px",
+    "light": {
+      "bg": "#F7F0E3",
+      "paper": "#FFFBF2",
+      "cardBg": "#FFFFFF",
+      "ink": "#2C1810",
+      "mut": "#6E533F",
+      "tost": "#A66A3B",
+      "line": "#E2D3BA",
+      "btn": "#3D2214",
+      "btnInk": "#FAF2E6",
+      "gold": "#C59B27",
+      "sand": "#EADBC0",
+      "sand2": "#D9C29B"
+    },
+    "dark": {
+      "bg": "#1B120C",
+      "paper": "#241810",
+      "cardBg": "#2B1D14",
+      "ink": "#F5EADB",
+      "mut": "#C4AD93",
+      "tost": "#E09A5F",
+      "line": "#3E2B1E",
+      "btn": "#FAF2E6",
+      "btnInk": "#241810",
+      "gold": "#E5B83B",
+      "sand": "#362316",
+      "sand2": "#4D3320"
+    }
+  },
+  "sections": {
+    "header": true,
+    "hero": true,
+    "about": true,
+    "catalog": true,
+    "gallery": true,
+    "booking": true,
+    "contact": true,
+    "map": true,
+    "footer": true
+  }
+}

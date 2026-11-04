@@ -17,6 +17,7 @@ app.use(express.static(path.join(__dirname)));
 const reservasHandler = require('./api/reservas');
 const adminLoginHandler = require('./api/admin-login');
 const cartaHandler = require('./api/carta');
+const businessConfigHandler = require('./api/business-config');
 
 // Adaptador para handlers de Vercel (req, res)
 const adaptVercelHandler = (handler) => (req, res) => {
@@ -29,6 +30,7 @@ app.all('/api/reservas', adaptVercelHandler(reservasHandler));
 app.all('/api/admin-login', adaptVercelHandler(adminLoginHandler));
 app.all('/api/admin/login', adaptVercelHandler(adminLoginHandler));
 app.all('/api/carta', adaptVercelHandler(cartaHandler));
+app.all('/api/business-config', adaptVercelHandler(businessConfigHandler));
 
 // Rutas amigables
 app.get('/admin', (req, res) => {

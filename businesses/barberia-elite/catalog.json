@@ -1,0 +1,62 @@
+[
+  {
+    "id": "corte-elite-fade",
+    "category": "Cortes",
+    "name": "Corte Signature Skin Fade",
+    "description": "Degradado a cero con máquina y navaja shavers, texturizado superior a tijera, lavado con champú mentolado y peinado final.",
+    "price": 20.00,
+    "badge": "Top Ventas",
+    "image": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "corte-clasico-tijera",
+    "category": "Cortes",
+    "name": "Corte Clásico a Tijera",
+    "description": "Estilo tradicional caballero cortado íntegramente a tijera sobre peine. Incluye perfilado de contornos y masaje en cuero cabelludo.",
+    "price": 18.00,
+    "badge": "Clásico",
+    "image": "https://images.unsplash.com/photo-1517832606589-7629c3395909?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "arreglo-barba-toalla",
+    "category": "Barba",
+    "name": "Ritual de Barba con Toalla Caliente",
+    "description": "Rebaje, esculpido y perfilado con navaja recta, aplicación de toallas vaporizadas aromatizadas y nutrición con aceite de cedro.",
+    "price": 16.00,
+    "badge": "Especialidad",
+    "image": "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "afeitado-tradicional",
+    "category": "Barba",
+    "name": "Afeitado Tradicional Completo a Navaja",
+    "description": "Espuma tibia de brocha de tejón, toalla caliente antes y fría al finalizar para cerrar poros, finalizado con aftershave balsámico.",
+    "price": 18.00,
+    "badge": "Experiencia",
+    "image": "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "ritual-imperial",
+    "category": "Tratamientos",
+    "name": "Ritual Imperial Completo (Corte + Barba)",
+    "description": "El pack insignia de la casa: corte skin fade o clásico, arreglo de barba con toalla caliente, mascarilla facial negra y peinado.",
+    "price": 34.00,
+    "badge": "Recomendado",
+    "image": "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  },
+  {
+    "id": "limpieza-facial-express",
+    "category": "Tratamientos",
+    "name": "Limpieza Facial Purificante con Carbón Activo",
+    "description": "Exfoliación suave, vapor de ozono para desobstruir poros, mascarilla purificante y tónico hidratante anti-brillos.",
+    "price": 15.00,
+    "badge": "Cuidado Facial",
+    "image": "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=400&q=80",
+    "available": true
+  }
+]
