@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tetería Bodhi · Tés, Cócteles y Cachimbas en Jerez de la Frontera</title>
+  <meta name="description" content="Tetería Bodhi en Jerez de la Frontera: tés del mundo, cachimbas premium, cócteles de autor y dulces artesanos en un ambiente relajado con terraza y salón lounge. Reserva tu mesa online.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path fill='%23A66A3B' d='M5 12h19v5a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8v-5z'/><path fill='none' stroke='%233D2214' stroke-width='2' d='M24 14h2.5a3 3 0 0 1 0 6H23'/></svg>">
+</head>
+<body>
+
+<!-- ================= CABECERA ================= -->
+<header>
+  <div class="wrap bar">
+    <div class="logo-group">
+      <a class="logo" href="#inicio" aria-label="Tetería Bodhi, volver al inicio">
+        <div class="logo-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        </div>
+        Tetería Bodhi
+      </a>
+      <span class="badge-city">Jerez</span>
+      <div class="status-indicator">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Abierto hoy · 18:00 a 02:00</span>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <nav id="menu" aria-label="Navegación principal">
+        <ul>
+          <li><a href="#inicio">Inicio</a></li>
+          <li><a href="#teteria">Nuestra Tetería</a></li>
+          <li><a href="#carta">Carta Digital</a></li>
+          <li><a href="#reservas">Reservas</a></li>
+          <li><a href="#galeria">Galería</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema de color">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+
+      <a href="#reservas" class="btn fill sm btn-nav-reserve">Reservar Mesa</a>
+
+      <button class="burger" id="burger" aria-expanded="false" aria-controls="menu" aria-label="Abrir menú de navegación">
+        <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ================= HERO SECTION ================= -->
+  <section id="inicio">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="wrap hero">
+      <div>
+        <span class="section-tag">Oasis Andalusí & Chill-out</span>
+        <h1><span>Tetería</span>Bodhi</h1>
+        <div class="orn" aria-hidden="true"><i></i><b></b><i></i></div>
+        <p>El aroma del té moruno recién servido, el susurro del agua y la calidez de nuestras cachimbas en el corazón de Jerez de la Frontera.</p>
+        
+        <div class="hero-pills">
+          <span class="hero-pill">🌿 Tés e infusiones del mundo</span>
+          <span class="hero-pill">💨 Shishas premium artesanales</span>
+          <span class="hero-pill">🍸 Cócteles de autor</span>
+          <span class="hero-pill">🪑 Sofás lounge y terraza</span>
+        </div>
+
+        <div class="cta">
+          <a class="btn fill" href="#reservas">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Reservar mesa online
+          </a>
+          <a class="btn line" href="#carta">Ver la carta</a>
+        </div>
+      </div>
+
+      <div class="arch-frame">
+        <div class="arch-card">
+          <div class="img-wrapper">
+            <img src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=1000&q=80" 
+                 alt="Ceremonia tradicional del té moruno servido en tetera plateada en Tetería Bodhi"
+                 loading="eager">
+          </div>
+          <div class="arch-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Tetería & Lounge · Jerez de la Frontera
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NUESTRA TETERÍA ================= -->
+  <section id="teteria">
+    <div class="wrap about">
+      <div>
+        <span class="section-tag">Un rincón para detener el tiempo</span>
+        <h2>Nuestra tetería</h2>
+        <p class="sub">Bodhi nació con una vocación muy clara: crear un refugio tranquilo en Jerez donde desconectar del ritmo acelerado, charlar con amigos y saborear cada trago.</p>
+        
+        <p>Inspirados en la tradición andalusí y oriental, combinamos una cuidada selección de tés importados de Marruecos, India y Japón con cachimbas de tabaco premium, cócteles de autor y los clásicos bocados y dulces de hojaldre, pistacho y miel.</p>
+
+        <div class="about-features">
+          <div class="feat-item">
+            <span class="icon">🛋️</span>
+            <strong>Zona Lounge Interior</strong>
+            <p>Banquettes de terciopelo, cojines marroquíes y luz tenue para desconectar sin prisa.</p>
+          </div>
+          <div class="feat-item">
+            <span class="icon">🌿</span>
+            <strong>Terraza Andalusí</strong>
+            <p>Espacio al aire libre con vegetación para disfrutar de las noches templadas de Jerez.</p>
+          </div>
+          <div class="feat-item">
+            <span class="icon">💨</span>
+            <strong>Cachimbas Premium</strong>
+            <p>Cazoletas tradicionales de barro, carbón natural y las mejores mezclas del mercado.</p>
+          </div>
+          <div class="feat-item">
+            <span class="icon">🫖</span>
+            <strong>Ceremonia del Té</strong>
+            <p>Servido en tetera artesanal de metal plateado con hierbabuena fresca andaluza.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="a">
+          <div class="frame">
+            <img src="https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=700&q=80" 
+                 alt="Taza de té aromático en el salón lounge de Bodhi" loading="lazy">
+          </div>
+        </div>
+        <div class="b">
+          <div class="frame">
+            <img src="https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80" 
+                 alt="Cachimba con luces tenues y ambiente chillout" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CARTA ================= -->
+  <section id="carta">
+    <div class="wrap">
+      <div class="carta-header">
+        <div>
+          <span class="section-tag">Sabores & Experiencias</span>
+          <h2>Nuestra carta digital</h2>
+          <p class="sub" style="margin-bottom: 0;">Selecciona una categoría o busca por ingrediente.</p>
+        </div>
+        <div class="carta-search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="carta-search-input" placeholder="Buscar té, cóctel, cachimba, baklava..." aria-label="Buscar en la carta">
+        </div>
+      </div>
+
+      <div class="tabs" id="tabs" role="tablist" aria-label="Categorías de la carta">
+        <button type="button" class="tab" aria-pressed="true">Tés e Infusiones</button>
+        <button type="button" class="tab" aria-pressed="false">Cachimbas</button>
+        <button type="button" class="tab" aria-pressed="false">Cócteles</button>
+        <button type="button" class="tab" aria-pressed="false">Dulces & Repostería</button>
+        <button type="button" class="tab" aria-pressed="false">Comida & Picoteo</button>
+      </div>
+
+      <div class="items-grid" id="items" aria-live="polite">
+        <!-- Tarjeta precargada 1 -->
+        <article class="menu-card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80" alt="Té Verde Moruno">
+          </div>
+          <div class="info">
+            <div>
+              <div class="title-row">
+                <h3>Té Verde Moruno Tradicional</h3>
+                <span class="price">3,80 €</span>
+              </div>
+              <p>Té verde gunpowder seleccionado, hierbabuena fresca de la huerta andaluza y azúcar moreno en tetera de plata.</p>
+            </div>
+            <span class="badge top">Especialidad</span>
+          </div>
+        </article>
+
+        <!-- Tarjeta precargada 2 -->
+        <article class="menu-card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?auto=format&fit=crop&w=400&q=80" alt="Té Pakistaní">
+          </div>
+          <div class="info">
+            <div>
+              <div class="title-row">
+                <h3>Té Pakistaní Especiado</h3>
+                <span class="price">4,20 €</span>
+              </div>
+              <p>Mezcla secreta de té negro, canela en rama, cardamomo verde, clavo y leche cremosa emulsionada.</p>
+            </div>
+            <span class="badge top">Top Ventas</span>
+          </div>
+        </article>
+
+        <!-- Tarjeta precargada 3 -->
+        <article class="menu-card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80" alt="Bodhi Signature Velvet">
+          </div>
+          <div class="info">
+            <div>
+              <div class="title-row">
+                <h3>Bodhi Signature Velvet</h3>
+                <span class="price">14,00 €</span>
+              </div>
+              <p>Nuestra mezcla de la casa: frutos del bosque silvestres, toque glacial de menta suave y base perfumada.</p>
+            </div>
+            <span class="badge top">Top Ventas</span>
+          </div>
+        </article>
+
+        <!-- Tarjeta precargada 4 -->
+        <article class="menu-card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80" alt="Bodhi Tea Spritz">
+          </div>
+          <div class="info">
+            <div>
+              <div class="title-row">
+                <h3>Bodhi Tea Spritz</h3>
+                <span class="price">7,50 €</span>
+              </div>
+              <p>Reducción artesanal de té Earl Grey, flor de saúco St. Germain, cava andaluz brut y twist de pomelo.</p>
+            </div>
+            <span class="badge">Autor</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RESERVAS ================= -->
+  <section id="reservas">
+    <div class="wrap res-layout">
+      <div>
+        <span class="section-tag">Sin esperas · Asegura tu rincón</span>
+        <h2>Reserva tu mesa</h2>
+        <p class="sub">Selecciona fecha, hora y número de personas. Guardamos tu reserva directamente en nuestro sistema y te enviamos confirmación instantánea.</p>
+
+        <div class="res-perks">
+          <div class="res-perk">
+            <span class="icon">⚡</span>
+            <div>
+              <h4>Confirmación directa</h4>
+              <p>Tu mesa queda bloqueada en el panel de la tetería de inmediato.</p>
+            </div>
+          </div>
+          <div class="res-perk">
+            <span class="icon">💬</span>
+            <div>
+              <h4>Respaldo en WhatsApp</h4>
+              <p>Recibe tu justificante con código único y contacta directamente con nuestro equipo.</p>
+            </div>
+          </div>
+          <div class="res-perk">
+            <span class="icon">🎂</span>
+            <div>
+              <h4>Celebraciones & Grupos</h4>
+              <p>Indícanos si venís a celebrar cumpleaños o tenéis preferencias de cazoletas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form class="ticket" id="form" novalidate>
+        <div class="ticket-header">
+          <span class="title">Boleto de Reserva</span>
+          <span class="step-badge">Paso único · Online</span>
+        </div>
+
+        <div class="fields">
+          <div class="f1">
+            <label for="n">Nombre y apellidos *</label>
+            <input id="n" name="name" required placeholder="Ej: Carmen Gómez" autocomplete="name">
+          </div>
+
+          <div>
+            <label for="t">Teléfono móvil *</label>
+            <input id="t" name="phone" type="tel" inputmode="tel" required placeholder="Ej: 612 34 56 78" autocomplete="tel">
+          </div>
+
+          <div>
+            <label for="e">Correo electrónico (opcional)</label>
+            <input id="e" name="email" type="email" placeholder="carmen@ejemplo.com" autocomplete="email">
+          </div>
+
+          <div>
+            <label for="d">Fecha de reserva *</label>
+            <input id="d" name="date" type="date" required>
+          </div>
+
+          <div>
+            <label for="h">Hora deseada *</label>
+            <select id="h" name="time" required>
+              <option value="18:00">18:00 h</option>
+              <option value="18:30">18:30 h</option>
+              <option value="19:00">19:00 h</option>
+              <option value="19:30">19:30 h</option>
+              <option value="20:00">20:00 h</option>
+              <option value="20:30" selected>20:30 h</option>
+              <option value="21:00">21:00 h</option>
+              <option value="21:30">21:30 h</option>
+              <option value="22:00">22:00 h</option>
+              <option value="22:30">22:30 h</option>
+              <option value="23:00">23:00 h</option>
+              <option value="23:30">23:30 h</option>
+              <option value="00:00">00:00 h (noche)</option>
+              <option value="00:30">00:30 h (noche)</option>
+              <option value="01:00">01:00 h (noche)</option>
+            </select>
+          </div>
+
+          <div class="f1">
+            <label for="p">Número de personas *</label>
+            <select id="p" name="guests">
+              <option value="1">1 persona</option>
+              <option value="2" selected>2 personas</option>
+              <option value="3">3 personas</option>
+              <option value="4">4 personas</option>
+              <option value="5">5 personas</option>
+              <option value="6">6 personas</option>
+              <option value="7">7 personas</option>
+              <option value="8">8 personas</option>
+              <option value="10">10 personas</option>
+              <option value="12">12 personas</option>
+              <option value="13">Más de 12 personas (Grupo especial)</option>
+            </select>
+            <p class="hint-box" id="hint">✨ Confirmación inmediata para mesas pequeñas.</p>
+          </div>
+
+          <fieldset class="f1" style="border:0;padding:0;">
+            <legend><label>Zona preferida</label></legend>
+            <div class="zone-selector">
+              <label>
+                <input type="radio" name="z" value="int">
+                <span>🛋️ Interior Lounge</span>
+              </label>
+              <label>
+                <input type="radio" name="z" value="ter">
+                <span>🌿 Terraza Andalusí</span>
+              </label>
+              <label>
+                <input type="radio" name="z" value="ind" checked>
+                <span>✨ Indiferente</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="f1">
+            <label for="o">Observaciones o peticiones especiales</label>
+            <textarea id="o" name="notes" placeholder="¿Celebración de cumpleaños? ¿Sabor preferido de cachimba? ¿Alergias o intolerancias?"></textarea>
+          </div>
+        </div>
+
+        <div class="submit-btn-row">
+          <button class="btn fill" id="submit-btn" type="submit" style="width: 100%;">
+            Solicitar reserva de mesa
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ================= GALERÍA ================= -->
+  <section id="galeria">
+    <div class="wrap">
+      <div style="text-align: center; max-width: 600px; margin: 0 auto 36px;">
+        <span class="section-tag">Atmósfera Bodhi</span>
+        <h2>Nuestros momentos</h2>
+        <p class="sub" style="margin: 0 auto;">Un vistazo al ambiente íntimo, a las copas recién preparadas y a las mesas compartidas.</p>
+      </div>
+
+      <div class="mosaic">
+        <div class="mosaic-item w t">
+          <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80" alt="Interior con ambiente relajado" loading="lazy">
+          <div class="caption">Salón lounge con iluminación cálida</div>
+        </div>
+        <div class="mosaic-item">
+          <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=500&q=80" alt="Cóctel artesano" loading="lazy">
+          <div class="caption">Bodhi Tea Spritz con botánicos</div>
+        </div>
+        <div class="mosaic-item">
+          <img src="https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?auto=format&fit=crop&w=500&q=80" alt="Té Chai con especias" loading="lazy">
+          <div class="caption">Chai especiado con canela y cardamomo</div>
+        </div>
+        <div class="mosaic-item w">
+          <img src="https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=900&q=80" alt="Terraza al aire libre" loading="lazy">
+          <div class="caption">Terraza andaluza para las noches de verano</div>
+        </div>
+        <div class="mosaic-item">
+          <img src="https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=500&q=80" alt="Shisha artesanal" loading="lazy">
+          <div class="caption">Cachimba Bodhi Velvet con menta helada</div>
+        </div>
+        <div class="mosaic-item t">
+          <img src="https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=600&q=80" alt="Repostería árabe artesana" loading="lazy">
+          <div class="caption">Baklava casero con miel y pistacho</div>
+        </div>
+        <div class="mosaic-item w">
+          <img src="https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=900&q=80" alt="Hummus con pita caliente" loading="lazy">
+          <div class="caption">Picoteo con hummus y aceite virgen extra</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTACTO & MAPA ================= -->
+  <section id="contacto">
+    <div class="wrap contact-grid">
+      <div class="contact-card">
+        <span class="section-tag">Ven a visitarnos</span>
+        <h2>Contacto & Horario</h2>
+        
+        <dl class="contact-dl">
+          <dt>📍 Ubicación</dt>
+          <dd>Calle Tornería, 14, 11403 Jerez de la Frontera, Cádiz</dd>
+
+          <dt>📞 Teléfono</dt>
+          <dd><a href="tel:+34956000000" style="font-weight: 600; color: var(--tost);">+34 956 00 00 00</a> · Reservas y consultas</dd>
+
+          <dt>💬 WhatsApp Directo</dt>
+          <dd><a href="https://wa.me/34600000000" target="_blank" rel="noopener" style="font-weight: 600; color: #25D366;">+34 600 00 00 00 (Atención rápida)</a></dd>
+
+          <dt>🕒 Horario de Apertura</dt>
+          <dd>
+            <table class="schedule-table">
+              <tr><td>Lunes</td><td>Cerrado (Descanso)</td></tr>
+              <tr><td>Martes, Miércoles y Jueves</td><td>18:00 a 02:00</td></tr>
+              <tr><td>Viernes y Sábado</td><td>18:00 a 03:00</td></tr>
+              <tr><td>Domingo</td><td>18:00 a 02:00</td></tr>
+            </table>
+          </dd>
+        </dl>
+      </div>
+
+      <div class="map-container">
+        <!-- Mapa interactivo centrado en Jerez de la Frontera -->
+        <iframe 
+          title="Ubicación de Tetería Bodhi en Jerez de la Frontera"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12798.852951912948!2d-6.14151275!3d36.68500295!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd0dc681f215ea71%3A0x6b772427a1864119!2sJerez%20de%20la%20Frontera%2C%20C%C3%A1diz!5e0!3m2!1ses!2ses!4v1710000000000!5m2!1ses!2ses" 
+          allowfullscreen="" 
+          loading="lazy" 
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="wrap">
+    <div class="foot-content">
+      <div class="foot-brand">
+        <div class="logo">Tetería Bodhi</div>
+        <small>Tés del Mundo · Cachimbas · Cócteles · Jerez de la Frontera</small>
+        <small>© 2026 Tetería Bodhi · Todos los derechos reservados.</small>
+      </div>
+
+      <ul class="foot-links" aria-label="Enlaces rápidos del pie">
+        <li><a href="#teteria">Nuestra tetería</a></li>
+        <li><a href="#carta">Carta</a></li>
+        <li><a href="#reservas">Reservas</a></li>
+        <li><a href="#galeria">Galería</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </div>
+
+    <div class="foot-bottom">
+      <span>Calle Tornería, Jerez de la Frontera · Cádiz</span>
+      <a href="admin.html" class="foot-admin-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Panel de Administración
+      </a>
+    </div>
+  </div>
+</footer>
+
+<!-- ================= MODAL DE CONFIRMACIÓN DE RESERVA ================= -->
+<div class="modal-overlay" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-card">
+    <button class="modal-close" id="modal-close" aria-label="Cerrar ventana">×</button>
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="width: 58px; height: 58px; background: #E8F5E9; color: #2E7D32; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 14px; font-size: 1.8rem;">
+        ✓
+      </div>
+      <h3 id="modal-title" style="font-size: 1.8rem; margin-bottom: 6px;">¡Reserva Registrada!</h3>
+      <p style="color: var(--mut); font-size: 0.95rem;">Tu solicitud se ha guardado en la base de datos de Bodhi.</p>
+    </div>
+
+    <div style="background: var(--bg); border: 1px dashed var(--line); border-radius: 14px; padding: 18px; margin-bottom: 22px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="color: var(--mut); font-size: 0.88rem;">Código de Reserva:</span>
+        <strong id="modal-code" style="color: var(--tost); font-size: 1.1rem; letter-spacing: 0.05em;">BDH-0000</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="color: var(--mut); font-size: 0.88rem;">Titular:</span>
+        <strong id="modal-name">-</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="color: var(--mut); font-size: 0.88rem;">Fecha y Hora:</span>
+        <strong id="modal-datetime">-</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span style="color: var(--mut); font-size: 0.88rem;">Detalles:</span>
+        <span id="modal-guests">-</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line);">
+        <span style="color: var(--mut); font-size: 0.88rem;">Estado:</span>
+        <span id="modal-status" style="font-size: 0.82rem; font-weight: 700; padding: 3px 10px; border-radius: 999px;">Confirmada</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <a href="#" id="modal-wa-btn" target="_blank" rel="noopener" class="btn" style="background: #25D366; color: #fff; width: 100%;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.699c.971.53 1.77.781 2.795.782 3.182 0 5.768-2.587 5.769-5.766.001-3.182-2.585-5.768-5.769-5.768zm0-2.172c4.378 0 7.938 3.56 7.939 7.939 0 4.379-3.561 7.939-7.939 7.939-1.398 0-2.456-.372-3.56-1l-5.471 1.434 1.46-5.334c-.71-1.19-1.09-2.072-1.09-3.039 0-4.379 3.56-7.939 7.939-7.939z"/></svg>
+        Enviar confirmación al WhatsApp de Bodhi
+      </a>
+      <button type="button" class="btn line" onclick="document.getElementById('confirm-modal').classList.remove('active')" style="width: 100%;">
+        Entendido, cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= BOTÓN FLOTANTE WHATSAPP ================= -->
+<a href="https://wa.me/34600000000?text=Hola%20Teter%C3%ADa%20Bodhi,%20quer%C3%ADa%20hacer%20una%20consulta." 
+   class="wa-float" 
+   target="_blank" 
+   rel="noopener" 
+   aria-label="Contactar por WhatsApp con Tetería Bodhi">
+  <svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.699c.971.53 1.77.781 2.795.782 3.182 0 5.768-2.587 5.769-5.766.001-3.182-2.585-5.768-5.769-5.768zm0-2.172c4.378 0 7.938 3.56 7.939 7.939 0 4.379-3.561 7.939-7.939 7.939-1.398 0-2.456-.372-3.56-1l-5.471 1.434 1.46-5.334c-.71-1.19-1.09-2.072-1.09-3.039 0-4.379 3.56-7.939 7.939-7.939z"/></svg>
+</a>
+
+<!-- Scripts con ruta relativa -->
+<script src="js/main.js"></script>
+</body>
+</html>

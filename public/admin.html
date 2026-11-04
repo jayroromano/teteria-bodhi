@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Panel de Administración · Tetería Bodhi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path fill='%233D2214' d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z'/></svg>">
+</head>
+<body>
+
+<!-- ================= PANTALLA DE ACCESO (LOGIN) ================= -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h1>Tetería Bodhi</h1>
+    <p>Acceso seguro al panel de control y reservas</p>
+
+    <form id="login-form">
+      <input type="password" id="login-password" class="login-input" placeholder="Contraseña de administrador" required autofocus autocomplete="current-password">
+      <button type="submit" class="login-btn">Entrar al panel</button>
+      <div class="login-error" id="login-error"></div>
+    </form>
+    <small style="color: #8C735F; display: block; margin-top: 18px; font-size: 0.8rem;">
+      Clave por defecto: <code style="background:#EADBC0;padding:2px 6px;border-radius:4px;">bodhi2026</code>
+    </small>
+  </div>
+</div>
+
+<!-- ================= APLICACIÓN ADMIN ================= -->
+<div class="admin-app">
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <div style="width:38px;height:38px;background:var(--sand);color:var(--primary);border-radius:10px;display:grid;place-items:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      </div>
+      <div>
+        <h2>Bodhi</h2>
+        <span>Panel de Gestión</span>
+      </div>
+    </div>
+
+    <ul class="nav-menu">
+      <li class="nav-item active">
+        <button type="button" data-tab="reservas">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Reservas de Mesa
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" data-tab="carta">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          Gestión de Carta
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" data-tab="db">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          Base de Datos & Vercel
+        </button>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <a href="index.html" class="sidebar-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Ver web pública
+      </a>
+      <button type="button" class="sidebar-link" id="logout-btn" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN WRAPPER -->
+  <main class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <h1 class="topbar-title" id="page-title">Reservas</h1>
+        <span class="db-pill" id="db-status-pill">Verificando DB...</span>
+      </div>
+
+      <div class="topbar-right">
+        <button type="button" class="btn-secondary" id="refresh-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Sincronizar
+        </button>
+        <button type="button" class="btn-primary" id="new-res-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nueva Reserva Manual
+        </button>
+      </div>
+    </header>
+
+    <div class="content-area">
+      <!-- PESTAÑA 1: RESERVAS -->
+      <div class="tab-section" id="tab-reservas">
+        <!-- KPIS -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span>Reservas para HOY</span>
+              <span>📅</span>
+            </div>
+            <div class="stat-value" id="kpi-today">3</div>
+            <div class="stat-sub">Servicio del día</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span>Comensales HOY</span>
+              <span>👥</span>
+            </div>
+            <div class="stat-value" id="kpi-guests-today">10</div>
+            <div class="stat-sub">Personas estimadas</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span>Pendientes</span>
+              <span>⏳</span>
+            </div>
+            <div class="stat-value" id="kpi-pending" style="color: var(--warning);">1</div>
+            <div class="stat-sub">Requieren confirmación</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span>Total Registradas</span>
+              <span>📦</span>
+            </div>
+            <div class="stat-value" id="kpi-total">5</div>
+            <div class="stat-sub">En base de datos</div>
+          </div>
+        </div>
+
+        <!-- FILTROS -->
+        <div class="filters-card">
+          <div class="filter-group">
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--mut);">Fecha:</span>
+            <button type="button" class="filter-pill active" data-date="all">Todas</button>
+            <button type="button" class="filter-pill" data-date="today">Hoy</button>
+            <button type="button" class="filter-pill" data-date="tomorrow">Mañana</button>
+          </div>
+
+          <div class="filter-group">
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--mut);">Estado:</span>
+            <select id="filter-status" style="border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; background: var(--bg); color: var(--ink);">
+              <option value="all">Todos los estados</option>
+              <option value="pending">Pendientes</option>
+              <option value="confirmed">Confirmadas</option>
+              <option value="completed">Completadas</option>
+              <option value="cancelled">Canceladas</option>
+            </select>
+          </div>
+
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="admin-search" placeholder="Buscar por cliente, teléfono o código...">
+          </div>
+
+          <div class="filter-group">
+            <button type="button" class="btn-secondary" id="export-csv-btn" title="Descargar en formato Excel / CSV">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              CSV
+            </button>
+            <button type="button" class="btn-secondary" id="print-btn" title="Imprimir hoja de servicio del día">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Imprimir
+            </button>
+          </div>
+        </div>
+
+        <div style="font-size: 0.85rem; color: var(--mut); margin-bottom: 12px;" id="showing-count">
+          Cargando reservas...
+        </div>
+
+        <!-- TABLA -->
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Fecha & Hora</th>
+                  <th>Cliente</th>
+                  <th>Personas / Zona</th>
+                  <th>Observaciones</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="reservas-tbody">
+                <!-- Inserción dinámica JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 2: GESTIÓN DE CARTA -->
+      <div class="tab-section" id="tab-carta" style="display: none;">
+        <div class="table-card" style="padding: 24px;">
+          <h2 style="font-family: var(--font-title); font-size: 1.8rem; margin-bottom: 8px;">Control de Disponibilidad de la Carta</h2>
+          <p style="color: var(--mut); font-size: 0.95rem; margin-bottom: 24px;">
+            Activa o desactiva productos según el stock del día en tiempo real. Los cambios se reflejan inmediatamente en la web pública.
+          </p>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Producto & Categoría</th>
+                  <th>Precio</th>
+                  <th>Estado en Carta</th>
+                </tr>
+              </thead>
+              <tbody id="carta-manager-tbody">
+                <!-- Inserción dinámica JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 3: BASE DE DATOS & VERCEL -->
+      <div class="tab-section" id="tab-db" style="display: none;">
+        <div class="table-card" style="padding: 28px;">
+          <h2 style="font-family: var(--font-title); font-size: 1.8rem; margin-bottom: 12px;">Conexión a Base de Datos & Despliegue</h2>
+          <p style="color: var(--mut); font-size: 1rem; line-height: 1.6; margin-bottom: 24px;">
+            Tetería Bodhi cuenta con un sistema híbrido de persistencia. Funciona de manera inmediata tanto en local como en la nube:
+          </p>
+
+          <div style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 30px;">
+            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 20px;">
+              <h3 style="font-size: 1.15rem; margin-bottom: 8px; color: var(--primary);">🟢 1. Conexión en Vercel (PostgreSQL Cloud)</h3>
+              <p style="font-size: 0.9rem; color: var(--mut); margin-bottom: 12px;">
+                Para persistencia permanente en Vercel, utiliza un servicio gratuito como <strong>Neon.tech</strong>, <strong>Supabase</strong> o <strong>Vercel Postgres</strong>.
+              </p>
+              <ol style="font-size: 0.88rem; color: var(--ink); padding-left: 20px; line-height: 1.6;">
+                <li>Crea una base de datos gratis en <a href="https://neon.tech" target="_blank" style="color:var(--tost);text-decoration:underline;">Neon.tech</a> o <a href="https://supabase.com" target="_blank" style="color:var(--tost);text-decoration:underline;">Supabase.com</a>.</li>
+                <li>Copia tu cadena de conexión (URI) que empieza por <code>postgres://...</code></li>
+                <li>En tu proyecto de Vercel ve a <strong>Settings → Environment Variables</strong>.</li>
+                <li>Añade la variable <code>DATABASE_URL</code> con tu enlace.</li>
+                <li>¡Listo! Las tablas de reservas y carta se inicializan automáticamente.</li>
+              </ol>
+            </div>
+
+            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 20px;">
+              <h3 style="font-size: 1.15rem; margin-bottom: 8px; color: var(--primary);">🟡 2. Modo Local / Respaldo</h3>
+              <p style="font-size: 0.9rem; color: var(--mut); margin-bottom: 12px;">
+                Si no se configura <code>DATABASE_URL</code>, la aplicación guarda las reservas en archivos locales en <code>data/reservas.json</code>.
+              </p>
+              <div style="background: var(--surface); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 0.85rem; border: 1px solid var(--line);">
+                npm run dev<br>
+                # Servidor en http://localhost:3000
+              </div>
+            </div>
+          </div>
+
+          <h3 style="font-size: 1.2rem; margin-bottom: 10px;">Esquema SQL de Reservas</h3>
+          <pre style="background: #2C1810; color: #FAF2E6; padding: 18px; border-radius: 10px; font-size: 0.85rem; overflow-x: auto; font-family: monospace; line-height: 1.5;">
+CREATE TABLE reservations (
+  id SERIAL PRIMARY KEY,
+  code VARCHAR(30) UNIQUE NOT NULL,
+  name VARCHAR(150) NOT NULL,
+  phone VARCHAR(50) NOT NULL,
+  email VARCHAR(150),
+  date VARCHAR(20) NOT NULL,
+  time VARCHAR(20) NOT NULL,
+  guests INT NOT NULL DEFAULT 2,
+  zone VARCHAR(50) DEFAULT 'indiferente',
+  notes TEXT,
+  status VARCHAR(30) DEFAULT 'pending',
+  admin_notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);</pre>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ================= MODAL: NUEVA RESERVA MANUAL ================= -->
+<div class="admin-modal-overlay" id="new-res-modal">
+  <div class="admin-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <h3 style="font-family: var(--font-title); font-size: 1.6rem;">Nueva Reserva Manual</h3>
+      <button type="button" style="background:none;border:none;font-size:1.5rem;cursor:pointer;" onclick="document.getElementById('new-res-modal').classList.remove('active')">×</button>
+    </div>
+
+    <form id="new-res-form">
+      <div style="display:grid;gap:12px;margin-bottom:18px;">
+        <div>
+          <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Nombre del cliente *</label>
+          <input id="m-n" required style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Teléfono *</label>
+            <input id="m-t" required style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
+          </div>
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Email</label>
+            <input id="m-e" type="email" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Fecha *</label>
+            <input id="m-d" type="date" required style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
+          </div>
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Hora *</label>
+            <input id="m-h" type="time" required style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Personas</label>
+            <select id="m-p" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);">
+              <option value="1">1 persona</option>
+              <option value="2" selected>2 personas</option>
+              <option value="3">3 personas</option>
+              <option value="4">4 personas</option>
+              <option value="5">5 personas</option>
+              <option value="6">6 personas</option>
+              <option value="8">8 personas</option>
+              <option value="10">10 personas</option>
+              <option value="12">12 personas</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Zona</label>
+            <select id="m-z" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);">
+              <option value="interior">Interior Lounge</option>
+              <option value="terraza">Terraza Andalusí</option>
+              <option value="indiferente" selected>Indiferente</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Observaciones / Mesa</label>
+          <input id="m-o" placeholder="Ej: Mesa asignada nº 5 en rincón" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
+        </div>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Registrar Reserva</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: NOTAS INTERNAS ================= -->
+<div class="admin-modal-overlay" id="notes-modal">
+  <div class="admin-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-family: var(--font-title); font-size: 1.4rem;">Notas Internas del Personal</h3>
+      <button type="button" style="background:none;border:none;font-size:1.5rem;cursor:pointer;" onclick="document.getElementById('notes-modal').classList.remove('active')">×</button>
+    </div>
+    <form id="notes-form">
+      <input type="hidden" id="modal-res-id">
+      <textarea id="modal-res-notes" rows="4" placeholder="Ej: Mesa 2 asignada. Cumpleaños, avisar para tarta con bengala..." style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-bottom:16px;"></textarea>
+      <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Guardar Nota</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>

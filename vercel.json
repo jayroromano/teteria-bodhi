@@ -1,11 +1,7 @@
 {
-  "version": 2,
   "cleanUrls": true,
   "rewrites": [
     { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/api/admin/login", "destination": "/api/admin-login.js" },
-    { "source": "/api/admin-login", "destination": "/api/admin-login.js" },
-    { "source": "/api/reservas", "destination": "/api/reservas.js" },
-    { "source": "/api/carta", "destination": "/api/carta.js" }
+    { "source": "/api/admin/login", "destination": "/api/admin-login" }
   ]
 }

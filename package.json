@@ -4,6 +4,7 @@
   "description": "Sitio web oficial y panel de gestión de reservas de Tetería Bodhi en Jerez de la Frontera.",
   "main": "server.js",
   "scripts": {
+    "build": "node -e \"console.log('Build completed for Vercel')\"",
     "start": "node server.js",
     "dev": "node server.js"
   },

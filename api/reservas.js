@@ -1,4 +1,4 @@
-const db = require('./db');
+const db = require('../lib/db');
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
