@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path fill='%23A66A3B' d='M5 12h19v5a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8v-5z'/><path fill='none' stroke='%233D2214' stroke-width='2' d='M24 14h2.5a3 3 0 0 1 0 6H23'/></svg>">
 </head>
 <body>
@@ -26,7 +26,7 @@
       <span class="badge-city">Jerez</span>
       <div class="status-indicator">
         <span class="status-dot" id="status-dot"></span>
-        <span id="status-text">Cargando horario...</span>
+        <span id="status-text">Abierto hoy · 18:00 a 02:00</span>
       </div>
     </div>
 
@@ -46,7 +46,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
 
-      <a href="#reservas" class="btn fill sm" style="display: none; @media(min-width:680px){display:inline-flex;}">Reservar Mesa</a>
+      <a href="#reservas" class="btn fill sm btn-nav-reserve">Reservar Mesa</a>
 
       <button class="burger" id="burger" aria-expanded="false" aria-controls="menu" aria-label="Abrir menú de navegación">
         <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -85,8 +85,8 @@
       <div class="arch-frame">
         <div class="arch-card">
           <div class="img-wrapper">
-            <img src="https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=1000&q=80" 
-                 alt="Salón lounge con lámparas de té y ambiente acogedor en Tetería Bodhi"
+            <img src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=1000&q=80" 
+                 alt="Ceremonia tradicional del té moruno servido en tetera plateada en Tetería Bodhi"
                  loading="eager">
           </div>
           <div class="arch-badge">
@@ -135,8 +135,8 @@
       <div class="stack">
         <div class="a">
           <div class="frame">
-            <img src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=700&q=80" 
-                 alt="Té verde moruno tradicional servido en tetera plateada" loading="lazy">
+            <img src="https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=700&q=80" 
+                 alt="Taza de té aromático en el salón lounge de Bodhi" loading="lazy">
           </div>
         </div>
         <div class="b">
@@ -165,11 +165,81 @@
       </div>
 
       <div class="tabs" id="tabs" role="tablist" aria-label="Categorías de la carta">
-        <!-- Renderizado dinámico desde /api/carta -->
+        <button type="button" class="tab" aria-pressed="true">Tés e Infusiones</button>
+        <button type="button" class="tab" aria-pressed="false">Cachimbas</button>
+        <button type="button" class="tab" aria-pressed="false">Cócteles</button>
+        <button type="button" class="tab" aria-pressed="false">Dulces & Repostería</button>
+        <button type="button" class="tab" aria-pressed="false">Comida & Picoteo</button>
       </div>
 
       <div class="items-grid" id="items" aria-live="polite">
-        <!-- Renderizado dinámico desde /api/carta -->
+        <!-- Tarjeta precargada 1 -->
+        <article class="menu-card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80" alt="Té Verde Moruno">
+          </div>
+          <div class="info">
+            <div>
+              <div class="title-row">
+                <h3>Té Verde Moruno Tradicional</h3>
+                <span class="price">3,80 €</span>
+              </div>
+              <p>Té verde gunpowder seleccionado, hierbabuena fresca de la huerta andaluza y azúcar moreno en tetera de plata.</p>
+            </div>
+            <span class="badge top">Especialidad</span>
+          </div>
+        </article>
+
+        <!-- Tarjeta precargada 2 -->
+        <article class="menu-card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?auto=format&fit=crop&w=400&q=80" alt="Té Pakistaní">
+          </div>
+          <div class="info">
+            <div>
+              <div class="title-row">
+                <h3>Té Pakistaní Especiado</h3>
+                <span class="price">4,20 €</span>
+              </div>
+              <p>Mezcla secreta de té negro, canela en rama, cardamomo verde, clavo y leche cremosa emulsionada.</p>
+            </div>
+            <span class="badge top">Top Ventas</span>
+          </div>
+        </article>
+
+        <!-- Tarjeta precargada 3 -->
+        <article class="menu-card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80" alt="Bodhi Signature Velvet">
+          </div>
+          <div class="info">
+            <div>
+              <div class="title-row">
+                <h3>Bodhi Signature Velvet</h3>
+                <span class="price">14,00 €</span>
+              </div>
+              <p>Nuestra mezcla de la casa: frutos del bosque silvestres, toque glacial de menta suave y base perfumada.</p>
+            </div>
+            <span class="badge top">Top Ventas</span>
+          </div>
+        </article>
+
+        <!-- Tarjeta precargada 4 -->
+        <article class="menu-card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80" alt="Bodhi Tea Spritz">
+          </div>
+          <div class="info">
+            <div>
+              <div class="title-row">
+                <h3>Bodhi Tea Spritz</h3>
+                <span class="price">7,50 €</span>
+              </div>
+              <p>Reducción artesanal de té Earl Grey, flor de saúco St. Germain, cava andaluz brut y twist de pomelo.</p>
+            </div>
+            <span class="badge">Autor</span>
+          </div>
+        </article>
       </div>
     </div>
   </section>
@@ -237,16 +307,40 @@
           <div>
             <label for="h">Hora deseada *</label>
             <select id="h" name="time" required>
-              <!-- Rellenado dinámicamente según horario -->
+              <option value="18:00">18:00 h</option>
+              <option value="18:30">18:30 h</option>
+              <option value="19:00">19:00 h</option>
+              <option value="19:30">19:30 h</option>
+              <option value="20:00">20:00 h</option>
+              <option value="20:30" selected>20:30 h</option>
+              <option value="21:00">21:00 h</option>
+              <option value="21:30">21:30 h</option>
+              <option value="22:00">22:00 h</option>
+              <option value="22:30">22:30 h</option>
+              <option value="23:00">23:00 h</option>
+              <option value="23:30">23:30 h</option>
+              <option value="00:00">00:00 h (noche)</option>
+              <option value="00:30">00:30 h (noche)</option>
+              <option value="01:00">01:00 h (noche)</option>
             </select>
           </div>
 
           <div class="f1">
             <label for="p">Número de personas *</label>
             <select id="p" name="guests">
-              <!-- Opciones generadas en JS -->
+              <option value="1">1 persona</option>
+              <option value="2" selected>2 personas</option>
+              <option value="3">3 personas</option>
+              <option value="4">4 personas</option>
+              <option value="5">5 personas</option>
+              <option value="6">6 personas</option>
+              <option value="7">7 personas</option>
+              <option value="8">8 personas</option>
+              <option value="10">10 personas</option>
+              <option value="12">12 personas</option>
+              <option value="13">Más de 12 personas (Grupo especial)</option>
             </select>
-            <p class="hint-box" id="hint"></p>
+            <p class="hint-box" id="hint">✨ Confirmación inmediata para mesas pequeñas.</p>
           </div>
 
           <fieldset class="f1" style="border:0;padding:0;">
@@ -388,7 +482,7 @@
 
     <div class="foot-bottom">
       <span>Calle Tornería, Jerez de la Frontera · Cádiz</span>
-      <a href="/admin" class="foot-admin-link">
+      <a href="admin.html" class="foot-admin-link">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Panel de Administración
       </a>
@@ -452,7 +546,7 @@
   <svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.699c.971.53 1.77.781 2.795.782 3.182 0 5.768-2.587 5.769-5.766.001-3.182-2.585-5.768-5.769-5.768zm0-2.172c4.378 0 7.938 3.56 7.939 7.939 0 4.379-3.561 7.939-7.939 7.939-1.398 0-2.456-.372-3.56-1l-5.471 1.434 1.46-5.334c-.71-1.19-1.09-2.072-1.09-3.039 0-4.379 3.56-7.939 7.939-7.939z"/></svg>
 </a>
 
-<!-- Scripts -->
-<script src="/js/main.js"></script>
+<!-- Scripts con ruta relativa -->
+<script src="js/main.js"></script>
 </body>
 </html>

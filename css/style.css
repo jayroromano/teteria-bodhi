@@ -375,6 +375,16 @@ nav a:hover::after {
   font-size: 0.88rem;
 }
 
+.btn-nav-reserve {
+  display: none;
+}
+
+@media (min-width: 680px) {
+  .btn-nav-reserve {
+    display: inline-flex;
+  }
+}
+
 /* =========================================================
    HERO SECTION
    ========================================================= */

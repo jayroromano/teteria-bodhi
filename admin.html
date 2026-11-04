@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="css/admin.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path fill='%233D2214' d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z'/></svg>">
 </head>
 <body>
@@ -68,7 +68,7 @@
     </ul>
 
     <div class="sidebar-footer">
-      <a href="/" target="_blank" class="sidebar-link">
+      <a href="index.html" class="sidebar-link">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         Ver web pública
       </a>
@@ -109,7 +109,7 @@
               <span>Reservas para HOY</span>
               <span>📅</span>
             </div>
-            <div class="stat-value" id="kpi-today">0</div>
+            <div class="stat-value" id="kpi-today">3</div>
             <div class="stat-sub">Servicio del día</div>
           </div>
 
@@ -118,7 +118,7 @@
               <span>Comensales HOY</span>
               <span>👥</span>
             </div>
-            <div class="stat-value" id="kpi-guests-today">0</div>
+            <div class="stat-value" id="kpi-guests-today">10</div>
             <div class="stat-sub">Personas estimadas</div>
           </div>
 
@@ -127,7 +127,7 @@
               <span>Pendientes</span>
               <span>⏳</span>
             </div>
-            <div class="stat-value" id="kpi-pending" style="color: var(--warning);">0</div>
+            <div class="stat-value" id="kpi-pending" style="color: var(--warning);">1</div>
             <div class="stat-sub">Requieren confirmación</div>
           </div>
 
@@ -136,7 +136,7 @@
               <span>Total Registradas</span>
               <span>📦</span>
             </div>
-            <div class="stat-value" id="kpi-total">0</div>
+            <div class="stat-value" id="kpi-total">5</div>
             <div class="stat-sub">En base de datos</div>
           </div>
         </div>
@@ -241,10 +241,10 @@
             <div style="background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 20px;">
               <h3 style="font-size: 1.15rem; margin-bottom: 8px; color: var(--primary);">🟢 1. Conexión en Vercel (PostgreSQL Cloud)</h3>
               <p style="font-size: 0.9rem; color: var(--mut); margin-bottom: 12px;">
-                Para persistencia ilimitada y profesional en Vercel, utiliza un servicio gratuito como <strong>Neon.tech</strong>, <strong>Supabase</strong> o <strong>Vercel Postgres</strong>.
+                Para persistencia permanente en Vercel, utiliza un servicio gratuito como <strong>Neon.tech</strong>, <strong>Supabase</strong> o <strong>Vercel Postgres</strong>.
               </p>
               <ol style="font-size: 0.88rem; color: var(--ink); padding-left: 20px; line-height: 1.6;">
-                <li>Crea una base de datos gratuita en <a href="https://neon.tech" target="_blank" style="color:var(--tost);text-decoration:underline;">Neon.tech</a> o <a href="https://supabase.com" target="_blank" style="color:var(--tost);text-decoration:underline;">Supabase.com</a>.</li>
+                <li>Crea una base de datos gratis en <a href="https://neon.tech" target="_blank" style="color:var(--tost);text-decoration:underline;">Neon.tech</a> o <a href="https://supabase.com" target="_blank" style="color:var(--tost);text-decoration:underline;">Supabase.com</a>.</li>
                 <li>Copia tu cadena de conexión (URI) que empieza por <code>postgres://...</code></li>
                 <li>En tu proyecto de Vercel ve a <strong>Settings → Environment Variables</strong>.</li>
                 <li>Añade la variable <code>DATABASE_URL</code> con tu enlace.</li>
@@ -370,6 +370,6 @@ CREATE TABLE reservations (
   </div>
 </div>
 
-<script src="/js/admin.js"></script>
+<script src="js/admin.js"></script>
 </body>
 </html>

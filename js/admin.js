@@ -7,9 +7,86 @@
 
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => document.querySelectorAll(s);
+  const isFileProtocol = window.location.protocol === 'file:';
 
   let authToken = localStorage.getItem('bodhi_admin_token') || '';
-  let allReservations = [];
+  let allReservations = [
+    {
+      id: "res_1730730001",
+      code: "BDH-1042",
+      name: "Alejandro Morales",
+      phone: "+34 612 34 56 78",
+      email: "alejandro.morales@example.com",
+      date: new Date().toISOString().split('T')[0],
+      time: "19:30",
+      guests: 2,
+      zone: "interior",
+      notes: "Mesa tranquila junto a los cojines para probar té pakistaní.",
+      status: "confirmed",
+      admin_notes: "Asignada mesa 4 rincón marroquí.",
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "res_1730730002",
+      code: "BDH-1043",
+      name: "Lucía Fernández",
+      phone: "+34 654 98 76 54",
+      email: "lucia.f@example.com",
+      date: new Date().toISOString().split('T')[0],
+      time: "21:00",
+      guests: 6,
+      zone: "terraza",
+      notes: "Celebración de cumpleaños de una amiga. Queremos cachimba de frutos del bosque.",
+      status: "pending",
+      admin_notes: "Pendiente de confirmar si prefieren mesa alta o sofás en terraza.",
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "res_1730730003",
+      code: "BDH-1044",
+      name: "Carlos Ruiz Gómez",
+      phone: "+34 678 11 22 33",
+      email: "carlos.ruiz@example.com",
+      date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      time: "20:00",
+      guests: 4,
+      zone: "indiferente",
+      notes: "Una persona intolerante al gluten para la repostería.",
+      status: "confirmed",
+      admin_notes: "Avisado al personal de repostería para el baklava sin gluten.",
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "res_1730730004",
+      code: "BDH-1045",
+      name: "Marta Benítez",
+      phone: "+34 699 44 55 66",
+      email: "marta.b@example.com",
+      date: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
+      time: "22:30",
+      guests: 3,
+      zone: "interior",
+      notes: "Cócteles y cachimba después de cenar.",
+      status: "confirmed",
+      admin_notes: "",
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "res_1730730005",
+      code: "BDH-1046",
+      name: "Javier Delgado",
+      phone: "+34 633 77 88 99",
+      email: "javi.delgado@example.com",
+      date: new Date().toISOString().split('T')[0],
+      time: "18:30",
+      guests: 2,
+      zone: "interior",
+      notes: "Primera visita recomendada por amigos de Jerez.",
+      status: "completed",
+      admin_notes: "Mesa atendida correctamente.",
+      created_at: new Date().toISOString()
+    }
+  ];
   let currentFilter = {
     dateQuick: 'all', // 'today', 'tomorrow', 'all'
     status: 'all',
@@ -28,6 +105,19 @@
   async function checkAuth() {
     if (!authToken) {
       showLogin();
+      return;
+    }
+
+    if (isFileProtocol) {
+      if (password === 'bodhi2026') {
+        authToken = 'bodhi_token_local';
+        localStorage.setItem('bodhi_admin_token', authToken);
+        hideLogin();
+        updateCloudDbPill(false);
+        loadDashboard();
+      } else {
+        loginError.textContent = 'Contraseña incorrecta (por defecto: bodhi2026)';
+      }
       return;
     }
 
@@ -114,6 +204,17 @@
   // CARGA DE RESERVAS Y KPIs
   // ==========================================
   async function loadDashboard() {
+    if (isFileProtocol) {
+      renderTable();
+      updateKpis({
+        total: allReservations.length,
+        todayCount: allReservations.filter(r => r.date === new Date().toISOString().split('T')[0]).length,
+        todayGuests: allReservations.filter(r => r.date === new Date().toISOString().split('T')[0]).reduce((a, b) => a + (Number(b.guests) || 0), 0),
+        pending: allReservations.filter(r => r.status === 'pending').length
+      });
+      return;
+    }
+
     try {
       const res = await fetch('/api/reservas', {
         headers: { 'Authorization': `Bearer ${authToken}` }

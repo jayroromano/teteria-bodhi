@@ -8,6 +8,163 @@
 
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => document.querySelectorAll(selector);
+  const isFileProtocol = window.location.protocol === 'file:';
+
+  // Datos completos de la carta precargados para visualización instantánea (incluso sin servidor)
+  let cartaData = [
+    {
+      id: "te-moruno",
+      category: "Tés e Infusiones",
+      name: "Té Verde Moruno Tradicional",
+      description: "Té verde gunpowder seleccionado, hierbabuena fresca de la huerta andaluza y azúcar moreno en tetera de plata.",
+      price: 3.80,
+      badge: "Especialidad",
+      image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "chai-pakistani",
+      category: "Tés e Infusiones",
+      name: "Té Pakistaní Especiado",
+      description: "Mezcla secreta de té negro, canela en rama, cardamomo verde, clavo y leche cremosa emulsionada.",
+      price: 4.20,
+      badge: "Top Ventas",
+      image: "https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "rooibos-azahar",
+      category: "Tés e Infusiones",
+      name: "Rooibos Flor de Azahar & Naranja",
+      description: "Infusión sudafricana sin teína, corteza de naranja amarga, pétalos de azahar y toque de vainilla Bourbon.",
+      price: 3.90,
+      badge: "Sin Teína",
+      image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "te-blanco-jazmin",
+      category: "Tés e Infusiones",
+      name: "Té Blanco Agujas de Plata & Jazmín",
+      description: "Primer brote de té blanco con aroma natural de flores nocturnas de jazmín. Suave, floral y antioxidante.",
+      price: 4.50,
+      badge: "Premium",
+      image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "cachimba-bodhi",
+      category: "Cachimbas",
+      name: "Bodhi Signature Velvet",
+      description: "Nuestra mezcla de la casa: frutos del bosque silvestres, toque glacial de menta suave y base de agua perfumada.",
+      price: 14.00,
+      badge: "Top Ventas",
+      image: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "cachimba-love66",
+      category: "Cachimbas",
+      name: "Love 66 Passion",
+      description: "Sensación exótica de melón cantalupo, fruta de la pasión, sandía jugosa y menta helada.",
+      price: 13.50,
+      badge: "Favorito",
+      image: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "cachimba-doble-manzana",
+      category: "Cachimbas",
+      name: "Doble Manzana Tradicional",
+      description: "El sabor clásico oriental por excelencia: manzana roja y verde con notas anisadas profundas.",
+      price: 13.00,
+      badge: "Clásico",
+      image: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "coctel-bodhi-spritz",
+      category: "Cócteles",
+      name: "Bodhi Tea Spritz",
+      description: "Reducción artesanal de té Earl Grey, flor de saúco St. Germain, cava andaluz brut y twist de pomelo.",
+      price: 7.50,
+      badge: "Autor",
+      image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "mojito-andalusi",
+      category: "Cócteles",
+      name: "Mojito Andalusí de Hierbabuena",
+      description: "Ron blanco caribeño macerado en tetería, hierbabuena fresca, azúcar de caña tostado y ginger ale.",
+      price: 7.00,
+      badge: "Recomendado",
+      image: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "mocktail-oasis",
+      category: "Cócteles",
+      name: "Mocktail Oasis (Sin Alcohol)",
+      description: "Zumo de maracuyá fresco, puré de mango, infusión fría de hibisco y espuma de jengibre.",
+      price: 5.50,
+      badge: "Sin Alcohol",
+      image: "https://images.unsplash.com/photo-1621263764928-df1444c5e859?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "surtido-baklava",
+      category: "Dulces & Repostería",
+      name: "Surtido Artesano de Baklavas",
+      description: "Finas capas de masa filo crujiente rellenas de pistacho iraní, nueces y bañadas en almíbar de azahar y miel.",
+      price: 5.00,
+      badge: "Casero",
+      image: "https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "pastas-arabes",
+      category: "Dulces & Repostería",
+      name: "Cuernos de Gacela & Pastas Árabes",
+      description: "Repostería tradicional de almendra marcona, canela y agua de rosas. El maridaje perfecto para tu té.",
+      price: 4.50,
+      badge: "Artesano",
+      image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "tarta-zanahoria",
+      category: "Dulces & Repostería",
+      name: "Tarta Especiada de Zanahoria & Nueces",
+      description: "Bizcocho húmedo con canela de Ceilán, nueces de Ronda y suave frosting de mascarpone al limón.",
+      price: 4.80,
+      badge: "Favorito",
+      image: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "hummus-pita",
+      category: "Comida & Picoteo",
+      name: "Hummus Bodhi con Pan de Pita Caliente",
+      description: "Crema suave de garbanzos con tahini tostado, aceite de oliva virgen extra de Jaén, pimentón de la Vera y pan recién horneado.",
+      price: 6.50,
+      badge: "Vegano",
+      image: "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=400&q=80",
+      available: true
+    },
+    {
+      id: "tabla-quesos-sierra",
+      category: "Comida & Picoteo",
+      name: "Tabla de Quesos Payoyo de la Sierra",
+      description: "Selección de quesos gaditanos de cabra payoya y oveja curada, acompañados de nueces, mermelada de higos y tostas.",
+      price: 9.50,
+      badge: "Local Cádiz",
+      image: "https://images.unsplash.com/photo-1631379578550-7038263db699?auto=format&fit=crop&w=400&q=80",
+      available: true
+    }
+  ];
+
+  let currentCategory = 'Tés e Infusiones';
 
   // ==========================================
   // TEMA OSCURO / CLARO
@@ -113,9 +270,9 @@
 
     // Resaltar día actual en la tabla de contacto
     const rows = $$('.schedule-table tr');
-    const dayMap = [6, 0, 1, 1, 1, 2, 2]; // mapeo al index de la tabla
+    const dayMap = [3, 0, 1, 1, 1, 2, 2];
     const targetRowIndex = dayMap[day];
-    if (rows[targetRowIndex]) {
+    if (rows && rows[targetRowIndex]) {
       rows[targetRowIndex].classList.add('today');
     }
   }
@@ -123,28 +280,21 @@
   updateBusinessStatus();
 
   // ==========================================
-  // CARTA INTERACTIVA DESDE API
+  // CARTA INTERACTIVA
   // ==========================================
-  let cartaData = [];
-  let currentCategory = 'Tés e Infusiones';
-
   async function loadCarta() {
-    try {
-      const res = await fetch('/api/carta');
-      if (res.ok) {
-        const json = await res.json();
-        cartaData = json.items || [];
-      } else {
-        throw new Error('Fallback local');
+    if (!isFileProtocol) {
+      try {
+        const res = await fetch('/api/carta');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.items && json.items.length > 0) {
+            cartaData = json.items;
+          }
+        }
+      } catch (e) {
+        // En caso de fallo de red, los datos precargados se mantienen intactos
       }
-    } catch (e) {
-      console.warn('Cargando carta de reserva local:', e.message);
-      // Fallback mínimo
-      cartaData = [
-        { id: '1', category: 'Tés e Infusiones', name: 'Té Verde Moruno Tradicional', description: 'Té verde gunpowder, hierbabuena fresca y azúcar moreno.', price: 3.80, available: true, badge: 'Especialidad', image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80' },
-        { id: '2', category: 'Cachimbas', name: 'Bodhi Signature Velvet', description: 'Frutos del bosque, menta glacial suave y base perfumada.', price: 14.00, available: true, badge: 'Top Ventas', image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80' },
-        { id: '3', category: 'Cócteles', name: 'Bodhi Tea Spritz', description: 'Reducción de Earl Grey, flor de saúco y cava andaluz brut.', price: 7.50, available: true, badge: 'Autor', image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80' }
-      ];
     }
 
     renderTabs();
@@ -201,7 +351,7 @@
       container.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; color: var(--mut);">
           <p style="font-size: 1.2rem; margin-bottom: 8px;">No encontramos productos con ese término.</p>
-          <small>Prueba buscando "menta", "pistacho", "vegano" o selecciona otra categoría.</small>
+          <small>Prueba buscando "menta", "pistacho", "vegano" o selecciona otra categoría arriba.</small>
         </div>
       `;
       return;
@@ -245,10 +395,11 @@
     });
   }
 
+  // Ejecutar render de carta de inmediato
   loadCarta();
 
   // ==========================================
-  // ASISTENTE DE RESERVAS INTELIGENTE
+  // ASISTENTE DE RESERVAS
   // ==========================================
   const dateInput = $('#d');
   const timeSelect = $('#h');
@@ -256,25 +407,6 @@
   const hintBox = $('#hint');
   const form = $('#form');
   const submitBtn = $('#submit-btn');
-
-  // Inicializar selector de comensales
-  if (guestsSelect) {
-    guestsSelect.innerHTML = '';
-    for (let i = 1; i <= 12; i++) {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = `${i} ${i === 1 ? 'persona' : 'personas'}`;
-      guestsSelect.appendChild(opt);
-    }
-    const optMore = document.createElement('option');
-    optMore.value = '13';
-    optMore.textContent = 'Más de 12 personas (Grupo especial)';
-    guestsSelect.appendChild(optMore);
-    guestsSelect.value = '2';
-
-    guestsSelect.addEventListener('change', updateGuestsHint);
-    updateGuestsHint();
-  }
 
   function updateGuestsHint() {
     if (!hintBox || !guestsSelect) return;
@@ -284,18 +416,24 @@
     } else if (n <= 12) {
       hintBox.textContent = '👥 Grupos medianos: os reservamos sofá o zona lounge preferente.';
     } else {
-      hintBox.textContent = '🎉 Para eventos o más de 12 personas, coordinaremos detalles por WhatsApp.';
+      hintBox.textContent = '🎉 Para grupos de más de 12 personas, coordinaremos detalles por WhatsApp.';
     }
   }
 
-  // Configurar fecha mínima (hoy) y selector dinámico de horas
+  if (guestsSelect) {
+    guestsSelect.addEventListener('change', updateGuestsHint);
+    updateGuestsHint();
+  }
+
   if (dateInput) {
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     dateInput.min = `${yyyy}-${mm}-${dd}`;
-    dateInput.value = `${yyyy}-${mm}-${dd}`;
+    if (!dateInput.value) {
+      dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
 
     dateInput.addEventListener('change', () => {
       validateDateSelection();
@@ -311,7 +449,7 @@
     const val = dateInput.value;
     if (!val) return false;
     const d = new Date(val + 'T12:00:00');
-    if (d.getDay() === 1) { // Lunes
+    if (d.getDay() === 1) { // Lunes cerrado
       showToast('Los lunes estamos cerrados por descanso. Por favor elige de martes a domingo.', 'error');
       dateInput.setCustomValidity('Los lunes la tetería permanece cerrada.');
       return false;
@@ -325,9 +463,10 @@
     if (!timeSelect) return;
     const val = dateInput ? dateInput.value : '';
     const day = val ? new Date(val + 'T12:00:00').getDay() : 2;
-    const isWeekend = day === 5 || day === 6; // Vie / Sáb hasta las 03:00
+    const isWeekend = day === 5 || day === 6;
 
-    timeSelect.innerHTML = '<option value="">Selecciona hora...</option>';
+    const currentVal = timeSelect.value;
+    timeSelect.innerHTML = '';
 
     // Franjas de 18:00 a 23:30
     for (let h = 18; h <= 23; h++) {
@@ -340,7 +479,7 @@
       });
     }
 
-    // Franjas de madrugada (00:00 a 02:00 o 03:00)
+    // Franjas de madrugada (00:00 a 02:00 / 03:00)
     const maxHour = isWeekend ? 2 : 1;
     for (let h = 0; h <= maxHour; h++) {
       ['00', '30'].forEach(m => {
@@ -352,10 +491,10 @@
       });
     }
 
-    timeSelect.value = '20:30';
+    timeSelect.value = currentVal || '20:30';
   }
 
-  // Enviar formulario al API con base de datos
+  // Envío del formulario
   if (form) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -364,13 +503,13 @@
 
       const name = $('#n').value.trim();
       const phone = $('#t').value.trim();
-      const email = $('#e').value.trim();
+      const email = $('#e') ? $('#e').value.trim() : '';
       const date = $('#d').value;
       const time = $('#h').value;
       const guests = $('#p').value;
       const zoneEl = document.querySelector('input[name="z"]:checked');
       const zone = zoneEl ? zoneEl.value : 'indiferente';
-      const notes = $('#o').value.trim();
+      const notes = $('#o') ? $('#o').value.trim() : '';
 
       if (!name || !phone || !date || !time) {
         showToast('Por favor completa todos los campos requeridos.', 'error');
@@ -379,12 +518,35 @@
 
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `
-          <svg style="animation:spin 1s linear infinite;width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-          Guardando reserva...
-        `;
+        submitBtn.innerHTML = 'Guardando reserva...';
       }
 
+      // Si se abre directamente como archivo local (file://)
+      if (isFileProtocol) {
+        const dummyCode = `BDH-${Math.floor(1000 + Math.random() * 9000)}`;
+        const localRes = {
+          code: dummyCode,
+          name, phone, email, date, time, guests, zone, notes,
+          status: Number(guests) > 4 ? 'pending' : 'confirmed'
+        };
+        const waMsg = encodeURIComponent(
+          `¡Hola Bodhi! He solicitado una reserva a nombre de *${localRes.name}* para el día *${localRes.date}* a las *${localRes.time}* (${localRes.guests} personas, zona ${localRes.zone}). Código: *${localRes.code}*. ¡Muchas gracias!`
+        );
+        const waUrl = `https://wa.me/34600000000?text=${waMsg}`;
+
+        showConfirmationModal(localRes, waUrl);
+        form.reset();
+        populateTimeSlots();
+        updateGuestsHint();
+        showToast('¡Reserva registrada! (Modo vista local)', 'success');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Solicitar reserva de mesa';
+        }
+        return;
+      }
+
+      // Conexión normal por HTTP/Vercel
       try {
         const res = await fetch('/api/reservas', {
           method: 'POST',
@@ -397,7 +559,6 @@
         if (res.ok && data.success) {
           showConfirmationModal(data.reservation, data.whatsappUrl);
           form.reset();
-          if (guestsSelect) guestsSelect.value = '2';
           populateTimeSlots();
           updateGuestsHint();
           showToast('¡Reserva registrada con éxito!', 'success');
@@ -406,7 +567,7 @@
         }
       } catch (err) {
         console.error('Error enviando reserva:', err);
-        showToast('Hubo un problema de conexión. Inténtalo de nuevo.', 'error');
+        showToast('Hubo un problema de conexión con el servidor.', 'error');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -479,7 +640,6 @@
     }, 4500);
   }
 
-  // Helpers
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>'"]/g, tag => ({
@@ -494,8 +654,8 @@
   }
 
   function translateZone(z) {
-    if (z === 'int') return 'Interior Lounge';
-    if (z === 'ter') return 'Terraza Andalusí';
+    if (z === 'int' || z === 'interior') return 'Interior Lounge';
+    if (z === 'ter' || z === 'terraza') return 'Terraza Andalusí';
     return 'Indiferente';
   }
 
