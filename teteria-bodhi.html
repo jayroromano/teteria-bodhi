@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tetería Bodhi · Jerez de la Frontera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F7F0E3;--paper:#FFFBF2;--sand:#EADBC0;--sand2:#D9C29B;--ink:#3B2618;--mut:#7B6350;--tost:#A66A3B;--line:#D8C7A8;--btn:#4A2E1F;--btnink:#FBF3E4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241810;--paper:#2F2016;--sand:#3A281B;--sand2:#5A4129;--ink:#F4EAD8;--mut:#C7B193;--tost:#D49A63;--line:#4A3626;--btn:#E2C79A;--btnink:#2A1A10;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#241810;--paper:#2F2016;--sand:#3A281B;--sand2:#5A4129;--ink:#F4EAD8;--mut:#C7B193;--tost:#D49A63;--line:#4A3626;--btn:#E2C79A;--btnink:#2A1A10;color-scheme:dark}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:calc(72px + env(safe-area-inset-top,0px));scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1.0625rem/1.6 Figtree,system-ui,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+h1,h2,h3{font-family:"Abril Fatface",Georgia,serif;font-weight:400;line-height:1.05;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 clamp(18px,4vw,40px)}
+section{padding:clamp(56px,9vw,104px) 0}
+h2{font-size:clamp(2.2rem,5vw,3.4rem);margin-bottom:14px}
+.sub{color:var(--mut);max-width:52ch;margin:0 0 36px}
+:focus-visible{outline:3px solid var(--tost);outline-offset:3px}
+
+/* cabecera */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:68px}
+.logo{font:400 1.55rem "Abril Fatface",Georgia,serif;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:10px}
+.logo svg{width:30px;height:30px}
+nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0}
+nav a{color:var(--ink);text-decoration:none;font-weight:500;padding:8px 2px;border-bottom:2px solid transparent}
+nav a:hover{border-color:var(--tost)}
+.burger{display:none;background:none;border:1px solid var(--line);border-radius:10px;width:46px;height:46px;color:var(--ink);cursor:pointer}
+@media(max-width:780px){
+ .burger{display:grid;place-items:center}
+ nav{position:absolute;left:0;right:0;top:68px;background:var(--bg);border-bottom:1px solid var(--line);display:none}
+ nav.open{display:block}
+ nav ul{flex-direction:column;gap:0;padding:8px clamp(18px,4vw,40px) 16px}
+ nav a{display:block;padding:14px 2px;border-bottom:1px solid var(--line)}
+}
+
+/* botones */
+.btn{display:inline-block;font:700 1rem Figtree,sans-serif;text-decoration:none;border-radius:999px;padding:15px 28px;border:2px solid var(--btn);cursor:pointer;min-height:48px}
+.btn.fill{background:var(--btn);color:var(--btnink)}
+.btn.line{background:transparent;color:var(--ink)}
+.btn:hover{transform:translateY(-1px)}
+
+/* placeholders de foto (sustituir por <img>) */
+.ph{position:relative;width:100%;height:100%;min-height:120px;display:grid;place-items:center;text-align:center;padding:14px;color:var(--mut);font-size:.85rem;background:repeating-linear-gradient(135deg,var(--sand) 0 12px,var(--paper) 12px 24px)}
+.ph::after{content:attr(data-label);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 10px;max-width:90%}
+.frame img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* hero */
+#inicio{padding:clamp(28px,6vw,64px) 0 clamp(56px,8vw,96px);position:relative;overflow:hidden}
+.rays{position:absolute;inset:0;background:repeating-conic-gradient(from 0deg at 72% 100%,var(--sand) 0 6deg,transparent 6deg 12deg);opacity:.55;-webkit-mask-image:linear-gradient(to top,#000 20%,transparent 85%);mask-image:linear-gradient(to top,#000 20%,transparent 85%)}
+.hero{position:relative;display:grid;gap:clamp(28px,5vw,64px);align-items:center;grid-template-columns:1fr}
+@media(min-width:900px){.hero{grid-template-columns:1fr 1fr}}
+.hero h1{font-size:clamp(3.4rem,10vw,6.6rem);letter-spacing:-.01em}
+.hero h1 span{display:block;font-size:.42em;color:var(--tost);margin-bottom:.15em}
+.orn{display:flex;align-items:center;gap:12px;color:var(--tost);margin:20px 0}
+.orn i{flex:0 0 70px;height:2px;background:currentColor}
+.orn b{width:10px;height:10px;transform:rotate(45deg);background:currentColor}
+.hero p{font-size:1.2rem;max-width:30ch;margin:0 0 28px}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
+.arch{border:3px solid var(--btn);border-radius:999px 999px 18px 18px;padding:10px;background:var(--paper);max-width:480px;margin:0 auto;width:100%}
+.arch .frame{aspect-ratio:4/5;border-radius:999px 999px 8px 8px;overflow:hidden}
+
+/* teteria */
+.about{display:grid;gap:clamp(28px,5vw,64px);align-items:center;grid-template-columns:1fr}
+@media(min-width:860px){.about{grid-template-columns:1fr 1fr}}
+.about p{max-width:46ch}
+.stack{position:relative;min-height:420px}
+.stack .a,.stack .b{position:absolute;background:var(--paper);padding:8px;border:1px solid var(--line);box-shadow:0 6px 0 var(--sand)}
+.stack .a{left:0;top:0;width:68%;height:300px;transform:rotate(-2deg)}
+.stack .b{right:0;bottom:0;width:58%;height:250px;transform:rotate(2.5deg)}
+.stack .frame{height:100%}
+
+/* carta */
+#carta{background:var(--paper);border-block:1px solid var(--line)}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:26px}
+.tab{flex:none;font:500 1rem Figtree,sans-serif;background:transparent;color:var(--ink);border:1.5px solid var(--line);border-radius:999px;padding:10px 18px;cursor:pointer;min-height:44px}
+.tab[aria-pressed="true"]{background:var(--btn);color:var(--btnink);border-color:var(--btn)}
+.items{display:grid;gap:18px 40px;grid-template-columns:1fr}
+@media(min-width:800px){.items{grid-template-columns:1fr 1fr}}
+.item{display:grid;grid-template-columns:96px 1fr;gap:16px;padding-bottom:18px;border-bottom:1px dashed var(--sand2)}
+.item .frame{width:96px;height:96px;border-radius:10px;overflow:hidden}
+.item .ph{min-height:0;font-size:.7rem;padding:4px}
+.item .ph::after{padding:3px 6px}
+.item h3{font-size:1.35rem;margin-bottom:4px;display:flex;justify-content:space-between;gap:12px}
+.item h3 em{font:700 1.05rem Figtree,sans-serif;font-style:normal;color:var(--tost);white-space:nowrap}
+.item p{margin:0;color:var(--mut);font-size:.95rem}
+.note{margin-top:26px;color:var(--mut);font-size:.9rem}
+
+/* reservas */
+.res{display:grid;gap:clamp(28px,5vw,60px);grid-template-columns:1fr}
+@media(min-width:900px){.res{grid-template-columns:5fr 7fr;align-items:start}}
+.ticket{background:var(--paper);border:2px solid var(--btn);border-radius:18px;padding:clamp(20px,3vw,34px);position:relative}
+.ticket::before,.ticket::after{content:"";position:absolute;top:50%;width:22px;height:22px;border-radius:50%;background:var(--bg);border:2px solid var(--btn);transform:translateY(-50%)}
+.ticket::before{left:-13px;clip-path:inset(0 0 0 50%)}.ticket::after{right:-13px;clip-path:inset(0 50% 0 0)}
+.fields{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+.f1{grid-column:1/-1}
+label,legend{display:block;font-weight:500;font-size:.92rem;margin-bottom:4px;padding:0}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:12px;min-height:48px}
+textarea{min-height:84px;resize:vertical}
+fieldset{border:0;margin:0;padding:0}
+.zone{display:flex;flex-wrap:wrap;gap:8px}
+.zone label{margin:0;cursor:pointer}
+.zone input{position:absolute;opacity:0;width:1px;height:1px;min-height:0}
+.zone span{display:inline-block;border:1.5px solid var(--line);border-radius:999px;padding:10px 18px;background:var(--bg)}
+.zone input:checked+span{background:var(--btn);color:var(--btnink);border-color:var(--btn)}
+.zone input:focus-visible+span{outline:3px solid var(--tost);outline-offset:2px}
+.hint{color:var(--mut);font-size:.9rem;margin:6px 0 0;min-height:1.4em}
+#msg{margin:14px 0 0;font-weight:500}
+@media(max-width:520px){.fields{grid-template-columns:1fr}}
+
+/* galeria */
+.mosaic{display:grid;gap:12px;grid-template-columns:repeat(2,1fr);grid-auto-rows:150px}
+@media(min-width:800px){.mosaic{grid-template-columns:repeat(4,1fr);grid-auto-rows:190px}}
+.mosaic .frame{border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.mosaic .w{grid-column:span 2}.mosaic .t{grid-row:span 2}
+
+/* contacto */
+#contacto{background:var(--sand)}
+.contact{display:grid;gap:clamp(24px,5vw,56px);grid-template-columns:1fr}
+@media(min-width:800px){.contact{grid-template-columns:1fr 1fr}}
+dl{margin:0}dt{font:400 1.25rem "Abril Fatface",Georgia,serif;margin-top:18px}dd{margin:2px 0 0}
+.pend{color:var(--mut);font-style:italic}
+table{border-collapse:collapse;width:100%}td{padding:5px 0;border-bottom:1px dashed var(--sand2)}td:last-child{text-align:right}
+.map{border:2px solid var(--btn);border-radius:16px;overflow:hidden;min-height:260px}
+
+footer{padding:36px 0 44px;border-top:1px solid var(--line)}
+.foot{display:flex;flex-wrap:wrap;gap:20px 40px;justify-content:space-between;align-items:flex-start}
+footer ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 22px}
+footer a{color:var(--ink)}
+footer small{display:block;color:var(--mut);margin-top:6px}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn:hover{transform:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="#inicio" aria-label="Tetería Bodhi, inicio">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h19v5a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8v-5z"/><path d="M24 14h2.5a3 3 0 0 1 0 6H23"/><path d="M11 4c-1.5 2 1.5 3 0 5M17 4c-1.5 2 1.5 3 0 5"/></svg>
+      Tetería Bodhi
+    </a>
+    <button class="burger" id="burger" aria-expanded="false" aria-controls="menu" aria-label="Abrir menú">
+      <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <nav id="menu" aria-label="Principal">
+      <ul>
+        <li><a href="#inicio">Inicio</a></li>
+        <li><a href="#teteria">Nuestra tetería</a></li>
+        <li><a href="#carta">Carta</a></li>
+        <li><a href="#reservas">Reservas</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section id="inicio">
+  <div class="rays" aria-hidden="true"></div>
+  <div class="wrap hero">
+    <div>
+      <h1><span>Tetería</span>Bodhi</h1>
+      <div class="orn" aria-hidden="true"><i></i><b></b><i></i></div>
+      <p>Tés, cócteles y cachimbas en un rincón tranquilo de Jerez, para quedarse sin prisa.</p>
+      <div class="cta">
+        <a class="btn fill" href="#carta">Ver la carta</a>
+        <a class="btn line" href="#reservas">Reservar mesa</a>
+      </div>
+    </div>
+    <div class="arch">
+      <!-- FOTO PORTADA: sustituye el <div class="ph"> por <img src="/fotos/interior.jpg" alt="Interior de Tetería Bodhi"> -->
+      <div class="frame"><div class="ph" data-label="Foto del interior de Bodhi"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="teteria">
+  <div class="wrap about">
+    <div>
+      <h2>Nuestra tetería</h2>
+      <p>Un local pensado para quedarse un rato: sofás cómodos, luz suave y una carta de tés, cócteles y cachimbas para compartir despacio.</p>
+      <p>Hay sitio en el interior y en la terraza, para ir en pareja, con amigos o en grupo.</p>
+      <p class="pend">Aquí irá la historia del local, con tus palabras.</p>
+    </div>
+    <div class="stack">
+      <div class="a"><div class="frame"><div class="ph" data-label="Foto de un rincón del local"></div></div></div>
+      <div class="b"><div class="frame"><div class="ph" data-label="Foto de la decoración"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="carta">
+  <div class="wrap">
+    <h2>Nuestra carta</h2>
+    <p class="sub">Elige una categoría para ver sus productos.</p>
+    <div class="tabs" id="tabs" role="group" aria-label="Categorías de la carta"></div>
+    <div class="items" id="items" aria-live="polite"></div>
+    <p class="note">Productos de ejemplo. Los reales, con sus fotos y precios, se cargarán más adelante desde el panel.</p>
+  </div>
+</section>
+
+<section id="reservas">
+  <div class="wrap res">
+    <div>
+      <h2>Reserva tu mesa</h2>
+      <p class="sub">Cuéntanos cuándo vienes y cuántos sois. Sin registrarte.</p>
+      <p class="pend">Diseño de prueba: de momento el formulario no envía nada.</p>
+    </div>
+    <form class="ticket" id="form" novalidate>
+      <div class="fields">
+        <div class="f1"><label for="n">Nombre</label><input id="n" autocomplete="name"></div>
+        <div><label for="t">Teléfono</label><input id="t" type="tel" inputmode="tel" autocomplete="tel"></div>
+        <div><label for="e">Correo (opcional)</label><input id="e" type="email" autocomplete="email"></div>
+        <div><label for="d">Fecha</label><input id="d" type="date"></div>
+        <div><label for="h">Hora</label><input id="h" type="time" step="1800"></div>
+        <div class="f1">
+          <label for="p">Personas</label>
+          <select id="p"></select>
+          <p class="hint" id="hint"></p>
+        </div>
+        <fieldset class="f1">
+          <legend>Zona preferida</legend>
+          <div class="zone">
+            <label><input type="radio" name="z" value="int"><span>Interior</span></label>
+            <label><input type="radio" name="z" value="ter"><span>Terraza</span></label>
+            <label><input type="radio" name="z" value="ind" checked><span>Indiferente</span></label>
+          </div>
+        </fieldset>
+        <div class="f1"><label for="o">Observaciones</label><textarea id="o" placeholder="Alergias, celebración, cochecito…"></textarea></div>
+      </div>
+      <button class="btn fill" type="submit" style="margin-top:20px;width:100%">Solicitar reserva</button>
+      <p id="msg" role="status"></p>
+    </form>
+  </div>
+</section>
+
+<section id="galeria">
+  <div class="wrap">
+    <h2>Galería</h2>
+    <p class="sub">Un vistazo al ambiente, a las copas y a las mesas.</p>
+    <div class="mosaic">
+      <div class="frame w t"><div class="ph" data-label="Foto: interior"></div></div>
+      <div class="frame"><div class="ph" data-label="Foto: cóctel"></div></div>
+      <div class="frame"><div class="ph" data-label="Foto: té"></div></div>
+      <div class="frame w"><div class="ph" data-label="Foto: terraza"></div></div>
+      <div class="frame"><div class="ph" data-label="Foto: cachimba"></div></div>
+      <div class="frame t"><div class="ph" data-label="Foto: decoración"></div></div>
+      <div class="frame w"><div class="ph" data-label="Foto: comida"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="contacto">
+  <div class="wrap contact">
+    <div>
+      <h2>Contacto</h2>
+      <dl>
+        <dt>Dónde estamos</dt><dd>Jerez de la Frontera, Cádiz</dd><dd class="pend">Dirección completa por añadir</dd>
+        <dt>Teléfono</dt><dd class="pend">Por añadir</dd>
+        <dt>Redes sociales</dt><dd class="pend">Por añadir</dd>
+        <dt>Horario</dt>
+        <dd><table>
+          <tr><td>Lunes</td><td>Cerrado</td></tr>
+          <tr><td>Martes, miércoles y jueves</td><td>18:00 a 02:00</td></tr>
+          <tr><td>Viernes y sábado</td><td>18:00 a 03:00</td></tr>
+          <tr><td>Domingo</td><td>18:00 a 02:00</td></tr>
+        </table></dd>
+      </dl>
+    </div>
+    <div class="map frame"><div class="ph" data-label="Aquí irá el mapa de Google Maps"></div></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div><div class="logo">Tetería Bodhi</div><small>Jerez de la Frontera</small><small>© 2026 Tetería Bodhi</small></div>
+    <ul aria-label="Enlaces del pie"><li><a href="#teteria">Nuestra tetería</a></li><li><a href="#carta">Carta</a></li><li><a href="#reservas">Reservas</a></li><li><a href="#contacto">Contacto</a></li></ul>
+    <small>Aviso legal y privacidad: por añadir</small>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var $=function(s){return document.querySelector(s)};
+  // Menú móvil
+  var b=$("#burger"),m=$("#menu");
+  b.addEventListener("click",function(){var o=m.classList.toggle("open");b.setAttribute("aria-expanded",o)});
+  m.addEventListener("click",function(e){if(e.target.tagName==="A"){m.classList.remove("open");b.setAttribute("aria-expanded","false")}});
+
+  // Carta: datos de ejemplo. Sustituir por los productos reales.
+  var CARTA={
+    "Cócteles":["Nombre del cóctel","Otro cóctel"],
+    "Tés e infusiones":["Nombre del té","Nombre de la infusión"],
+    "Bebidas":["Nombre de la bebida","Otra bebida"],
+    "Cachimbas":["Nombre de la cachimba","Otra cachimba"],
+    "Comida":["Nombre del plato","Otro plato"],
+    "Otros productos":["Nombre del producto","Otro producto"]
+  };
+  var cur="Cócteles";
+  function drawCarta(){
+    var t=$("#tabs");t.innerHTML="";
+    Object.keys(CARTA).forEach(function(c){
+      var x=document.createElement("button");x.type="button";x.className="tab";x.textContent=c;
+      x.setAttribute("aria-pressed",c===cur);
+      x.addEventListener("click",function(){cur=c;drawCarta()});
+      t.appendChild(x);
+    });
+    var box=$("#items");box.innerHTML="";
+    CARTA[cur].forEach(function(n){
+      var a=document.createElement("article");a.className="item";
+      a.innerHTML='<div class="frame"><div class="ph" data-label="Foto"></div></div><div><h3></h3><p>Descripción breve del producto.</p></div>';
+      a.querySelector("h3").innerHTML='<span></span><em>0,00 €</em>';
+      a.querySelector("h3 span").textContent=n;
+      box.appendChild(a);
+    });
+  }
+  drawCarta();
+
+  // Reservas: solo diseño
+  var p=$("#p");
+  for(var i=1;i<=12;i++){var o=document.createElement("option");o.value=i;o.textContent=i+(i===1?" persona":" personas");p.appendChild(o)}
+  var big=document.createElement("option");big.value="13";big.textContent="Más de 12";p.appendChild(big);
+  p.value="2";
+  function hint(){
+    var n=+p.value;
+    $("#hint").textContent=n<=5?"":n<=12?"Los grupos de 6 o más los revisamos y te confirmamos.":"Para más de 12 personas, llámanos y lo organizamos.";
+  }
+  p.addEventListener("change",hint);
+  var d=$("#d"),now=new Date();
+  d.min=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+  $("#form").addEventListener("submit",function(e){
+    e.preventDefault();
+    $("#msg").textContent="Esto es una maqueta: la solicitud todavía no se envía.";
+  });
+})();
+</script>
+</body>
+</html>
