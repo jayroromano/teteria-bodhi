@@ -621,6 +621,31 @@
       } catch (e) {
         showAdminToast('Error actualizando carta.', 'danger');
       }
+    },
+
+    async deleteMenuItem(id, name) {
+      if (!confirm(`¿Seguro que deseas eliminar "${name}" de la carta?`)) return;
+      if (isFileProtocol) {
+        showAdminToast('Producto eliminado (modo local).', 'success');
+        return;
+      }
+      try {
+        const res = await fetch(`/api/carta?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showAdminToast(`✓ "${name}" eliminado de la carta.`, 'success');
+          loadCartaManager();
+        } else {
+          showAdminToast(data.error || 'No se pudo eliminar el producto.', 'danger');
+        }
+      } catch (e) {
+        showAdminToast('Error al conectar con el servidor.', 'danger');
+      }
     }
   };
 
@@ -793,10 +818,14 @@
   }
 
   // ==========================================
-  // GESTIÓN DE CARTA
+  // GESTIÓN DE CARTA & PRODUCTOS
   // ==========================================
+  let cachedCartaItems = [];
+  let currentCartaFilter = 'all';
+
   async function loadCartaManager() {
     const box = $('#carta-manager-tbody');
+    const countInfo = $('#carta-count-info');
     if (!box) return;
 
     try {
@@ -804,28 +833,170 @@
       const data = await res.json();
       if (!res.ok || !data.items) return;
 
-      box.innerHTML = '';
-      data.items.forEach(item => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <div style="font-weight: 700;">${escapeHtml(item.name)}</div>
-            <div style="font-size: 0.78rem; color: var(--mut);">${escapeHtml(item.category)}</div>
-          </td>
-          <td><strong>${Number(item.price).toFixed(2)} €</strong></td>
-          <td>
-            <button class="filter-pill ${item.available ? 'active' : ''}" 
-                    style="font-size: 0.8rem; padding: 4px 10px;"
-                    onclick="window.adminApp.toggleMenuAvailable('${item.id}', ${item.available})">
-              ${item.available ? '✓ Disponible' : '✗ Agotado'}
-            </button>
-          </td>
-        `;
-        box.appendChild(tr);
-      });
+      cachedCartaItems = data.items;
+      renderCartaTable();
     } catch (e) {
       console.warn('Error cargando gestión de carta:', e);
+      if (countInfo) countInfo.textContent = 'Error cargando carta';
     }
+  }
+
+  function renderCartaTable() {
+    const box = $('#carta-manager-tbody');
+    const countInfo = $('#carta-count-info');
+    if (!box) return;
+
+    let items = cachedCartaItems;
+    if (currentCartaFilter !== 'all') {
+      items = items.filter(i => (i.category || '').toLowerCase() === currentCartaFilter.toLowerCase());
+    }
+
+    if (countInfo) {
+      countInfo.textContent = `${items.length} producto${items.length === 1 ? '' : 's'} ${currentCartaFilter !== 'all' ? `en "${currentCartaFilter}"` : 'en total'}`;
+    }
+
+    box.innerHTML = '';
+    if (items.length === 0) {
+      box.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 32px 16px; color: var(--mut);">
+            No hay productos registrados en esta categoría. Pulsa en <strong>"➕ Añadir Nuevo Producto"</strong> para agregar el primero.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    items.forEach(item => {
+      const tr = document.createElement('tr');
+      const safeName = escapeHtml(item.name || 'Sin nombre');
+      const jsSafeName = safeName.replace(/'/g, "\\'");
+      const cat = escapeHtml(item.category || 'Otro');
+      const badgeHtml = item.badge ? `<span style="font-size:0.7rem;padding:2px 6px;border-radius:4px;background:var(--sand);color:var(--tost);font-weight:700;margin-left:5px;">${escapeHtml(item.badge)}</span>` : '';
+      const descHtml = item.description ? `<div style="font-size:0.78rem;color:var(--mut);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">${escapeHtml(item.description)}</div>` : '';
+
+      const imgUrl = item.image || (cat === 'Cócteles' ? 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80' : cat === 'Tés' ? 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80' : 'https://images.unsplash.com/photo-1519869325930-281384150729?auto=format&fit=crop&w=400&q=80');
+
+      let catBg = '#FFF3E0';
+      let catColor = '#E65100';
+      if (cat === 'Cócteles') {
+        catBg = '#E1F5FE';
+        catColor = '#0277BD';
+      } else if (cat === 'Tés') {
+        catBg = '#E8F5E9';
+        catColor = '#2E7D32';
+      }
+
+      tr.innerHTML = `
+        <td>
+          <img src="${imgUrl}" alt="${safeName}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--sand);display:block;" onerror="this.src='https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80'">
+        </td>
+        <td>
+          <div style="font-weight:700;display:flex;align-items:center;flex-wrap:wrap;">${safeName} ${badgeHtml}</div>
+          ${descHtml}
+        </td>
+        <td>
+          <span class="status-badge" style="background:${catBg};color:${catColor};font-size:0.75rem;padding:3px 9px;">${cat}</span>
+        </td>
+        <td><strong>${Number(item.price || 0).toFixed(2)} €</strong></td>
+        <td>
+          <button type="button" class="filter-pill ${item.available ? 'active' : ''}" 
+                  style="font-size: 0.8rem; padding: 4px 10px; cursor: pointer;"
+                  onclick="window.adminApp.toggleMenuAvailable('${item.id}', ${item.available})">
+            ${item.available ? '✓ Disponible' : '✗ Agotado'}
+          </button>
+        </td>
+        <td>
+          <button type="button" class="btn-icon" title="Eliminar producto de la carta" 
+                  style="color: var(--danger); border: 1px solid var(--line); padding: 6px; border-radius: 6px; cursor: pointer; background: var(--bg);"
+                  onclick="window.adminApp.deleteMenuItem('${item.id}', '${jsSafeName}')">
+            🗑️
+          </button>
+        </td>
+      `;
+      box.appendChild(tr);
+    });
+  }
+
+  // Filtrar pills de carta
+  $$('.carta-filter-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      $$('.carta-filter-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentCartaFilter = pill.getAttribute('data-carta-cat') || 'all';
+      renderCartaTable();
+    });
+  });
+
+  // Modal Añadir Producto
+  const btnOpenAddProduct = $('#btn-open-add-product');
+  if (btnOpenAddProduct) {
+    btnOpenAddProduct.addEventListener('click', () => {
+      const form = $('#new-product-form');
+      if (form) form.reset();
+      $('#product-modal').classList.add('active');
+      const nameInput = $('#prod-name');
+      if (nameInput) nameInput.focus();
+    });
+  }
+
+  const newProductForm = $('#new-product-form');
+  if (newProductForm) {
+    newProductForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = $('#btn-save-product');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Guardando...';
+      }
+
+      const name = ($('#prod-name')?.value || '').trim();
+      const category = $('#prod-category')?.value || 'Otro';
+      const price = parseFloat($('#prod-price')?.value || '0');
+      const image = ($('#prod-image')?.value || '').trim();
+      const description = ($('#prod-desc')?.value || '').trim();
+      const badge = ($('#prod-badge')?.value || '').trim();
+
+      if (!name) {
+        showAdminToast('El nombre del producto es obligatorio.', 'warning');
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '💾 Guardar Producto'; }
+        return;
+      }
+
+      if (isNaN(price) || price < 0) {
+        showAdminToast('Por favor introduce un precio válido.', 'warning');
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '💾 Guardar Producto'; }
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/carta', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ name, category, price, image, description, badge })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          $('#product-modal').classList.remove('active');
+          newProductForm.reset();
+          showAdminToast(`✓ "${name}" añadido a la carta con éxito (${category})`, 'success');
+          loadCartaManager();
+        } else {
+          showAdminToast(data.error || 'Error al guardar el producto.', 'danger');
+        }
+      } catch (err) {
+        showAdminToast('Error de conexión al guardar el producto.', 'danger');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '💾 Guardar Producto';
+        }
+      }
+    });
   }
 
   $$('.nav-item button').forEach(btn => {

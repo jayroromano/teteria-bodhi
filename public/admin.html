@@ -230,17 +230,42 @@
       <!-- PESTAÑA 2: GESTIÓN DE CARTA -->
       <div class="tab-section" id="tab-carta" style="display: none;">
         <div class="table-card" style="padding: 24px;">
-          <h2 style="font-family: var(--font-title); font-size: 1.8rem; margin-bottom: 8px;">Control de Disponibilidad de la Carta</h2>
-          <p style="color: var(--mut); font-size: 0.95rem; margin-bottom: 24px;">
-            Activa o desactiva productos según el stock del día en tiempo real. Los cambios se reflejan inmediatamente en la web pública.
-          </p>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+            <div>
+              <h2 style="font-family: var(--font-title); font-size: 1.8rem; margin-bottom: 6px;">Control y Gestión de la Carta</h2>
+              <p style="color: var(--mut); font-size: 0.95rem; margin-bottom: 0;">
+                Añade nuevos productos con foto, precio y categoría, o gestiona su disponibilidad en tiempo real.
+              </p>
+            </div>
+            <button type="button" class="btn-primary" id="btn-open-add-product" style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.92rem; padding: 10px 20px; cursor: pointer;">
+              <span>➕</span> Añadir Nuevo Producto
+            </button>
+          </div>
+
+          <!-- Filtros de categoría de carta -->
+          <div class="filters-card" style="margin-bottom: 18px; padding: 12px 18px;">
+            <div class="filter-group">
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--mut);">Filtrar por categoría:</span>
+              <button type="button" class="filter-pill carta-filter-pill active" data-carta-cat="all">Todas</button>
+              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Cócteles">Cócteles</button>
+              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Tés">Tés</button>
+              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Otro">Otro</button>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--mut); margin-left: auto;" id="carta-count-info">
+              Cargando productos...
+            </div>
+          </div>
+
           <div class="table-responsive">
             <table class="admin-table">
               <thead>
                 <tr>
-                  <th>Producto & Categoría</th>
+                  <th style="width: 64px;">Foto</th>
+                  <th>Producto</th>
+                  <th>Categoría</th>
                   <th>Precio</th>
-                  <th>Estado en Carta</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody id="carta-manager-tbody">
@@ -481,6 +506,61 @@ CREATE TABLE reservations (
       </div>
     </div>
   </main>
+</div>
+
+<!-- ================= MODAL: AÑADIR NUEVO PRODUCTO ================= -->
+<div class="admin-modal-overlay" id="product-modal">
+  <div class="admin-modal" style="max-width: 520px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <h3 style="font-family: var(--font-title); font-size: 1.6rem; margin: 0;">➕ Añadir Producto a la Carta</h3>
+      <button type="button" style="background:none;border:none;font-size:1.6rem;cursor:pointer;color:var(--mut);" onclick="document.getElementById('product-modal').classList.remove('active')">×</button>
+    </div>
+
+    <form id="new-product-form">
+      <div style="display:grid;gap:14px;margin-bottom:20px;">
+        <div>
+          <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Nombre del Producto *</label>
+          <input id="prod-name" required placeholder="Ej: Cóctel Pasión Andalusí" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:0.95rem;background:var(--bg);color:var(--ink);">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Categoría *</label>
+            <select id="prod-category" required style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:0.95rem;background:var(--bg);color:var(--ink);">
+              <option value="Cócteles">Cócteles</option>
+              <option value="Tés">Tés</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Precio (€) *</label>
+            <input id="prod-price" type="number" step="0.05" min="0" required placeholder="6.50" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:0.95rem;background:var(--bg);color:var(--ink);">
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Foto del Producto (URL)</label>
+          <input id="prod-image" type="url" placeholder="https://images.unsplash.com/... (opcional)" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:0.95rem;background:var(--bg);color:var(--ink);">
+          <small style="color:var(--mut);font-size:0.75rem;margin-top:3px;display:block;">Si lo dejas en blanco, se asignará automáticamente una foto profesional acorde a la categoría elegida.</small>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Descripción (opcional)</label>
+          <textarea id="prod-desc" rows="2" placeholder="Ingredientes, notas aromáticas, elaboración..." style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:0.92rem;background:var(--bg);color:var(--ink);font-family:inherit;"></textarea>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Etiqueta destacada (opcional)</label>
+          <input id="prod-badge" placeholder="Ej: Especialidad, Top Ventas, Casero, Sin Alcohol..." style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:0.95rem;background:var(--bg);color:var(--ink);">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" class="btn-secondary" onclick="document.getElementById('product-modal').classList.remove('active')">Cancelar</button>
+        <button type="submit" class="btn-primary" id="btn-save-product">💾 Guardar Producto</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- ================= MODAL: NUEVA RESERVA MANUAL ================= -->

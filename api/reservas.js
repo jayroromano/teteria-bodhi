@@ -83,6 +83,7 @@ function setCors(res) {
 
 function parseBody(req) {
   if (req.body && typeof req.body === 'object') return Promise.resolve(req.body);
+  if (!req.on || typeof req.on !== 'function') return Promise.resolve({});
   return new Promise((resolve) => {
     let data = '';
     req.on('data', chunk => { data += chunk; });

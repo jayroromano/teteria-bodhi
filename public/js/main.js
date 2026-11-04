@@ -302,9 +302,26 @@
   }
 
   function getCategories() {
+    const defaultOrder = ['Tés', 'Cócteles', 'Otro'];
     const set = new Set();
-    cartaData.forEach(item => set.add(item.category));
-    return Array.from(set);
+    cartaData.forEach(item => {
+      let cat = item.category || 'Otro';
+      if (/t[eé]/i.test(cat)) cat = 'Tés';
+      else if (/c[oó]ctel/i.test(cat)) cat = 'Cócteles';
+      else cat = 'Otro';
+      item.category = cat;
+      set.add(cat);
+    });
+    const all = Array.from(set);
+    all.sort((a, b) => {
+      const idxA = defaultOrder.indexOf(a);
+      const idxB = defaultOrder.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+    return all.length ? all : defaultOrder;
   }
 
   function renderTabs() {
