@@ -252,6 +252,7 @@
     "booking": true,
     "contact": true,
     "map": true,
-    "footer": true
+    "footer": true,
+    "reviews": true
   }
 }

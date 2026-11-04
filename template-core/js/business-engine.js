@@ -363,7 +363,7 @@ window.BusinessEngine = (function () {
     // Alternar visibilidad de secciones
     if (config.sections) {
       for (const [secName, isVisible] of Object.entries(config.sections)) {
-        const el = document.getElementById(secName === 'catalog' ? 'carta' : secName === 'booking' ? 'reservas' : secName === 'about' ? 'teteria' : secName);
+        const el = document.getElementById(secName === 'catalog' ? 'carta' : secName === 'booking' ? 'reservas' : secName === 'about' ? 'teteria' : secName === 'reviews' ? 'opiniones' : secName);
         if (el) {
           el.style.display = isVisible ? '' : 'none';
         }
