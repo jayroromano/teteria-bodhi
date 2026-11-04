@@ -10,8 +10,15 @@
     "tagline": "Oasis Andalusí & Chill-out",
     "seoTitle": "Tetería Bodhi | Tés del Mundo, Cachimbas y Cócteles en Jerez",
     "seoDescription": "Descubre Tetería Bodhi en Jerez de la Frontera: tés e infusiones del mundo, cachimbas premium, cócteles de autor y sofás lounge.",
-    "primaryCta": { "text": "Reservar mesa online", "href": "#reservas" },
-    "secondaryCta": { "text": "Ver la carta", "href": "#carta" }
+    "primaryCta": {
+      "text": "Reservar mesa online",
+      "href": "#reservas"
+    },
+    "secondaryCta": {
+      "text": "Ver la carta",
+      "href": "#carta"
+    },
+    "logoImage": "img/logo-bodhi.png"
   },
   "hero": {
     "tag": "Oasis Andalusí & Chill-out",
@@ -111,17 +118,48 @@
     "personLabel": "Personas",
     "zoneLabel": "Zona deseada",
     "zones": [
-      { "value": "interior", "label": "Interior Lounge" },
-      { "value": "terraza", "label": "Terraza Andalusí" },
-      { "value": "indiferente", "label": "Indiferente" }
+      {
+        "value": "interior",
+        "label": "Interior Lounge"
+      },
+      {
+        "value": "terraza",
+        "label": "Terraza Andalusí"
+      },
+      {
+        "value": "indiferente",
+        "label": "Indiferente"
+      }
     ],
-    "guestsOptions": [1, 2, 3, 4, 5, 6, 8, 10, 12],
+    "guestsOptions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      10,
+      12
+    ],
     "defaultGuests": 2,
     "hintSmall": "✓ Para mesas de hasta 4 personas la confirmación suele ser automática.",
     "hintLarge": "⏳ Para grupos de más de 4 personas revisamos el aforo antes de confirmar tu mesa.",
     "timeSlots": [
-      "18:00", "18:30", "19:00", "19:30", "20:00", "20:30",
-      "21:00", "21:30", "22:00", "22:30", "23:00", "23:30", "00:00", "00:30"
+      "18:00",
+      "18:30",
+      "19:00",
+      "19:30",
+      "20:00",
+      "20:30",
+      "21:00",
+      "21:30",
+      "22:00",
+      "22:30",
+      "23:00",
+      "23:30",
+      "00:00",
+      "00:30"
     ]
   },
   "contact": {
@@ -137,10 +175,37 @@
     "openHour": 18,
     "closeHour": 2,
     "days": [
-      { "day": "Lunes", "hours": "Cerrado (Descanso)", "dayIndices": [1] },
-      { "day": "Martes, Miércoles y Jueves", "hours": "18:00 a 02:00", "dayIndices": [2, 3, 4] },
-      { "day": "Viernes y Sábado", "hours": "18:00 a 03:00", "dayIndices": [5, 6] },
-      { "day": "Domingo", "hours": "18:00 a 02:00", "dayIndices": [0] }
+      {
+        "day": "Lunes",
+        "hours": "Cerrado (Descanso)",
+        "dayIndices": [
+          1
+        ]
+      },
+      {
+        "day": "Martes, Miércoles y Jueves",
+        "hours": "18:00 a 02:00",
+        "dayIndices": [
+          2,
+          3,
+          4
+        ]
+      },
+      {
+        "day": "Viernes y Sábado",
+        "hours": "18:00 a 03:00",
+        "dayIndices": [
+          5,
+          6
+        ]
+      },
+      {
+        "day": "Domingo",
+        "hours": "18:00 a 02:00",
+        "dayIndices": [
+          0
+        ]
+      }
     ]
   },
   "theme": {
