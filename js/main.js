@@ -221,7 +221,7 @@
     });
 
     menu.addEventListener('click', (e) => {
-      if (e.target.tagName === 'A') {
+      if (e.target.tagName === 'A' || e.target.closest('a')) {
         menu.classList.remove('open');
         burger.setAttribute('aria-expanded', 'false');
       }
