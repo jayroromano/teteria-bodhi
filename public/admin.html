@@ -103,6 +103,25 @@
     </header>
 
     <div class="content-area">
+      <!-- ALERTA DE BASE DE DATOS EN TIEMPO REAL -->
+      <div id="db-alert-banner" style="display:none; margin-bottom: 24px; padding: 16px 20px; border-radius: 12px; font-size: 0.92rem; line-height: 1.5; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 1.6rem;" id="db-alert-icon">⚠️</span>
+          <div>
+            <strong id="db-alert-title" style="display: block; font-size: 1rem; margin-bottom: 2px;">Comprobando conexión a la Base de Datos...</strong>
+            <span id="db-alert-message" style="color: inherit; opacity: 0.95;">Verificando si PostgreSQL está activo en Vercel.</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; flex-shrink: 0; flex-wrap: wrap;">
+          <button type="button" id="btn-recheck-db" class="btn-secondary" style="font-size: 0.85rem; padding: 8px 14px; cursor: pointer;">
+            🔄 Probar conexión
+          </button>
+          <button type="button" id="btn-open-db-tab" class="btn-primary" style="font-size: 0.85rem; padding: 8px 14px; cursor: pointer;">
+            ⚙️ Diagnóstico & Configurar
+          </button>
+        </div>
+      </div>
+
       <!-- PESTAÑA 1: RESERVAS -->
       <div class="tab-section" id="tab-reservas">
         <!-- KPIS -->
@@ -235,10 +254,47 @@
       <!-- PESTAÑA 3: BASE DE DATOS & VERCEL -->
       <div class="tab-section" id="tab-db" style="display: none;">
         <div class="table-card" style="padding: 28px;">
-          <h2 style="font-family: var(--font-title); font-size: 1.8rem; margin-bottom: 12px;">Conexión a Base de Datos & Despliegue</h2>
-          <p style="color: var(--mut); font-size: 1rem; line-height: 1.6; margin-bottom: 24px;">
-            Tetería Bodhi cuenta con un sistema híbrido de persistencia. Funciona de manera inmediata tanto en local como en la nube:
+          <h2 style="font-family: var(--font-title); font-size: 1.8rem; margin-bottom: 8px;">Diagnóstico de Base de Datos PostgreSQL</h2>
+          <p style="color: var(--mut); font-size: 0.96rem; line-height: 1.5; margin-bottom: 24px;">
+            Comprueba en tiempo real el estado de conexión entre Vercel y tu base de datos cloud (Neon / Supabase / Vercel Postgres).
           </p>
+
+          <!-- CONSOLA DE DIAGNÓSTICO EN VIVO -->
+          <div style="background: var(--paper); border: 2px solid var(--line); border-radius: 14px; padding: 22px; margin-bottom: 28px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+              <h3 style="font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <span>📡</span> Estado de la Conexión en Vercel
+              </h3>
+              <div style="display: flex; gap: 10px;">
+                <button type="button" id="btn-diag-test-db" class="btn-primary" style="font-size: 0.85rem; padding: 8px 16px; cursor: pointer;">
+                  🔄 Probar Conexión Ahora
+                </button>
+                <button type="button" id="btn-diag-test-reservation" class="btn-secondary" style="font-size: 0.85rem; padding: 8px 16px; cursor: pointer;">
+                  🧪 Insertar Reserva de Prueba
+                </button>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px;">
+              <div style="background: var(--bg); padding: 14px; border-radius: 10px; border: 1px solid var(--line);">
+                <small style="color: var(--mut); display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Estado Actual</small>
+                <div id="db-diag-status" style="font-size: 0.95rem; font-weight: 600;">Comprobando...</div>
+              </div>
+              <div style="background: var(--bg); padding: 14px; border-radius: 10px; border: 1px solid var(--line);">
+                <small style="color: var(--mut); display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Variable Detectada</small>
+                <div id="db-diag-var" style="font-size: 0.92rem; font-family: monospace; font-weight: 600; color: var(--tost);">Verificando...</div>
+              </div>
+              <div style="background: var(--bg); padding: 14px; border-radius: 10px; border: 1px solid var(--line);">
+                <small style="color: var(--mut); display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Reservas en PostgreSQL</small>
+                <div id="db-diag-rows" style="font-size: 0.95rem; font-weight: 600;">—</div>
+              </div>
+            </div>
+
+            <div style="background: var(--bg); padding: 14px; border-radius: 10px; border: 1px solid var(--line);">
+              <small style="color: var(--mut); display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Detalles / Diagnóstico Técnico</small>
+              <div id="db-diag-error" style="font-family: monospace; font-size: 0.85rem; line-height: 1.5; color: var(--ink);">Pulsa "Probar Conexión Ahora" para ejecutar el diagnóstico.</div>
+            </div>
+          </div>
 
           <div style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 30px;">
             <div style="background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 20px;">

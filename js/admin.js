@@ -265,6 +265,78 @@
     });
   }
 
+  async function checkDbHealth() {
+    if (isFileProtocol) {
+      updateCloudDbPill(false);
+      return;
+    }
+    try {
+      const res = await fetch('/api/reservas?health=true');
+      const data = await res.json();
+
+      const pill = $('#db-status-pill');
+      const banner = $('#db-alert-banner');
+      const bannerTitle = $('#db-alert-title');
+      const bannerMsg = $('#db-alert-message');
+      const bannerIcon = $('#db-alert-icon');
+
+      if (data.pgConnected) {
+        if (pill) {
+          pill.className = 'db-pill cloud';
+          pill.innerHTML = `🟢 PostgreSQL Conectado (${data.pgDetail?.database || 'Cloud'})`;
+          pill.title = `Conectado a PostgreSQL. ${data.pgDetail?.reservationsCount || 0} reservas en la base de datos.`;
+        }
+        if (banner) {
+          banner.style.display = 'none';
+        }
+      } else {
+        if (pill) {
+          pill.className = 'db-pill';
+          pill.innerHTML = `🔴 BD No Conectada`;
+          pill.title = data.pgDetail?.error || data.lastDbError || 'Base de datos no disponible';
+        }
+        if (banner) {
+          banner.style.display = 'flex';
+          banner.style.background = '#FFF3CD';
+          banner.style.border = '1.5px solid #FFEBAA';
+          banner.style.color = '#856404';
+          if (bannerIcon) bannerIcon.textContent = '⚠️';
+          if (bannerTitle) bannerTitle.textContent = 'Atención: La Base de Datos PostgreSQL no está conectada';
+          const errMsg = data.pgDetail?.error || data.lastDbError || 'No se detectó la variable DATABASE_URL en Vercel';
+          if (bannerMsg) {
+            bannerMsg.innerHTML = `Las reservas hechas por clientes <strong>no se guardarán de forma permanente</strong> hasta conectar la base de datos.<br><span style="font-family:monospace; font-size:0.82rem; background:rgba(0,0,0,0.06); padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px;">Motivo: ${errMsg}</span>`;
+          }
+        }
+      }
+
+      // Actualizar consola de diagnóstico de la pestaña BD
+      const dbDiagStatus = $('#db-diag-status');
+      const dbDiagVar = $('#db-diag-var');
+      const dbDiagError = $('#db-diag-error');
+      const dbDiagRows = $('#db-diag-rows');
+      if (dbDiagStatus) {
+        dbDiagStatus.innerHTML = data.pgConnected
+          ? '<span style="color:#2E7D32; font-weight:700;">🟢 Conectado con éxito a PostgreSQL</span>'
+          : '<span style="color:#C62828; font-weight:700;">🔴 Desconectado o con error de credenciales</span>';
+      }
+      if (dbDiagVar) {
+        dbDiagVar.textContent = data.detectedEnvVar || 'Ninguna variable de base de datos detectada en Vercel';
+      }
+      if (dbDiagError) {
+        dbDiagError.textContent = data.pgConnected
+          ? 'Conexión verificada sin errores. Las tablas están sincronizadas.'
+          : (data.pgDetail?.error || data.lastDbError || 'Falta añadir DATABASE_URL en Settings > Environment Variables de tu proyecto en Vercel.');
+      }
+      if (dbDiagRows) {
+        dbDiagRows.textContent = data.pgConnected
+          ? `${data.pgDetail?.reservationsCount || 0} reservas guardadas en la nube`
+          : '0 (usando memoria temporal)';
+      }
+    } catch (e) {
+      console.warn('Error verificando salud de la DB:', e);
+    }
+  }
+
   function updateCloudDbPill(isCloud) {
     const pill = $('#db-status-pill');
     if (!pill) return;
@@ -283,6 +355,9 @@
   // CARGA DE RESERVAS Y KPIs
   // ==========================================
   async function loadDashboard(isBackgroundSync = false) {
+    if (!isBackgroundSync) {
+      checkDbHealth();
+    }
     if (isFileProtocol) {
       renderTable();
       updateKpis({
@@ -739,8 +814,88 @@
       if (targetSec) targetSec.style.display = 'block';
 
       if (target === 'carta') loadCartaManager();
+      if (target === 'db') checkDbHealth();
     });
   });
+
+  // Botones de diagnóstico de base de datos
+  const btnRecheck = $('#btn-recheck-db');
+  if (btnRecheck) {
+    btnRecheck.addEventListener('click', () => {
+      showAdminToast('Comprobando conexión con PostgreSQL...', 'info');
+      checkDbHealth();
+      loadDashboard();
+    });
+  }
+
+  const btnOpenDbTab = $('#btn-open-db-tab');
+  if (btnOpenDbTab) {
+    btnOpenDbTab.addEventListener('click', () => {
+      const dbNavBtn = $('button[data-tab="db"]');
+      if (dbNavBtn) dbNavBtn.click();
+    });
+  }
+
+  const btnDiagTestDb = $('#btn-diag-test-db');
+  if (btnDiagTestDb) {
+    btnDiagTestDb.addEventListener('click', async () => {
+      btnDiagTestDb.disabled = true;
+      btnDiagTestDb.textContent = 'Comprobando...';
+      await checkDbHealth();
+      showAdminToast('Diagnóstico de base de datos actualizado.', 'info');
+      btnDiagTestDb.disabled = false;
+      btnDiagTestDb.textContent = '🔄 Probar Conexión Ahora';
+    });
+  }
+
+  const btnDiagTestRes = $('#btn-diag-test-reservation');
+  if (btnDiagTestRes) {
+    btnDiagTestRes.addEventListener('click', async () => {
+      btnDiagTestRes.disabled = true;
+      btnDiagTestRes.textContent = 'Insertando...';
+      try {
+        const dummyDate = new Date();
+        dummyDate.setDate(dummyDate.getDate() + 1);
+        if (dummyDate.getDay() === 1) dummyDate.setDate(dummyDate.getDate() + 1); // evitar lunes
+        const dateStr = dummyDate.toISOString().split('T')[0];
+
+        const payload = {
+          name: 'Prueba Verificación Admin',
+          phone: '+34 600 12 34 56',
+          email: 'admin-test@teteriabodhi.es',
+          date: dateStr,
+          time: '21:00',
+          guests: 2,
+          zone: 'interior',
+          notes: 'Reserva automática de verificación generada desde el panel admin.'
+        };
+
+        const res = await fetch('/api/reservas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const storage = data.storage || (data.reservation?.isCloudDb ? 'PostgreSQL Cloud' : 'Local Fallback');
+          alert(`✅ ¡Reserva de prueba creada con éxito!\n\nCódigo: ${data.reservation.code}\nAlmacenamiento: ${storage}\n${data.dbError ? 'Aviso DB: ' + data.dbError : 'Estado DB: Conectada a la nube'}`);
+          await checkDbHealth();
+          await loadDashboard();
+        } else {
+          alert(`❌ Error al crear reserva de prueba:\n${data.error || 'Fallo desconocido'}`);
+        }
+      } catch (err) {
+        alert(`❌ Error de conexión: ${err.message}`);
+      } finally {
+        btnDiagTestRes.disabled = false;
+        btnDiagTestRes.textContent = '🧪 Insertar Reserva de Prueba';
+      }
+    });
+  }
 
   // ==========================================
   // TOAST NOTIFICATIONS ADMIN

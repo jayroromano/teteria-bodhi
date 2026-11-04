@@ -116,18 +116,22 @@ module.exports = async function handler(req, res) {
     // GET: Listado de reservas, estadísticas o test de conexión
     if (method === 'GET') {
       if (query.health === 'true') {
-        let pgTest = false;
-        let pgDetail = null;
-        if (db.isCloudDb()) {
-          const testRes = await db.testPgConnection();
-          pgTest = testRes.ok;
-          pgDetail = testRes.ok ? { database: testRes.database, serverTime: testRes.now } : { error: testRes.error };
-        }
+        const testRes = await db.testPgConnection();
         return res.status(200).json({
-          status: 'ok',
+          status: testRes.ok ? 'connected' : 'error',
           cloudDbConfigured: db.isCloudDb(),
-          pgConnected: pgTest,
-          pgDetail,
+          detectedEnvVar: db.getDetectedEnvVar(),
+          pgConnected: testRes.ok,
+          pgDetail: testRes.ok ? { database: testRes.database, reservationsCount: testRes.reservationsCount, serverTime: testRes.now } : { error: testRes.error },
+          lastDbError: db.getLastError() || null,
+          envVarsDetected: {
+            DATABASE_URL: Boolean(process.env.DATABASE_URL),
+            POSTGRES_URL: Boolean(process.env.POSTGRES_URL),
+            POSTGRES_PRISMA_URL: Boolean(process.env.POSTGRES_PRISMA_URL),
+            POSTGRES_URL_NON_POOLING: Boolean(process.env.POSTGRES_URL_NON_POOLING),
+            SUPABASE_DATABASE_URL: Boolean(process.env.SUPABASE_DATABASE_URL),
+            POSTGRES_HOST: Boolean(process.env.POSTGRES_HOST)
+          },
           timestamp: new Date().toISOString()
         });
       }
@@ -156,7 +160,9 @@ module.exports = async function handler(req, res) {
         success: true,
         count: reservations.length,
         stats,
-        reservations
+        reservations,
+        cloudDb: db.isCloudDb(),
+        lastDbError: db.getLastError() || null
       });
     }
 
@@ -219,7 +225,9 @@ module.exports = async function handler(req, res) {
         message: 'Reserva registrada con éxito.',
         reservation: newReservation,
         whatsappUrl,
-        cloudDb: db.isCloudDb()
+        cloudDb: db.isCloudDb(),
+        storage: newReservation.isCloudDb ? 'PostgreSQL Cloud' : 'Local Fallback',
+        dbError: db.getLastError() || null
       });
     }
 
