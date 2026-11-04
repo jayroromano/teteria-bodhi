@@ -103,9 +103,13 @@ window.BusinessEngine = (function () {
     // Logo & Nombre
     const logoEls = document.querySelectorAll('.logo');
     logoEls.forEach(el => {
-      const emoji = config.identity?.logoEmoji || '';
       const text = config.identity?.name || '';
-      el.innerHTML = `<span style="margin-right:6px;">${emoji}</span>${text}`;
+      if (config.identity?.logoImage) {
+        el.innerHTML = `<img src="${config.identity.logoImage}" alt="${text}" class="logo-img"><span>${text}</span>`;
+      } else {
+        const emoji = config.identity?.logoEmoji || '';
+        el.innerHTML = `<span style="margin-right:6px;">${emoji}</span><span>${text}</span>`;
+      }
     });
 
     // Tagline / Ciudad en barra superior
