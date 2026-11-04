@@ -113,8 +113,25 @@ module.exports = async function handler(req, res) {
   const { method, query } = req;
 
   try {
-    // GET: Listado de reservas o estadísticas
+    // GET: Listado de reservas, estadísticas o test de conexión
     if (method === 'GET') {
+      if (query.health === 'true') {
+        let pgTest = false;
+        let pgDetail = null;
+        if (db.isCloudDb()) {
+          const testRes = await db.testPgConnection();
+          pgTest = testRes.ok;
+          pgDetail = testRes.ok ? { database: testRes.database, serverTime: testRes.now } : { error: testRes.error };
+        }
+        return res.status(200).json({
+          status: 'ok',
+          cloudDbConfigured: db.isCloudDb(),
+          pgConnected: pgTest,
+          pgDetail,
+          timestamp: new Date().toISOString()
+        });
+      }
+
       if (query.stats === 'true') {
         const stats = await db.getStats();
         return res.status(200).json({ success: true, stats });
@@ -150,47 +167,48 @@ module.exports = async function handler(req, res) {
 
       if (!name || !phone || !date || !time) {
         return res.status(400).json({
-          error: 'Faltan campos obligatorios: nombre, teléfono, fecha y hora.'
+          error: 'Faltan campos obligatorios: por favor indica nombre, teléfono, fecha y hora.'
         });
       }
 
-      // Validar día de la semana (Lunes cerrado)
-      const dateObj = new Date(date + 'T12:00:00');
-      const dayOfWeek = dateObj.getDay(); // 0: Domingo, 1: Lunes, ...
-      if (dayOfWeek === 1) {
-        return res.status(400).json({
-          error: 'Los lunes la tetería permanece cerrada por descanso del personal.'
-        });
+      const cleanDate = String(date).trim();
+      const cleanTime = String(time).trim();
+
+      // Validar día de la semana de forma segura frente a zonas horarias (Lunes cerrado)
+      const dateParts = cleanDate.split('-');
+      if (dateParts.length === 3) {
+        const testDate = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 12, 0, 0);
+        if (testDate.getDay() === 1) {
+          return res.status(400).json({
+            error: 'Los lunes la tetería permanece cerrada por descanso del personal. Por favor selecciona una fecha de martes a domingo.'
+          });
+        }
       }
 
-      // Validar hora dentro del horario (18:00 a 02:00 / 03:00)
-      const [h, m] = time.split(':').map(Number);
-      const isWeekend = dayOfWeek === 5 || dayOfWeek === 6; // Viernes o Sábado
-      const validLateHour = h >= 0 && h < (isWeekend ? 3 : 2);
-      const validEveningHour = h >= 18 && h <= 23;
-
-      if (!validEveningHour && !validLateHour) {
+      // Validar franja horaria (desde 16:00 tarde hasta las 03:00 madrugada)
+      const [h, m] = cleanTime.split(':').map(Number);
+      if (!isNaN(h) && (h >= 4 && h < 16)) {
         return res.status(400).json({
-          error: `Nuestro horario es de 18:00 a ${isWeekend ? '03:00' : '02:00'}. Por favor selecciona una hora dentro de este intervalo.`
+          error: 'Nuestro horario de apertura es de 18:00 a 02:00 h (hasta las 03:00 h los fines de semana).'
         });
       }
 
       const newReservation = await db.createReservation({
-        name: name.trim(),
-        phone: phone.trim(),
-        email: (email || '').trim(),
-        date,
-        time,
-        guests: Number(guests) || 2,
+        name: String(name).trim(),
+        phone: String(phone).trim(),
+        email: email ? String(email).trim() : '',
+        date: cleanDate,
+        time: cleanTime,
+        guests: Math.max(1, parseInt(guests, 10) || 2),
         zone: zone || 'indiferente',
-        notes: (notes || '').trim()
+        notes: notes ? String(notes).trim() : ''
       });
 
-      // Disparar notificaciones configuradas (WhatsApp / Telegram / Email)
+      // Disparar notificaciones configuradas de forma asíncrona
       sendAdminNotifications(newReservation).catch(() => {});
 
       // Construir enlace de WhatsApp directo para confirmación del cliente
-      const teteriaWhatsapp = '34600000000'; // Número de la tetería
+      const teteriaWhatsapp = '34600000000';
       const waMsg = encodeURIComponent(
         `¡Hola Bodhi! He solicitado una reserva a nombre de *${newReservation.name}* para el día *${newReservation.date}* a las *${newReservation.time}* (${newReservation.guests} personas, zona ${newReservation.zone}). Código: *${newReservation.code}*. ¡Muchas gracias!`
       );
@@ -200,7 +218,8 @@ module.exports = async function handler(req, res) {
         success: true,
         message: 'Reserva registrada con éxito.',
         reservation: newReservation,
-        whatsappUrl
+        whatsappUrl,
+        cloudDb: db.isCloudDb()
       });
     }
 
