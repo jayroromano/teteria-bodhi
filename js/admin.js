@@ -139,11 +139,19 @@
   function updateNotifBtn() {
     if (!notifBtn) return;
     if ('Notification' in window && Notification.permission === 'granted') {
-      notifBtn.innerHTML = `🔔 Avisos & Sonido Activos`;
+      notifBtn.innerHTML = `
+        <span class="btn-icon">🔔</span>
+        <span class="btn-label-full">Avisos & Sonido Activos</span>
+        <span class="btn-label-mob">Avisos ON</span>
+      `;
       notifBtn.style.color = '#2E7D32';
       notifBtn.style.borderColor = '#2E7D32';
     } else {
-      notifBtn.innerHTML = `🔕 Activar Avisos Sonoros`;
+      notifBtn.innerHTML = `
+        <span class="btn-icon">🔕</span>
+        <span class="btn-label-full">Activar Avisos Sonoros</span>
+        <span class="btn-label-mob">Avisos</span>
+      `;
       notifBtn.style.color = '';
       notifBtn.style.borderColor = '';
     }
@@ -283,7 +291,11 @@
       if (data.pgConnected && data.tableReady) {
         if (pill) {
           pill.className = 'db-pill cloud';
-          pill.innerHTML = `🟢 Supabase Cloud Conectado`;
+          pill.innerHTML = `
+            <span class="pill-dot">🟢</span>
+            <span class="pill-text-full">Supabase Cloud Conectado</span>
+            <span class="pill-text-mob">Conectado</span>
+          `;
           pill.title = `Conectado a Supabase. ${data.pgDetail?.reservationsCount || 0} reservas en la base de datos.`;
         }
         if (banner) banner.style.display = 'none';
@@ -294,7 +306,11 @@
           pill.className = 'db-pill';
           pill.style.background = '#FFF3CD';
           pill.style.color = '#856404';
-          pill.innerHTML = `🟡 Supabase: Falta crear tabla`;
+          pill.innerHTML = `
+            <span class="pill-dot">🟡</span>
+            <span class="pill-text-full">Supabase: Falta crear tabla</span>
+            <span class="pill-text-mob">Sin tabla</span>
+          `;
           pill.title = 'Proyecto Supabase conectado, pero falta ejecutar el script SQL para crear la tabla.';
         }
         if (banner) {
@@ -313,7 +329,11 @@
       } else {
         if (pill) {
           pill.className = 'db-pill';
-          pill.innerHTML = `🔴 BD No Conectada`;
+          pill.innerHTML = `
+            <span class="pill-dot">🔴</span>
+            <span class="pill-text-full">BD No Conectada</span>
+            <span class="pill-text-mob">Offline</span>
+          `;
           pill.title = data.pgDetail?.error || data.lastDbError || 'Base de datos no disponible';
         }
         if (banner) {
@@ -367,11 +387,19 @@
     if (!pill) return;
     if (isCloud) {
       pill.className = 'db-pill cloud';
-      pill.innerHTML = `🟢 PostgreSQL Cloud`;
+      pill.innerHTML = `
+        <span class="pill-dot">🟢</span>
+        <span class="pill-text-full">PostgreSQL Cloud</span>
+        <span class="pill-text-mob">Cloud</span>
+      `;
       pill.title = 'Base de datos conectada en la nube (Neon / Supabase / Vercel Postgres)';
     } else {
       pill.className = 'db-pill';
-      pill.innerHTML = `🟡 Modo Local / Respaldo`;
+      pill.innerHTML = `
+        <span class="pill-dot">🟡</span>
+        <span class="pill-text-full">Modo Local / Respaldo</span>
+        <span class="pill-text-mob">Local</span>
+      `;
       pill.title = 'Persistencia en memoria / archivo local. Conecta DATABASE_URL para producción permanente.';
     }
   }
@@ -1012,20 +1040,76 @@
     });
   }
 
-  $$('.nav-item button').forEach(btn => {
+  // Control del menú lateral en móviles
+  const burgerBtn = $('#admin-burger');
+  const sidebar = $('aside.admin-sidebar');
+  const sidebarBackdrop = $('#sidebar-backdrop');
+  const sidebarCloseBtn = $('#sidebar-close-btn');
+
+  function openSidebar() {
+    if (sidebar) sidebar.classList.add('open');
+    if (sidebarBackdrop) sidebarBackdrop.classList.add('active');
+  }
+
+  function closeSidebar() {
+    if (sidebar) sidebar.classList.remove('open');
+    if (sidebarBackdrop) sidebarBackdrop.classList.remove('active');
+  }
+
+  if (burgerBtn) burgerBtn.addEventListener('click', openSidebar);
+  if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', closeSidebar);
+  if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
+
+  function switchAdminTab(target) {
+    $$('.nav-item').forEach(li => li.classList.remove('active'));
+    const matchingNavBtn = $(`aside.admin-sidebar button[data-tab="${target}"]`);
+    if (matchingNavBtn && matchingNavBtn.parentElement) {
+      matchingNavBtn.parentElement.classList.add('active');
+    }
+
+    $$('.mob-nav-btn[data-tab]').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === target);
+    });
+
+    $$('.tab-section').forEach(sec => sec.style.display = 'none');
+    const targetSec = $(`#tab-${target}`);
+    if (targetSec) targetSec.style.display = 'block';
+
+    const titleMap = {
+      'reservas': 'Reservas',
+      'carta': 'Gestión de Carta',
+      'db': 'Base de Datos & Vercel'
+    };
+    const titleEl = $('#page-title');
+    if (titleEl && titleMap[target]) {
+      titleEl.textContent = titleMap[target];
+    }
+
+    if (target === 'carta') loadCartaManager();
+    if (target === 'db') checkDbHealth();
+
+    closeSidebar();
+  }
+
+  $$('.nav-item button[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const target = btn.getAttribute('data-tab');
-      $$('.nav-item').forEach(li => li.classList.remove('active'));
-      btn.parentElement.classList.add('active');
-
-      $$('.tab-section').forEach(sec => sec.style.display = 'none');
-      const targetSec = $(`#tab-${target}`);
-      if (targetSec) targetSec.style.display = 'block';
-
-      if (target === 'carta') loadCartaManager();
-      if (target === 'db') checkDbHealth();
+      switchAdminTab(btn.getAttribute('data-tab'));
     });
   });
+
+  $$('.mob-nav-btn[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchAdminTab(btn.getAttribute('data-tab'));
+    });
+  });
+
+  const mobLogoutBtn = $('#mob-logout-btn');
+  if (mobLogoutBtn) {
+    mobLogoutBtn.addEventListener('click', () => {
+      const logoutBtn = $('#logout-btn');
+      if (logoutBtn) logoutBtn.click();
+    });
+  }
 
   // Botones de diagnóstico de base de datos
   const btnRecheck = $('#btn-recheck-db');

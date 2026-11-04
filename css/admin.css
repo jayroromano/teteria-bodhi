@@ -43,6 +43,7 @@ body {
   color: var(--ink);
   line-height: 1.5;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* ================= LOGIN OVERLAY ================= */
@@ -597,17 +598,307 @@ table.admin-table tr:hover td {
   position: relative;
 }
 
-/* Responsive */
-@media (max-width: 900px) {
+/* ================= COMPONENTES MÓVILES ================= */
+.btn-label-mob {
+  display: none;
+}
+.btn-label-full {
+  display: inline;
+}
+.pill-text-mob {
+  display: none;
+}
+.pill-text-full {
+  display: inline;
+}
+
+.admin-burger {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  place-items: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.admin-burger:hover {
+  background: var(--sand);
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 12, 8, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 150;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.sidebar-backdrop.active {
+  display: block;
+  opacity: 1;
+}
+
+.sidebar-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--sidebar-text);
+  font-size: 1.8rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+  margin-left: auto;
+}
+
+/* Barra inferior móvil estilo App */
+.admin-mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: #FFFFFF;
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px));
+  justify-content: space-around;
+  align-items: center;
+}
+
+.mob-nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--mut);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font: 700 0.72rem var(--font-main);
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: all 0.2s;
+  flex: 1;
+  text-align: center;
+}
+
+.mob-nav-btn svg {
+  stroke-width: 2.2;
+}
+
+.mob-nav-btn.active {
+  color: var(--tost);
+  background: rgba(166, 106, 59, 0.12);
+}
+
+/* ================= RESPONSIVE MÓVIL Y TABLET ================= */
+@media (max-width: 860px) {
+  .admin-burger {
+    display: grid;
+  }
+
+  .sidebar-close-btn {
+    display: block;
+  }
+
+  .admin-mobile-nav {
+    display: flex;
+  }
+
+  .admin-main {
+    padding-bottom: 78px; /* Espacio para barra inferior */
+  }
+
   aside.admin-sidebar {
     position: fixed;
-    left: -260px;
+    left: -290px;
     top: 0;
     bottom: 0;
+    width: 270px;
     z-index: 200;
-    transition: left 0.3s ease;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 12px 0 35px rgba(0, 0, 0, 0.45);
   }
+
   aside.admin-sidebar.open {
     left: 0;
+  }
+
+  header.admin-topbar {
+    padding: 10px 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .topbar-left-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .topbar-title {
+    font-size: 1.35rem;
+    white-space: nowrap;
+  }
+
+  .db-pill {
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 6px;
+  }
+
+  .topbar-right button {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    border-radius: 8px;
+  }
+
+  .topbar-right #new-res-btn {
+    flex: 1.4;
+    font-weight: 700;
+    padding: 9px 8px;
+  }
+
+  .btn-label-full {
+    display: none !important;
+  }
+
+  .btn-label-mob {
+    display: inline !important;
+  }
+
+  .pill-text-full {
+    display: none !important;
+  }
+
+  .pill-text-mob {
+    display: inline !important;
+  }
+
+  .content-area {
+    padding: 14px 12px;
+  }
+
+  /* KPIs en grid 2x2 */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+  }
+
+  .stat-header {
+    font-size: 0.76rem;
+    margin-bottom: 4px;
+  }
+
+  .stat-sub {
+    font-size: 0.72rem;
+    margin-top: 4px;
+  }
+
+  /* Filtros */
+  .filters-card {
+    padding: 12px 14px;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .filter-group {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .filter-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .search-box {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  /* Tablas responsivas */
+  .table-card {
+    border-radius: 12px;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table.admin-table th,
+  table.admin-table td {
+    padding: 12px 10px;
+    font-size: 0.84rem;
+    white-space: nowrap;
+  }
+
+  .action-btns {
+    gap: 6px;
+  }
+
+  .action-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Modales */
+  .admin-modal-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  .admin-modal {
+    padding: 22px 16px;
+    border-radius: 20px 20px 0 0;
+    max-height: 88vh;
+    overflow-y: auto;
+    width: 100%;
   }
 }

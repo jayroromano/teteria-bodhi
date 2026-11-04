@@ -34,6 +34,8 @@
 
 <!-- ================= APLICACIÓN ADMIN ================= -->
 <div class="admin-app">
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
   <!-- SIDEBAR -->
   <aside class="admin-sidebar">
     <div class="sidebar-brand">
@@ -44,6 +46,7 @@
         <h2>Bodhi</h2>
         <span>Panel de Gestión</span>
       </div>
+      <button type="button" class="sidebar-close-btn" id="sidebar-close-btn" aria-label="Cerrar menú">×</button>
     </div>
 
     <ul class="nav-menu">
@@ -83,21 +86,34 @@
   <main class="admin-main">
     <header class="admin-topbar">
       <div class="topbar-left">
-        <h1 class="topbar-title" id="page-title">Reservas</h1>
-        <span class="db-pill" id="db-status-pill">Verificando DB...</span>
+        <button type="button" class="admin-burger" id="admin-burger" aria-label="Abrir menú de navegación">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-left-inner">
+          <h1 class="topbar-title" id="page-title">Reservas</h1>
+          <span class="db-pill" id="db-status-pill">
+            <span class="pill-dot">🟢</span>
+            <span class="pill-text-full">Supabase Cloud Conectado</span>
+            <span class="pill-text-mob">Conectado</span>
+          </span>
+        </div>
       </div>
 
       <div class="topbar-right">
-        <button type="button" class="btn-secondary" id="enable-notif-btn" title="Activar sonido de campana y avisos de escritorio">
-          🔕 Activar Avisos Sonoros
-        </button>
-        <button type="button" class="btn-secondary" id="refresh-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          Sincronizar
-        </button>
         <button type="button" class="btn-primary" id="new-res-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nueva Reserva Manual
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span class="btn-label-full">Nueva Reserva Manual</span>
+          <span class="btn-label-mob">Nueva Reserva</span>
+        </button>
+        <button type="button" class="btn-secondary" id="refresh-btn" title="Sincronizar reservas">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span class="btn-label-full">Sincronizar</span>
+          <span class="btn-label-mob">Sincr.</span>
+        </button>
+        <button type="button" class="btn-secondary" id="enable-notif-btn" title="Activar sonido de campana y avisos de escritorio">
+          <span class="btn-icon">🔕</span>
+          <span class="btn-label-full">Activar Avisos Sonoros</span>
+          <span class="btn-label-mob">Avisos</span>
         </button>
       </div>
     </header>
@@ -645,6 +661,26 @@ CREATE TABLE reservations (
     </form>
   </div>
 </div>
+
+<!-- NAVEGACIÓN INFERIOR MÓVIL ESTILO APP -->
+<nav class="admin-mobile-nav" id="admin-mobile-nav" aria-label="Navegación rápida móvil">
+  <button type="button" class="mob-nav-btn active" data-tab="reservas">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>Reservas</span>
+  </button>
+  <button type="button" class="mob-nav-btn" data-tab="carta">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    <span>Carta</span>
+  </button>
+  <button type="button" class="mob-nav-btn" data-tab="db">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+    <span>Ajustes</span>
+  </button>
+  <button type="button" class="mob-nav-btn" id="mob-logout-btn">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <span>Salir</span>
+  </button>
+</nav>
 
 <script src="js/admin.js"></script>
 </body>
