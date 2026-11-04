@@ -370,49 +370,15 @@ window.BusinessEngine = (function () {
     }
   }
 
-  // 4. Widget Flotante Selector de Negocios para demostraciones en vivo
-  function renderDemoSwitcher(available, currentSlug) {
-    if (!available || available.length <= 1) return;
-
-    let box = document.getElementById('template-demo-switcher');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = 'template-demo-switcher';
-      box.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 9999;
-        font-family: system-ui, -apple-system, sans-serif;
-      `;
-      document.body.appendChild(box);
-    }
-
-    const currentBiz = available.find(b => b.slug === currentSlug) || available[0];
-
-    box.innerHTML = `
-      <div style="background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(8px); border: 1.5px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 6px 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 1.1rem;">${currentBiz.emoji || '🏢'}</span>
-        <select id="select-demo-business" style="background: transparent; color: #FFFFFF; border: none; font-size: 0.86rem; font-weight: 700; cursor: pointer; outline: none; padding-right: 4px;">
-          ${available.map(b => `<option value="${b.slug}" ${b.slug === currentSlug ? 'selected' : ''} style="background: #1E293B; color: #FFFFFF;">${b.name} (${b.category || b.slug})</option>`).join('')}
-        </select>
-      </div>
-    `;
-
-    const select = box.querySelector('#select-demo-business');
-    if (select) {
-      select.addEventListener('change', (e) => {
-        const nextSlug = e.target.value;
-        localStorage.setItem('bodhi_active_business', nextSlug);
-        const url = new URL(window.location.href);
-        url.searchParams.set('b', nextSlug);
-        window.location.href = url.toString();
-      });
-    }
+  // 4. Widget Flotante Selector de Negocios (Desactivado para una experiencia limpia)
+  function renderDemoSwitcher() {
+    const existing = document.getElementById('template-demo-switcher');
+    if (existing) existing.remove();
   }
 
   // 5. Inicializar carga del negocio activo
   async function init() {
+    renderDemoSwitcher();
     const slug = getActiveSlug();
 
     try {
@@ -426,7 +392,7 @@ window.BusinessEngine = (function () {
 
           applyTheme(currentConfig.theme);
           applyContent(currentConfig, currentCatalog);
-          renderDemoSwitcher(availableBusinesses, data.activeSlug);
+          renderDemoSwitcher();
           return;
         }
       }
