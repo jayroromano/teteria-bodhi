@@ -37,7 +37,7 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-app.get('*', (req, res) => {
+app.use((req, res) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'Endpoint no encontrado' });
   }

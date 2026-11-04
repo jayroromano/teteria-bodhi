@@ -10,6 +10,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path fill='%23A66A3B' d='M5 12h19v5a8 8 0 0 1-8 8h-3a8 8 0 0 1-8-8v-5z'/><path fill='none' stroke='%233D2214' stroke-width='2' d='M24 14h2.5a3 3 0 0 1 0 6H23'/></svg>">
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('bodhi_theme');
+        if (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) t = 'dark';
+        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body>
 
@@ -184,13 +193,12 @@
       </div>
 
       <div class="tabs" id="tabs" role="tablist" aria-label="Categorías de la carta">
-        <button type="button" class="tab" aria-pressed="true">Cócteles</button>
-        <button type="button" class="tab" aria-pressed="false">Cachimbas</button>
-        <button type="button" class="tab" aria-pressed="false">Tés & Cafés</button>
-        <button type="button" class="tab" aria-pressed="false">Meriendas</button>
-        <button type="button" class="tab" aria-pressed="false">Cervezas</button>
-        <button type="button" class="tab" aria-pressed="false">Copas</button>
-        <button type="button" class="tab" aria-pressed="false">Refrescos & Vinos</button>
+        <button type="button" class="tab" aria-pressed="true">🍸 Cócteles</button>
+        <button type="button" class="tab" aria-pressed="false">💨 Cachimbas</button>
+        <button type="button" class="tab" aria-pressed="false">🥤 Refrescos</button>
+        <button type="button" class="tab" aria-pressed="false">🍺 Alcohol</button>
+        <button type="button" class="tab" aria-pressed="false">🫖 Tés, Cafés & Meriendas</button>
+        <button type="button" class="tab" aria-pressed="false">✨ Todos</button>
       </div>
 
       <div class="items-grid" id="items" aria-live="polite">

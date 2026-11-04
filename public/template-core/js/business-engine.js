@@ -48,18 +48,34 @@ window.BusinessEngine = (function () {
       document.head.appendChild(styleTag);
     }
 
-    const lightVars = theme.light ? Object.entries(theme.light).map(([k, v]) => `  --${k}: ${v};`).join('\n') : '';
-    const darkVars = theme.dark ? Object.entries(theme.dark).map(([k, v]) => `  --${k}: ${v};`).join('\n') : '';
+    function toKebab(str) {
+      return str.replace(/([A-Z])/g, '-$1').toLowerCase();
+    }
+
+    function formatVars(obj) {
+      if (!obj) return '';
+      const lines = [];
+      for (const [k, v] of Object.entries(obj)) {
+        const kebab = toKebab(k);
+        lines.push(`  --${kebab}: ${v};`);
+        if (kebab === 'btn-ink') lines.push(`  --btnink: ${v};`);
+        if (kebab === 'card-bg') lines.push(`  --cardbg: ${v};`);
+      }
+      return lines.join('\n');
+    }
+
+    const lightVars = formatVars(theme.light);
+    const darkVars = formatVars(theme.dark);
 
     styleTag.textContent = `
-      :root {
+      :root, html[data-theme="light"], body.light-mode {
         --font-title: ${theme.fontTitle || "'Abril Fatface', Georgia, serif"};
         --font-body: ${theme.fontBody || "'Figtree', sans-serif"};
         --radius: ${theme.borderRadius || '16px'};
         --radius-sm: ${theme.borderRadiusSmall || '10px'};
         ${lightVars}
       }
-      [data-theme="dark"], body.dark-mode {
+      html[data-theme="dark"], [data-theme="dark"], body.dark-mode {
         ${darkVars}
       }
       h1, h2, h3, .logo, .ticket-header .title {

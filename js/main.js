@@ -174,7 +174,7 @@
   },
   {
     "id": "te-verde-moruno",
-    "category": "Tés & Cafés",
+    "category": "Tés, Cafés & Meriendas",
     "name": "Té Verde Moruno con Hierbabuena",
     "description": "Té verde gunpowder, hierbabuena fresca andaluza y azúcar moreno servido en tetera tradicional.",
     "price": 1.5,
@@ -184,7 +184,7 @@
   },
   {
     "id": "te-chai-latte",
-    "category": "Tés & Cafés",
+    "category": "Tés, Cafés & Meriendas",
     "name": "Té Chai Latte Especiado",
     "description": "Té negro especiado con canela, cardamomo, clavo y jengibre, emulsionado con leche vaporizada.",
     "price": 2.5,
@@ -194,7 +194,7 @@
   },
   {
     "id": "te-matcha-japones",
-    "category": "Tés & Cafés",
+    "category": "Tés, Cafés & Meriendas",
     "name": "Té Matcha Japonés / Vainilla",
     "description": "Té verde matcha en polvo ceremonial batido al estilo tradicional o con toque dulce de vainilla (2,50€).",
     "price": 2.5,
@@ -204,7 +204,7 @@
   },
   {
     "id": "infusiones-clasicas",
-    "category": "Tés & Cafés",
+    "category": "Tés, Cafés & Meriendas",
     "name": "Infusiones Clásicas (Manzanilla / Tila / Menta Poleo)",
     "description": "Selección de hierbas e infusiones naturales digestivas y relajantes.",
     "price": 1.5,
@@ -214,7 +214,7 @@
   },
   {
     "id": "cafe-espresso-leche",
-    "category": "Tés & Cafés",
+    "category": "Tés, Cafés & Meriendas",
     "name": "Café (Solo / Cortado / Con Leche / Doble)",
     "description": "Café arábica de tueste natural recién molido. Solo (1,50€), cortado o con leche (1,60€), doble (2,60€).",
     "price": 1.6,
@@ -224,7 +224,7 @@
   },
   {
     "id": "cafe-especialidad-latte",
-    "category": "Tés & Cafés",
+    "category": "Tés, Cafés & Meriendas",
     "name": "Latte Macchiato de Sabores & Capuccino",
     "description": "Capuccino (2,80€), Café Irlandés con whisky (4,00€), Latte Macchiato Caramelo, Avellana, Vainilla o Chocolate Blanco (2,80€).",
     "price": 2.8,
@@ -234,7 +234,7 @@
   },
   {
     "id": "batidos-nesquik",
-    "category": "Tés & Cafés",
+    "category": "Tés, Cafés & Meriendas",
     "name": "Batidos (Chocolate / Fresa / Vainilla) & Nesquik",
     "description": "Batidos cremosos bien fríos (1,80€), Nesquik calentito o frío (1,60€) o carajillo flambeado (3,00€).",
     "price": 1.8,
@@ -244,7 +244,7 @@
   },
   {
     "id": "gofre-artesano",
-    "category": "Meriendas",
+    "category": "Tés, Cafés & Meriendas",
     "name": "Gofre Belga Artesano",
     "description": "Gofre crujiente recién hecho. Incluye 1 sirope o topping a elegir (Nutella, Lotus, Kinder, Fresa, Caramelo, etc.). Extra nata +0,50€.",
     "price": 4.5,
@@ -254,7 +254,7 @@
   },
   {
     "id": "crepe-dulce",
-    "category": "Meriendas",
+    "category": "Tés, Cafés & Meriendas",
     "name": "Crepe Dulce Recién Hecha",
     "description": "Fina masa de crepe dorada al momento con tu sirope favorito incluido (Dulce de leche, Chocolate blanco, Kinder, Pistacho...).",
     "price": 4.5,
@@ -264,7 +264,7 @@
   },
   {
     "id": "tortitas-americanas",
-    "category": "Meriendas",
+    "category": "Tés, Cafés & Meriendas",
     "name": "Torre de Tortitas (Pancakes)",
     "description": "Esponjosas tortitas americanas con 1 sirope o topping incluido. Prueba con Oreo, Filipinos o Kinder Bueno (+1€ extra topping).",
     "price": 4.5,
@@ -274,7 +274,7 @@
   },
   {
     "id": "cerveza-gran-via",
-    "category": "Cervezas",
+    "category": "Alcohol",
     "name": "Gran Vía (Caña / Maceta / Tercio / Tostada)",
     "description": "Rubia clásica de barril o tercio 1/3 (2,50€), Caña fría (1,50€), Maceta grande (3,00€) o Caña tostada (2,20€).",
     "price": 2.5,
@@ -284,7 +284,7 @@
   },
   {
     "id": "cubo-botellines",
-    "category": "Cervezas",
+    "category": "Alcohol",
     "name": "Cubo de 5 Botellines Estrella Galicia (1/5)",
     "description": "Cubo metálico con hielo y 5 botellines de 1/5 de Estrella Galicia para compartir con amigos.",
     "price": 5,
@@ -294,7 +294,7 @@
   },
   {
     "id": "estrella-1906-reserva",
-    "category": "Cervezas",
+    "category": "Alcohol",
     "name": "Estrella Galicia 1906 / Red Vintage",
     "description": "La colorada clásica 1906 Reserva Especial o Red Vintage (2,80€). También disponible Estrella sin gluten (2,80€).",
     "price": 2.8,
@@ -304,7 +304,7 @@
   },
   {
     "id": "alhambra-1925",
-    "category": "Cervezas",
+    "category": "Alcohol",
     "name": "Alhambra Reserva 1925 / Roja",
     "description": "La mítica verde de Alhambra (2,50€) o la Alhambra Reserva Roja de trago lento (2,80€).",
     "price": 2.5,
@@ -314,7 +314,7 @@
   },
   {
     "id": "cervezas-internacionales",
-    "category": "Cervezas",
+    "category": "Alcohol",
     "name": "Internacionales (Corona, Stella Artois, Budweiser, Heineken)",
     "description": "Corona mexicana con lima (3,00€), Stella Artois belga (3,00€), Budweiser (3,00€), Heineken o Mahou 5 Estrellas (2,50€).",
     "price": 3,
@@ -324,7 +324,7 @@
   },
   {
     "id": "cervezas-trigo-belgas",
-    "category": "Cervezas",
+    "category": "Alcohol",
     "name": "Cervezas de Trigo & Abadía Belga (Paulaner, Franziskaner, Leffe, Guinness)",
     "description": "Franziskaner rubia o negra (4,00€), Paulaner (4,50€), Leffe Blonde o Brune (3,50€), Modelo Negra (3,50€) o Guinness (3,50€).",
     "price": 3.5,
@@ -334,7 +334,7 @@
   },
   {
     "id": "radler-desperados-00",
-    "category": "Cervezas",
+    "category": "Alcohol",
     "name": "Radler Limón, Desperados Tequila & Mahou 0,0",
     "description": "Radler con limón (2,50€), Desperados con tequila (3,00€) o Mahou 0,0 Tostada sin alcohol (2,50€).",
     "price": 2.5,
@@ -344,7 +344,7 @@
   },
   {
     "id": "copas-ginebra",
-    "category": "Copas",
+    "category": "Alcohol",
     "name": "Copas de Ginebra (Rives, Beefeater, Tanqueray, Seagrams, Nordés)",
     "description": "Servidas en copa balón con hielo macizo y tónica/refresco: Rives (5€), Rives 1880/Exótica/Pink (6€), Larios 12 (6€), Tanqueray (6€), Beefeater (6€), Seagrams o Bombay Sapphire (6,50€), Nordés o Martin Millers (7,50€).",
     "price": 6,
@@ -354,7 +354,7 @@
   },
   {
     "id": "copas-ron",
-    "category": "Copas",
+    "category": "Alcohol",
     "name": "Copas de Ron (Barceló, Brugal, Legendario, Cacique, Arehucas, Imperial)",
     "description": "Cacique (5€), Bacardí (5,50€), Barceló, Brugal, Legendario, Arehucas, Bacardí Limón, Malibú o Pampero (6€), Barceló Imperial añejo (8€).",
     "price": 6,
@@ -364,7 +364,7 @@
   },
   {
     "id": "copas-whisky-vodka",
-    "category": "Copas",
+    "category": "Alcohol",
     "name": "Copas de Whisky & Vodka (Jack Daniels, Ballantines, Red Label, Absolut, Cîroc)",
     "description": "Dyc 8 (5€), Cutty Sark, White Label, Ballantines, JB, Johnnie Walker (6€), Jameson (6,50€), Jack Daniels Tennessee (7€). Vodka VH (5€), Absolut (6€), Cîroc (7,50€).",
     "price": 6,
@@ -374,7 +374,7 @@
   },
   {
     "id": "licores-chupitos",
-    "category": "Copas",
+    "category": "Alcohol",
     "name": "Licores (Baileys, Licor 43, Amaretto, Jägermeister, Ponche)",
     "description": "Baileys (5€), Licor 43 (6€), Amaretto Disaronno (6€), Jägermeister (6€), Carlos III (6€), Ponche Caballero (4,50€), Ruavieja o Martini (4€).",
     "price": 5,
@@ -384,7 +384,7 @@
   },
   {
     "id": "refrescos-variados",
-    "category": "Refrescos & Vinos",
+    "category": "Refrescos",
     "name": "Refrescos (Coca Cola, Zero, Fanta, Kas, 7up, Tónica Schweppes)",
     "description": "Botellín de cristal frío: Coca Cola normal o Zero, Fanta naranja o limón, Kas, 7up o Tónica Schweppes (clásica, berry o pomelo).",
     "price": 2,
@@ -394,7 +394,7 @@
   },
   {
     "id": "monster-energy",
-    "category": "Refrescos & Vinos",
+    "category": "Refrescos",
     "name": "Monster Energy (Original, Mango Loco, Zero) & Powerking",
     "description": "Lata de 500ml de Monster Energy (2,50€) o Powerking (2,00€). Si pides Monster para combinar con tu copa tiene recargo de +1€.",
     "price": 2.5,
@@ -404,7 +404,7 @@
   },
   {
     "id": "nestea-aquarade-zumos",
-    "category": "Refrescos & Vinos",
+    "category": "Refrescos",
     "name": "Nestea, Aquarade, Zumos, Limonada & Agua",
     "description": "Nestea limón o maracuyá (2,20€), Aquarade (2,20€), Zumos variados o Limonada (1,80€), Agua mineral (1,50€).",
     "price": 2.2,
@@ -414,7 +414,7 @@
   },
   {
     "id": "tinto-verano",
-    "category": "Refrescos & Vinos",
+    "category": "Alcohol",
     "name": "Tinto de Verano con Limón (o 0,0)",
     "description": "Vino tinto con refresco de limón y mucho hielo en copa grande.",
     "price": 2.5,
@@ -424,7 +424,7 @@
   },
   {
     "id": "vinos-de-jerez",
-    "category": "Refrescos & Vinos",
+    "category": "Alcohol",
     "name": "Vinos de Jerez (Tío Pepe, Oloroso, Solera, P.X, Amontillado, Tierra Blanca)",
     "description": "Copa de vino tradicional de la tierra: Tío Pepe fino (2,20€), Solera (2,20€), Oloroso (2,20€), Pedro Ximénez dulce (2,50€), Amontillado (2,80€), Tierra Blanca blanco (2,50€) o Croft Twist (2,50€).",
     "price": 2.2,
@@ -433,6 +433,71 @@
     "available": true
   }
 ];
+
+  let currentCategory = 'Cócteles';
+
+  // ==========================================
+  // TEMA OSCURO / CLARO
+  // ==========================================
+  const themeToggle = $('#theme-toggle');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function initTheme() {
+    const savedTheme = localStorage.getItem('bodhi_theme');
+    if (savedTheme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+    } else if (prefersDark.matches) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      updateThemeIcon('dark');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      updateThemeIcon('light');
+    }
+  }
+
+  function updateThemeIcon(theme) {
+    if (!themeToggle) return;
+    if (theme === 'dark') {
+      themeToggle.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+      themeToggle.setAttribute('aria-label', 'Cambiar a modo claro');
+    } else {
+      themeToggle.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+      themeToggle.setAttribute('aria-label', 'Cambiar a modo oscuro');
+    }
+  }
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const target = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', target);
+      localStorage.setItem('bodhi_theme', target);
+      updateThemeIcon(target);
+    });
+  }
+
+  initTheme();
+
+  // ==========================================
+  // MENÚ MÓVIL
+  // ==========================================
+  const burger = $('#burger');
+  const menu = $('#menu');
+  if (burger && menu) {
+    burger.addEventListener('click', () => {
+      const isOpen = menu.classList.toggle('open');
+      burger.setAttribute('aria-expanded', isOpen);
+    });
+
+    menu.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A' || e.target.closest('a')) {
+        menu.classList.remove('open');
+        burger.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
 
   // ==========================================
   // ESTADO EN TIEMPO REAL: ABIERTO / CERRADO
@@ -507,15 +572,25 @@
     renderCartaItems();
   }
 
+  const categoryIcons = {
+    'Cócteles': '🍸',
+    'Cachimbas': '💨',
+    'Refrescos': '🥤',
+    'Alcohol': '🍺',
+    'Tés, Cafés & Meriendas': '🫖',
+    'Todos': '✨',
+    'Cortes': '✂️',
+    'Barba': '🪒',
+    'Tratamientos': '💆'
+  };
+
   function getCategories() {
     const defaultOrder = [
       'Cócteles',
       'Cachimbas',
-      'Tés & Cafés',
-      'Meriendas',
-      'Cervezas',
-      'Copas',
-      'Refrescos & Vinos',
+      'Refrescos',
+      'Alcohol',
+      'Tés, Cafés & Meriendas',
       'Cortes',
       'Barba',
       'Tratamientos'
@@ -553,15 +628,21 @@
     tabsBox.innerHTML = '';
 
     const categories = getCategories();
-    if (!categories.includes(currentCategory) && categories.length > 0) {
-      currentCategory = categories[0];
+    const listToRender = [...categories];
+    if (categories.length > 1) {
+      listToRender.push('Todos');
     }
 
-    categories.forEach(cat => {
+    if (!listToRender.includes(currentCategory) && listToRender.length > 0) {
+      currentCategory = listToRender[0];
+    }
+
+    listToRender.forEach(cat => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'tab';
-      btn.textContent = cat;
+      const icon = categoryIcons[cat] ? categoryIcons[cat] + ' ' : '';
+      btn.innerHTML = '<span>' + icon + escapeHtml(cat) + '</span>';
       btn.setAttribute('aria-pressed', cat === currentCategory);
       btn.addEventListener('click', () => {
         currentCategory = cat;
@@ -579,7 +660,7 @@
 
     const query = filterQuery.toLowerCase().trim();
     const items = cartaData.filter(i => {
-      const matchCat = query ? true : i.category === currentCategory;
+      const matchCat = (currentCategory === 'Todos' || !currentCategory || query) ? true : i.category === currentCategory;
       const matchQuery = !query ||
         i.name.toLowerCase().includes(query) ||
         i.description.toLowerCase().includes(query) ||
@@ -621,7 +702,10 @@
             </div>
             <p>${escapeHtml(item.description)}</p>
           </div>
-          ${badgeHtml}
+          <div style="display:flex;gap:6px;align-items:center;margin-top:auto;flex-wrap:wrap;">
+            ${(currentCategory === 'Todos' || query) ? `<span style="font-size:0.75rem;font-weight:700;background:var(--sand);color:var(--ink);padding:2px 8px;border-radius:6px;">${categoryIcons[item.category] || '🏷️'} ${escapeHtml(item.category)}</span>` : ''}
+            ${badgeHtml}
+          </div>
         </div>
       `;
       container.appendChild(card);
