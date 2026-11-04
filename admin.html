@@ -573,18 +573,14 @@ CREATE TABLE reservations (
 
     <form id="new-res-form">
       <div style="display:grid;gap:12px;margin-bottom:18px;">
-        <div>
-          <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Nombre del cliente *</label>
-          <input id="m-n" required style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
-        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div>
-            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Teléfono *</label>
-            <input id="m-t" required style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
+            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Nombre del cliente *</label>
+            <input id="m-n" required placeholder="Ej: Carmen Gómez" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
           </div>
           <div>
-            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Email</label>
-            <input id="m-e" type="email" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
+            <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Teléfono *</label>
+            <input id="m-t" required placeholder="Ej: 612 34 56 78" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;">
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">

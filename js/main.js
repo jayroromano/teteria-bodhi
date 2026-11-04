@@ -520,7 +520,6 @@
 
       const name = $('#n').value.trim();
       const phone = $('#t').value.trim();
-      const email = $('#e') ? $('#e').value.trim() : '';
       const date = $('#d').value;
       const time = $('#h').value;
       const guests = $('#p').value;
@@ -543,7 +542,7 @@
         const dummyCode = `BDH-${Math.floor(1000 + Math.random() * 9000)}`;
         const localRes = {
           code: dummyCode,
-          name, phone, email, date, time, guests, zone, notes,
+          name, phone, date, time, guests, zone, notes,
           status: Number(guests) > 4 ? 'pending' : 'confirmed'
         };
         const waMsg = encodeURIComponent(
@@ -568,7 +567,7 @@
         const res = await fetch('/api/reservas', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, email, date, time, guests, zone, notes })
+          body: JSON.stringify({ name, phone, date, time, guests, zone, notes })
         });
 
         const data = await res.json();

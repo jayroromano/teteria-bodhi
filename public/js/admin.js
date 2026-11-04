@@ -517,10 +517,9 @@
         </td>
         <td>
           <div style="font-weight: 700;">${escapeHtml(r.name)}</div>
-          <a href="tel:${escapeHtml(r.phone)}" style="font-size: 0.85rem; color: var(--mut); text-decoration: underline;">
-            ${escapeHtml(r.phone)}
+          <a href="tel:${escapeHtml(r.phone)}" style="font-size: 0.85rem; color: var(--tost); text-decoration: none; font-weight: 600;">
+            📞 ${escapeHtml(r.phone)}
           </a>
-          ${r.email ? `<div style="font-size: 0.78rem; color: var(--mut);">${escapeHtml(r.email)}</div>` : ''}
         </td>
         <td>
           <strong>${r.guests} pers.</strong>
@@ -776,7 +775,6 @@
       const payload = {
         name: $('#m-n').value.trim(),
         phone: $('#m-t').value.trim(),
-        email: $('#m-e').value.trim(),
         date: $('#m-d').value,
         time: $('#m-h').value,
         guests: Number($('#m-p').value),
