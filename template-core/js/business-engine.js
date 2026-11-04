@@ -212,29 +212,27 @@ window.BusinessEngine = (function () {
       }
     }
 
-    // GALERÍA
+    // GALERÍA (conservar diseño nativo para Bodhi y formatear correctamente para nuevos negocios)
     if (config.gallery && Array.isArray(config.gallery.items)) {
       const galSec = document.querySelector('#galeria');
       if (galSec) {
         const tag = galSec.querySelector('.section-tag');
-        if (tag) tag.textContent = config.gallery.sectionTag || '';
+        if (tag && config.gallery.sectionTag && config.identity?.id !== 'bodhi') tag.textContent = config.gallery.sectionTag;
         const title = galSec.querySelector('h2');
-        if (title) title.textContent = config.gallery.title || '';
+        if (title && config.gallery.title && config.identity?.id !== 'bodhi') title.textContent = config.gallery.title;
         const sub = galSec.querySelector('.sub');
-        if (sub) sub.textContent = config.gallery.subtitle || '';
+        if (sub && config.gallery.subtitle && config.identity?.id !== 'bodhi') sub.textContent = config.gallery.subtitle;
 
         const mosaic = galSec.querySelector('.mosaic, .gallery-grid');
-        if (mosaic) {
+        if (mosaic && config.identity?.id !== 'bodhi') {
           mosaic.innerHTML = '';
           config.gallery.items.forEach((item, idx) => {
             const itemDiv = document.createElement('div');
-            itemDiv.className = `m-item m${idx + 1}`;
+            const spanClass = (idx === 0 || idx === 3) ? 't' : (idx === 4 ? 'w' : '');
+            itemDiv.className = `mosaic-item ${spanClass} m-item m${idx + 1}`.trim();
             itemDiv.innerHTML = `
-              <img src="${item.url}" alt="${item.caption || ''}" loading="lazy">
-              <div class="m-overlay">
-                <span class="m-tag">${item.tag || ''}</span>
-                <p>${item.caption || ''}</p>
-              </div>
+              <img src="${item.url}" alt="${item.caption || item.tag || 'Foto de galería'}" loading="lazy">
+              <div class="caption">${item.caption || item.tag || ''}</div>
             `;
             mosaic.appendChild(itemDiv);
           });
