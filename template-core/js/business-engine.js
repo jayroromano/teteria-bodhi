@@ -100,17 +100,19 @@ window.BusinessEngine = (function () {
       metaDesc.setAttribute('content', config.identity.seoDescription);
     }
 
-    // Logo & Nombre
-    const logoEls = document.querySelectorAll('.logo');
-    logoEls.forEach(el => {
-      const text = config.identity?.name || '';
-      if (config.identity?.logoImage) {
-        el.innerHTML = `<img src="${config.identity.logoImage}" alt="${text}" class="logo-img"><span>${text}</span>`;
-      } else {
-        const emoji = config.identity?.logoEmoji || '';
-        el.innerHTML = `<span style="margin-right:6px;">${emoji}</span><span>${text}</span>`;
-      }
-    });
+    // Logo & Nombre (solo personalizar dinámicamente si no es Bodhi nativo o si se especifica logoImage)
+    if (config.identity?.id !== 'bodhi' || config.identity?.logoImage) {
+      const logoEls = document.querySelectorAll('.logo');
+      logoEls.forEach(el => {
+        const text = config.identity?.name || '';
+        if (config.identity?.logoImage) {
+          el.innerHTML = `<img src="${config.identity.logoImage}" alt="${text}" class="logo-img"><span>${text}</span>`;
+        } else {
+          const emoji = config.identity?.logoEmoji || '';
+          el.innerHTML = `<span style="margin-right:6px;">${emoji}</span><span>${text}</span>`;
+        }
+      });
+    }
 
     // Tagline / Ciudad en barra superior
     const cityBadge = document.querySelector('.city-tag, .tag-city');
