@@ -63,8 +63,16 @@
     "sectionTag": "Sabores & Experiencias",
     "title": "Nuestra carta digital",
     "subtitle": "Selecciona una categoría o busca por ingrediente.",
-    "searchPlaceholder": "Buscar té, cóctel, cachimba, baklava...",
-    "defaultCategories": ["Tés", "Cócteles", "Otro"]
+    "searchPlaceholder": "Buscar cóctel, cachimba, té, gofre, cerveza, copa...",
+    "defaultCategories": [
+      "Cócteles",
+      "Cachimbas",
+      "Tés & Cafés",
+      "Meriendas",
+      "Cervezas",
+      "Copas",
+      "Refrescos & Vinos"
+    ]
   },
   "gallery": {
     "sectionTag": "Rincones & Detalles",

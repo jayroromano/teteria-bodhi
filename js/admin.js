@@ -880,9 +880,24 @@
       if (cat === 'Cócteles') {
         catBg = '#E1F5FE';
         catColor = '#0277BD';
-      } else if (cat === 'Tés') {
+      } else if (cat.includes('Cachimba')) {
+        catBg = '#F3E5F5';
+        catColor = '#7B1FA2';
+      } else if (cat.includes('Té') || cat.includes('Café')) {
         catBg = '#E8F5E9';
         catColor = '#2E7D32';
+      } else if (cat.includes('Merienda') || cat.includes('Dulce')) {
+        catBg = '#FFF8E1';
+        catColor = '#F57F17';
+      } else if (cat.includes('Cerveza')) {
+        catBg = '#FFF3E0';
+        catColor = '#E65100';
+      } else if (cat.includes('Copa')) {
+        catBg = '#EFEBE9';
+        catColor = '#4E342E';
+      } else if (cat.includes('Vino') || cat.includes('Refresco')) {
+        catBg = '#FCE4EC';
+        catColor = '#C2185B';
       }
 
       tr.innerHTML = `

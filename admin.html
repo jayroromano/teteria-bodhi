@@ -244,12 +244,16 @@
 
           <!-- Filtros de categoría de carta -->
           <div class="filters-card" style="margin-bottom: 18px; padding: 12px 18px;">
-            <div class="filter-group">
+            <div class="filter-group" style="flex-wrap: wrap; gap: 6px;">
               <span style="font-size: 0.85rem; font-weight: 700; color: var(--mut);">Filtrar por categoría:</span>
               <button type="button" class="filter-pill carta-filter-pill active" data-carta-cat="all">Todas</button>
               <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Cócteles">Cócteles</button>
-              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Tés">Tés</button>
-              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Otro">Otro</button>
+              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Cachimbas">Cachimbas</button>
+              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Tés & Cafés">Tés & Cafés</button>
+              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Meriendas">Meriendas</button>
+              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Cervezas">Cervezas</button>
+              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Copas">Copas</button>
+              <button type="button" class="filter-pill carta-filter-pill" data-carta-cat="Refrescos & Vinos">Refrescos & Vinos</button>
             </div>
             <div style="font-size: 0.85rem; color: var(--mut); margin-left: auto;" id="carta-count-info">
               Cargando productos...
@@ -527,9 +531,13 @@ CREATE TABLE reservations (
           <div>
             <label style="display:block;font-size:0.85rem;font-weight:700;margin-bottom:4px;">Categoría *</label>
             <select id="prod-category" required style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:0.95rem;background:var(--bg);color:var(--ink);">
-              <option value="Cócteles">Cócteles</option>
-              <option value="Tés">Tés</option>
-              <option value="Otro">Otro</option>
+              <option value="Cócteles" selected>Cócteles</option>
+              <option value="Cachimbas">Cachimbas</option>
+              <option value="Tés & Cafés">Tés & Cafés</option>
+              <option value="Meriendas">Meriendas</option>
+              <option value="Cervezas">Cervezas</option>
+              <option value="Copas">Copas</option>
+              <option value="Refrescos & Vinos">Refrescos & Vinos</option>
             </select>
           </div>
           <div>

@@ -179,82 +179,86 @@
         </div>
         <div class="carta-search">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="carta-search-input" placeholder="Buscar té, cóctel, cachimba, baklava..." aria-label="Buscar en la carta">
+          <input type="text" id="carta-search-input" placeholder="Buscar cóctel, cachimba, té, gofre, cerveza, copa..." aria-label="Buscar en la carta">
         </div>
       </div>
 
       <div class="tabs" id="tabs" role="tablist" aria-label="Categorías de la carta">
-        <button type="button" class="tab" aria-pressed="true">Tés</button>
-        <button type="button" class="tab" aria-pressed="false">Cócteles</button>
-        <button type="button" class="tab" aria-pressed="false">Otro</button>
+        <button type="button" class="tab" aria-pressed="true">Cócteles</button>
+        <button type="button" class="tab" aria-pressed="false">Cachimbas</button>
+        <button type="button" class="tab" aria-pressed="false">Tés & Cafés</button>
+        <button type="button" class="tab" aria-pressed="false">Meriendas</button>
+        <button type="button" class="tab" aria-pressed="false">Cervezas</button>
+        <button type="button" class="tab" aria-pressed="false">Copas</button>
+        <button type="button" class="tab" aria-pressed="false">Refrescos & Vinos</button>
       </div>
 
       <div class="items-grid" id="items" aria-live="polite">
-        <!-- Tarjeta precargada 1 -->
+        <!-- Tarjeta 1: Mojito -->
         <article class="menu-card">
           <div class="thumb">
-            <img src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80" alt="Té Verde Moruno">
+            <img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=400&q=80" alt="Mojito Tradicional">
           </div>
           <div class="info">
             <div>
               <div class="title-row">
-                <h3>Té Verde Moruno Tradicional</h3>
-                <span class="price">3,80 €</span>
+                <h3>Mojito Tradicional</h3>
+                <span class="price">6,50 €</span>
               </div>
-              <p>Té verde gunpowder seleccionado, hierbabuena fresca de la huerta andaluza y azúcar moreno en tetera de plata.</p>
+              <p>Empieza suave, como quien no quiere la cosa... y acaba haciendo que le escribas a tu ex. Lima, hierbabuena y ron con ganas de joderte el autocontrol.</p>
             </div>
-            <span class="badge top">Especialidad</span>
+            <span class="badge top">Favorito</span>
           </div>
         </article>
 
-        <!-- Tarjeta precargada 2 -->
+        <!-- Tarjeta 2: Piña Colada -->
         <article class="menu-card">
           <div class="thumb">
-            <img src="https://images.unsplash.com/photo-1561336313-0bd5e0b27ec8?auto=format&fit=crop&w=400&q=80" alt="Té Pakistaní">
+            <img src="https://images.unsplash.com/photo-1587223962716-6ddaaa2566b6?auto=format&fit=crop&w=400&q=80" alt="Piña Colada">
           </div>
           <div class="info">
             <div>
               <div class="title-row">
-                <h3>Té Pakistaní Especiado</h3>
-                <span class="price">4,20 €</span>
+                <h3>Piña Colada</h3>
+                <span class="price">7,00 €</span>
               </div>
-              <p>Mezcla secreta de té negro, canela en rama, cardamomo verde, clavo y leche cremosa emulsionada.</p>
+              <p>Sabe a coco, piña, ron y decisiones cuestionables. Ideal para olvidarte de todo… incluido cómo llegaste a casa anoche.</p>
             </div>
-            <span class="badge top">Top Ventas</span>
+            <span class="badge top">Tropical</span>
           </div>
         </article>
 
-        <!-- Tarjeta precargada 3 -->
+        <!-- Tarjeta 3: Rebujito Frozen -->
         <article class="menu-card">
           <div class="thumb">
-            <img src="https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80" alt="Bodhi Signature Velvet">
+            <img src="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=400&q=80" alt="Rebujito Frozen">
           </div>
           <div class="info">
             <div>
               <div class="title-row">
-                <h3>Bodhi Signature Velvet</h3>
-                <span class="price">14,00 €</span>
+                <h3>Rebujito Frozen</h3>
+                <span class="price">6,50 €</span>
               </div>
-              <p>Nuestra mezcla de la casa: frutos del bosque silvestres, toque glacial de menta suave y base perfumada.</p>
+              <p>Para los que van a la feria solo a llenar el feed de postureo. Vino fino, limón, hierbabuena y gaseosa hechos hielo.</p>
             </div>
-            <span class="badge top">Top Ventas</span>
+            <span class="badge">Especial Jerez</span>
           </div>
         </article>
 
-        <!-- Tarjeta precargada 4 -->
+        <!-- Tarjeta 4: Cachimba -->
         <article class="menu-card">
           <div class="thumb">
-            <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80" alt="Bodhi Tea Spritz">
+            <img src="https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80" alt="Cachimba Sabores Afrutados">
           </div>
           <div class="info">
             <div>
               <div class="title-row">
-                <h3>Bodhi Tea Spritz</h3>
-                <span class="price">7,50 €</span>
+                <h3>Cachimba Sabores Afrutados</h3>
+                <span class="price">10,00 €</span>
               </div>
-              <p>Reducción artesanal de té Earl Grey, flor de saúco St. Germain, cava andaluz brut y twist de pomelo.</p>
+              <p>Melón con menta, Sandía menta, Coco, Frutas exóticas, Piña helada, Frutos rojos o Chuche de Coca Cola. ¡Combínalos como quieras!</p>
             </div>
-            <span class="badge">Autor</span>
+            <span class="badge top">10€ Completa</span>
           </div>
         </article>
       </div>
