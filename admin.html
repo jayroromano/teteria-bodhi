@@ -88,6 +88,9 @@
       </div>
 
       <div class="topbar-right">
+        <button type="button" class="btn-secondary" id="enable-notif-btn" title="Activar sonido de campana y avisos de escritorio">
+          🔕 Activar Avisos Sonoros
+        </button>
         <button type="button" class="btn-secondary" id="refresh-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           Sincronizar
@@ -281,6 +284,57 @@ CREATE TABLE reservations (
   admin_notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );</pre>
+
+          <h3 style="font-size: 1.3rem; margin: 30px 0 12px; color: var(--primary);">📲 Notificaciones Automáticas en tu Móvil</h3>
+          <p style="color: var(--mut); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+            Elige el canal que prefieras para enterarte de cada reserva al instante en tu teléfono:
+          </p>
+          <div style="display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 10px;">
+            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 18px;">
+              <h4 style="font-size: 1.05rem; margin-bottom: 6px;">💬 Opción 1: WhatsApp al Móvil (CallMeBot Gratis)</h4>
+              <p style="font-size: 0.85rem; color: var(--mut); margin-bottom: 10px;">
+                Recibe un WhatsApp automático a tu móvil personal cada vez que un cliente reserva:
+              </p>
+              <ol style="font-size: 0.82rem; padding-left: 18px; line-height: 1.6;">
+                <li>Envía por WhatsApp al número <code>+34 644 10 55 84</code> el texto: <code>I allow callmebot to send me messages</code></li>
+                <li>Te responderá en segundos con tu <strong>apikey</strong>.</li>
+                <li>En Vercel (Settings → Environment Variables) añade:<br>
+                  <code>WHATSAPP_NOTIFY_PHONE=346XXXXXXXX</code><br>
+                  <code>WHATSAPP_NOTIFY_APIKEY=tu_apikey</code>
+                </li>
+              </ol>
+            </div>
+
+            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 18px;">
+              <h4 style="font-size: 1.05rem; margin-bottom: 6px;">✈️ Opción 2: Telegram Bot (Gratis)</h4>
+              <p style="font-size: 0.85rem; color: var(--mut); margin-bottom: 10px;">
+                Crea un bot de avisos exclusivo para tu tetería en Telegram:
+              </p>
+              <ol style="font-size: 0.82rem; padding-left: 18px; line-height: 1.6;">
+                <li>En Telegram busca <code>@BotFather</code> y escribe <code>/newbot</code>.</li>
+                <li>Copia el token que te proporcione.</li>
+                <li>En Vercel añade:<br>
+                  <code>TELEGRAM_BOT_TOKEN=123456:ABC...</code><br>
+                  <code>TELEGRAM_CHAT_ID=tu_chat_id</code>
+                </li>
+              </ol>
+            </div>
+
+            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 18px;">
+              <h4 style="font-size: 1.05rem; margin-bottom: 6px;">✉️ Opción 3: Correo Electrónico (Resend)</h4>
+              <p style="font-size: 0.85rem; color: var(--mut); margin-bottom: 10px;">
+                Recibe un email con todos los datos detallados:
+              </p>
+              <ol style="font-size: 0.82rem; padding-left: 18px; line-height: 1.6;">
+                <li>Crea cuenta gratis en <a href="https://resend.com" target="_blank" style="color:var(--tost);">resend.com</a>.</li>
+                <li>Copia tu API Key de Resend.</li>
+                <li>En Vercel añade:<br>
+                  <code>RESEND_API_KEY=re_...</code><br>
+                  <code>ADMIN_EMAIL=tu@correo.com</code>
+                </li>
+              </ol>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,79 @@
 const db = require('../lib/db');
+const https = require('https');
+
+// Notificaciones automáticas al administrador cuando entra una reserva
+async function sendAdminNotifications(reservation) {
+  const textMsg = `🛎️ ¡NUEVA RESERVA EN TETERÍA BODHI!
+👤 Cliente: ${reservation.name}
+📞 Teléfono: ${reservation.phone}
+📅 Fecha: ${reservation.date} a las ${reservation.time} h
+👥 Personas: ${reservation.guests} (Zona ${reservation.zone})
+📝 Notas: ${reservation.notes || 'Ninguna'}
+🏷️ Código: ${reservation.code}`;
+
+  // 1. WhatsApp al móvil del dueño (vía CallMeBot gratuito)
+  const waPhone = process.env.WHATSAPP_NOTIFY_PHONE;
+  const waKey = process.env.WHATSAPP_NOTIFY_APIKEY;
+  if (waPhone && waKey) {
+    try {
+      const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(waPhone)}&text=${encodeURIComponent(textMsg)}&apikey=${encodeURIComponent(waKey)}`;
+      https.get(url, () => {}).on('error', (e) => console.warn('Error WhatsApp notification:', e.message));
+    } catch (e) {}
+  }
+
+  // 2. Telegram Bot al móvil del dueño (Gratuito)
+  const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+  const tgChatId = process.env.TELEGRAM_CHAT_ID;
+  if (tgToken && tgChatId) {
+    try {
+      const payload = JSON.stringify({ chat_id: tgChatId, text: textMsg });
+      const req = https.request({
+        hostname: 'api.telegram.org',
+        path: `/bot${tgToken}/sendMessage`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) }
+      });
+      req.on('error', (e) => console.warn('Error Telegram notification:', e.message));
+      req.write(payload);
+      req.end();
+    } catch (e) {}
+  }
+
+  // 3. Email con Resend (Gratis 3.000 emails/mes)
+  const resendKey = process.env.RESEND_API_KEY;
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (resendKey && adminEmail) {
+    try {
+      const payload = JSON.stringify({
+        from: 'Tetería Bodhi <onboarding@resend.dev>',
+        to: [adminEmail],
+        subject: `🛎️ Nueva Reserva: ${reservation.name} (${reservation.guests} pers.)`,
+        html: `
+          <h2>Nueva reserva recibida en Tetería Bodhi</h2>
+          <p><strong>Cliente:</strong> ${reservation.name}</p>
+          <p><strong>Teléfono:</strong> <a href="tel:${reservation.phone}">${reservation.phone}</a></p>
+          <p><strong>Fecha y Hora:</strong> ${reservation.date} a las ${reservation.time} h</p>
+          <p><strong>Comensales:</strong> ${reservation.guests} personas (Zona ${reservation.zone})</p>
+          <p><strong>Observaciones:</strong> ${reservation.notes || 'Sin observaciones'}</p>
+          <p><strong>Código:</strong> ${reservation.code}</p>
+        `
+      });
+      const req = https.request({
+        hostname: 'api.resend.com',
+        path: '/emails',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${resendKey}`,
+          'Content-Length': Buffer.byteLength(payload)
+        }
+      });
+      req.on('error', (e) => console.warn('Error Resend email notification:', e.message));
+      req.write(payload);
+      req.end();
+    } catch (e) {}
+  }
+}
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -110,6 +185,9 @@ module.exports = async function handler(req, res) {
         zone: zone || 'indiferente',
         notes: (notes || '').trim()
       });
+
+      // Disparar notificaciones configuradas (WhatsApp / Telegram / Email)
+      sendAdminNotifications(newReservation).catch(() => {});
 
       // Construir enlace de WhatsApp directo para confirmación del cliente
       const teteriaWhatsapp = '34600000000'; // Número de la tetería

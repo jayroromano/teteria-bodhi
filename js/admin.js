@@ -10,6 +10,9 @@
   const isFileProtocol = window.location.protocol === 'file:';
 
   let authToken = localStorage.getItem('bodhi_admin_token') || '';
+  let knownCodes = new Set();
+  let isInitialLoad = true;
+
   let allReservations = [
     {
       id: "res_1730730001",
@@ -87,11 +90,82 @@
       created_at: new Date().toISOString()
     }
   ];
+
   let currentFilter = {
-    dateQuick: 'all', // 'today', 'tomorrow', 'all'
+    dateQuick: 'all',
     status: 'all',
     search: ''
   };
+
+  // ==========================================
+  // SONIDO & NOTIFICACIONES DE ESCRITORIO
+  // ==========================================
+  function playBellSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Sonido de campana de recepción 🛎️
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, now); // Nota A5
+      osc.frequency.exponentialRampToValueAtTime(1320, now + 0.08); // E6
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 1.2);
+    } catch (e) {
+      console.warn('Audio no permitido todavía:', e);
+    }
+  }
+
+  function showBrowserNotification(r) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('🛎️ ¡Nueva Reserva en Tetería Bodhi!', {
+          body: `${r.name} · ${r.guests} personas para el ${r.date} a las ${r.time} h`,
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" fill="%233D2214"/><path fill="%23FFF" d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg>'
+        });
+      } catch (e) {}
+    }
+  }
+
+  const notifBtn = $('#enable-notif-btn');
+  function updateNotifBtn() {
+    if (!notifBtn) return;
+    if ('Notification' in window && Notification.permission === 'granted') {
+      notifBtn.innerHTML = `🔔 Avisos & Sonido Activos`;
+      notifBtn.style.color = '#2E7D32';
+      notifBtn.style.borderColor = '#2E7D32';
+    } else {
+      notifBtn.innerHTML = `🔕 Activar Avisos Sonoros`;
+      notifBtn.style.color = '';
+      notifBtn.style.borderColor = '';
+    }
+  }
+
+  if (notifBtn) {
+    notifBtn.addEventListener('click', async () => {
+      playBellSound();
+      if ('Notification' in window) {
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+          showAdminToast('¡Notificaciones de escritorio y sonido activados!', 'success');
+          new Notification('Tetería Bodhi', { body: 'Las notificaciones de reservas están activadas correctamente.' });
+        } else {
+          showAdminToast('Permiso de notificaciones denegado en el navegador.', 'danger');
+        }
+      }
+      updateNotifBtn();
+    });
+  }
+
+  updateNotifBtn();
 
   // ==========================================
   // AUTENTICACIÓN
@@ -109,15 +183,9 @@
     }
 
     if (isFileProtocol) {
-      if (password === 'bodhi2026') {
-        authToken = 'bodhi_token_local';
-        localStorage.setItem('bodhi_admin_token', authToken);
-        hideLogin();
-        updateCloudDbPill(false);
-        loadDashboard();
-      } else {
-        loginError.textContent = 'Contraseña incorrecta (por defecto: bodhi2026)';
-      }
+      hideLogin();
+      updateCloudDbPill(false);
+      loadDashboard();
       return;
     }
 
@@ -134,8 +202,6 @@
         showLogin();
       }
     } catch (e) {
-      console.warn('Error verificando sesión admin:', e);
-      // Permitir continuar si no hay conexión temporal pero hay token
       hideLogin();
       loadDashboard();
     }
@@ -154,6 +220,19 @@
       e.preventDefault();
       loginError.textContent = '';
       const password = loginPass.value.trim();
+
+      if (isFileProtocol) {
+        if (password === 'bodhi2026') {
+          authToken = 'bodhi_token_local';
+          localStorage.setItem('bodhi_admin_token', authToken);
+          hideLogin();
+          updateCloudDbPill(false);
+          loadDashboard();
+        } else {
+          loginError.textContent = 'Contraseña incorrecta (por defecto: bodhi2026)';
+        }
+        return;
+      }
 
       try {
         const res = await fetch('/api/admin-login', {
@@ -195,15 +274,15 @@
       pill.title = 'Base de datos conectada en la nube (Neon / Supabase / Vercel Postgres)';
     } else {
       pill.className = 'db-pill';
-      pill.innerHTML = `🟡 Modo Local / JSON`;
-      pill.title = 'Persistencia en archivo JSON local / memoria. Conecta DATABASE_URL para producción permanente.';
+      pill.innerHTML = `🟡 Modo Local / Respaldo`;
+      pill.title = 'Persistencia en memoria / archivo local. Conecta DATABASE_URL para producción permanente.';
     }
   }
 
   // ==========================================
   // CARGA DE RESERVAS Y KPIs
   // ==========================================
-  async function loadDashboard() {
+  async function loadDashboard(isBackgroundSync = false) {
     if (isFileProtocol) {
       renderTable();
       updateKpis({
@@ -227,13 +306,32 @@
 
       const data = await res.json();
       if (res.ok && data.success) {
-        allReservations = data.reservations || [];
+        const freshList = data.reservations || [];
+
+        // Detectar si han entrado reservas nuevas desde la última consulta
+        if (!isInitialLoad) {
+          const incoming = freshList.filter(r => !knownCodes.has(r.code));
+          if (incoming.length > 0) {
+            playBellSound();
+            incoming.forEach(r => {
+              showBrowserNotification(r);
+              showAdminToast(`🛎️ ¡Nueva reserva! ${r.name} (${r.guests} pers. - ${r.time}h)`, 'success');
+            });
+          }
+        }
+
+        freshList.forEach(r => knownCodes.add(r.code));
+        isInitialLoad = false;
+
+        allReservations = freshList;
         updateKpis(data.stats);
         renderTable();
       }
     } catch (e) {
-      console.error('Error cargando reservas:', e);
-      showAdminToast('Error cargando los datos del servidor.', 'danger');
+      if (!isBackgroundSync) {
+        console.error('Error cargando reservas:', e);
+        showAdminToast('Error sincronizando reservas.', 'danger');
+      }
     }
   }
 
@@ -245,6 +343,13 @@
     $('#kpi-pending').textContent = stats.pending || 0;
   }
 
+  // Sondeo automático cada 18 segundos para detectar reservas nuevas sin recargar la página
+  setInterval(() => {
+    if (authToken) {
+      loadDashboard(true);
+    }
+  }, 18000);
+
   // ==========================================
   // FILTRADO Y RENDERIZADO DE TABLA
   // ==========================================
@@ -255,14 +360,11 @@
     const tomorrow = tomDate.toISOString().split('T')[0];
 
     return allReservations.filter(r => {
-      // Filtro de fecha rápida
       if (currentFilter.dateQuick === 'today' && r.date !== today) return false;
       if (currentFilter.dateQuick === 'tomorrow' && r.date !== tomorrow) return false;
 
-      // Filtro de estado
       if (currentFilter.status !== 'all' && r.status !== currentFilter.status) return false;
 
-      // Filtro de búsqueda
       if (currentFilter.search) {
         const q = currentFilter.search.toLowerCase();
         const matchName = (r.name || '').toLowerCase().includes(q);
@@ -363,6 +465,14 @@
   // ==========================================
   window.adminApp = {
     async updateStatus(id, newStatus) {
+      if (isFileProtocol) {
+        const item = allReservations.find(r => r.id === id);
+        if (item) item.status = newStatus;
+        showAdminToast(`Reserva actualizada a "${translateStatus(newStatus)}"`, 'success');
+        loadDashboard();
+        return;
+      }
+
       try {
         const res = await fetch('/api/reservas', {
           method: 'PATCH',
@@ -391,6 +501,10 @@
     },
 
     async toggleMenuAvailable(id, currentAvailable) {
+      if (isFileProtocol) {
+        showAdminToast('Disponibilidad actualizada (modo local).', 'success');
+        return;
+      }
       try {
         const res = await fetch('/api/carta', {
           method: 'PATCH',
@@ -410,13 +524,21 @@
     }
   };
 
-  // Guardar notas internas
   const notesForm = $('#notes-form');
   if (notesForm) {
     notesForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const id = $('#modal-res-id').value;
       const admin_notes = $('#modal-res-notes').value.trim();
+
+      if (isFileProtocol) {
+        const item = allReservations.find(r => r.id === id);
+        if (item) item.admin_notes = admin_notes;
+        $('#notes-modal').classList.remove('active');
+        showAdminToast('Nota guardada.', 'success');
+        loadDashboard();
+        return;
+      }
 
       try {
         const res = await fetch('/api/reservas', {
@@ -474,7 +596,6 @@
     });
   }
 
-  // Exportar a CSV
   const exportBtn = $('#export-csv-btn');
   if (exportBtn) {
     exportBtn.addEventListener('click', () => {
@@ -500,7 +621,6 @@
     });
   }
 
-  // Imprimir lista de servicio
   const printBtn = $('#print-btn');
   if (printBtn) {
     printBtn.addEventListener('click', () => {
@@ -539,6 +659,15 @@
         notes: $('#m-o').value.trim(),
         status: 'confirmed'
       };
+
+      if (isFileProtocol) {
+        const newCode = `BDH-${Math.floor(1000 + Math.random() * 9000)}`;
+        allReservations.unshift({ id: `res_${Date.now()}`, code: newCode, ...payload, created_at: new Date().toISOString() });
+        newResModal.classList.remove('active');
+        showAdminToast(`Reserva ${newCode} creada con éxito.`, 'success');
+        loadDashboard();
+        return;
+      }
 
       try {
         const res = await fetch('/api/reservas', {
@@ -599,7 +728,6 @@
     }
   }
 
-  // Pestañas del sidebar
   $$('.nav-item button').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = btn.getAttribute('data-tab');
@@ -635,7 +763,6 @@
     }, 3800);
   }
 
-  // Helpers
   function escapeHtml(s) {
     if (!s) return '';
     return String(s).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c] || c));
@@ -653,8 +780,8 @@
   }
 
   function translateZone(z) {
-    if (z === 'int') return '🛋️ Interior';
-    if (z === 'ter') return '🌿 Terraza';
+    if (z === 'int' || z === 'interior') return '🛋️ Interior';
+    if (z === 'ter' || z === 'terraza') return '🌿 Terraza';
     return '✨ Indiferente';
   }
 
@@ -676,7 +803,6 @@
     return `Hace ${Math.floor(h / 24)} d`;
   }
 
-  // Inicializar
   checkAuth();
 
 })();
