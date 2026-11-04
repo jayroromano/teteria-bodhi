@@ -280,15 +280,36 @@
       const bannerMsg = $('#db-alert-message');
       const bannerIcon = $('#db-alert-icon');
 
-      if (data.pgConnected) {
+      if (data.pgConnected && data.tableReady) {
         if (pill) {
           pill.className = 'db-pill cloud';
-          pill.innerHTML = `🟢 PostgreSQL Conectado (${data.pgDetail?.database || 'Cloud'})`;
-          pill.title = `Conectado a PostgreSQL. ${data.pgDetail?.reservationsCount || 0} reservas en la base de datos.`;
+          pill.innerHTML = `🟢 Supabase Cloud Conectado`;
+          pill.title = `Conectado a Supabase. ${data.pgDetail?.reservationsCount || 0} reservas en la base de datos.`;
+        }
+        if (banner) banner.style.display = 'none';
+        const setupCard = $('#supabase-setup-card');
+        if (setupCard) setupCard.style.display = 'none';
+      } else if (data.cloudDbConfigured && !data.tableReady) {
+        if (pill) {
+          pill.className = 'db-pill';
+          pill.style.background = '#FFF3CD';
+          pill.style.color = '#856404';
+          pill.innerHTML = `🟡 Supabase: Falta crear tabla`;
+          pill.title = 'Proyecto Supabase conectado, pero falta ejecutar el script SQL para crear la tabla.';
         }
         if (banner) {
-          banner.style.display = 'none';
+          banner.style.display = 'flex';
+          banner.style.background = '#FFF3CD';
+          banner.style.border = '1.5px solid #FFEBAA';
+          banner.style.color = '#856404';
+          if (bannerIcon) bannerIcon.textContent = '⚡';
+          if (bannerTitle) bannerTitle.textContent = 'Tu proyecto Supabase está conectado, pero falta crear la tabla "reservations"';
+          if (bannerMsg) {
+            bannerMsg.innerHTML = `Para que las reservas se guarden de forma permanente en Supabase, pulsa el botón <strong>"⚙️ Diagnóstico & Configurar"</strong>, copia el código SQL y ejecútalo en Supabase en 1 clic.`;
+          }
         }
+        const setupCard = $('#supabase-setup-card');
+        if (setupCard) setupCard.style.display = 'block';
       } else {
         if (pill) {
           pill.className = 'db-pill';
@@ -315,22 +336,26 @@
       const dbDiagError = $('#db-diag-error');
       const dbDiagRows = $('#db-diag-rows');
       if (dbDiagStatus) {
-        dbDiagStatus.innerHTML = data.pgConnected
-          ? '<span style="color:#2E7D32; font-weight:700;">🟢 Conectado con éxito a PostgreSQL</span>'
-          : '<span style="color:#C62828; font-weight:700;">🔴 Desconectado o con error de credenciales</span>';
+        dbDiagStatus.innerHTML = (data.pgConnected && data.tableReady)
+          ? '<span style="color:#2E7D32; font-weight:700;">🟢 Conectado con éxito a Supabase Cloud</span>'
+          : (data.cloudDbConfigured && !data.tableReady)
+            ? '<span style="color:#E65100; font-weight:700;">🟡 Supabase Conectado (Falta crear tabla)</span>'
+            : '<span style="color:#C62828; font-weight:700;">🔴 Desconectado o con error de credenciales</span>';
       }
       if (dbDiagVar) {
-        dbDiagVar.textContent = data.detectedEnvVar || 'Ninguna variable de base de datos detectada en Vercel';
+        dbDiagVar.textContent = 'SUPABASE_URL (https://vgvijpknawgrjctywywq.supabase.co)';
       }
       if (dbDiagError) {
-        dbDiagError.textContent = data.pgConnected
-          ? 'Conexión verificada sin errores. Las tablas están sincronizadas.'
-          : (data.pgDetail?.error || data.lastDbError || 'Falta añadir DATABASE_URL en Settings > Environment Variables de tu proyecto en Vercel.');
+        dbDiagError.textContent = (data.pgConnected && data.tableReady)
+          ? 'Conexión verificada sin errores. Las tablas están sincronizadas y listas.'
+          : (data.cloudDbConfigured && !data.tableReady)
+            ? 'La API de Supabase respondió correctamente, pero falta crear la tabla public.reservations. Ejecuta el script SQL en Supabase.'
+            : (data.pgDetail?.error || data.lastDbError || 'Error de conexión.');
       }
       if (dbDiagRows) {
-        dbDiagRows.textContent = data.pgConnected
+        dbDiagRows.textContent = (data.pgConnected && data.tableReady)
           ? `${data.pgDetail?.reservationsCount || 0} reservas guardadas en la nube`
-          : '0 (usando memoria temporal)';
+          : '0 (usando memoria temporal hasta crear la tabla)';
       }
     } catch (e) {
       console.warn('Error verificando salud de la DB:', e);
@@ -893,6 +918,22 @@
       } finally {
         btnDiagTestRes.disabled = false;
         btnDiagTestRes.textContent = '🧪 Insertar Reserva de Prueba';
+      }
+    });
+  }
+
+  const btnCopySql = $('#btn-copy-supabase-sql');
+  if (btnCopySql) {
+    btnCopySql.addEventListener('click', () => {
+      const sqlCode = $('#supabase-sql-code')?.textContent || '';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(sqlCode).then(() => {
+          showAdminToast('¡Script SQL copiado! Pégalo en Supabase y pulsa RUN.', 'success');
+        }).catch(() => {
+          showAdminToast('Selecciona el texto SQL abajo para copiarlo.', 'info');
+        });
+      } else {
+        showAdminToast('Selecciona el texto SQL abajo para copiarlo.', 'info');
       }
     });
   }

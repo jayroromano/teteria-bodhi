@@ -116,22 +116,17 @@ module.exports = async function handler(req, res) {
     // GET: Listado de reservas, estadísticas o test de conexión
     if (method === 'GET') {
       if (query.health === 'true') {
-        const testRes = await db.testPgConnection();
+        const testRes = await db.testCloudConnection();
+        const sbConfig = db.getSupabaseConfig ? db.getSupabaseConfig() : null;
         return res.status(200).json({
-          status: testRes.ok ? 'connected' : 'error',
+          status: testRes.ok ? 'connected' : 'needs_table',
+          provider: testRes.provider || db.getProviderName(),
           cloudDbConfigured: db.isCloudDb(),
-          detectedEnvVar: db.getDetectedEnvVar(),
+          tableReady: Boolean(testRes.tableReady),
           pgConnected: testRes.ok,
-          pgDetail: testRes.ok ? { database: testRes.database, reservationsCount: testRes.reservationsCount, serverTime: testRes.now } : { error: testRes.error },
+          pgDetail: testRes,
           lastDbError: db.getLastError() || null,
-          envVarsDetected: {
-            DATABASE_URL: Boolean(process.env.DATABASE_URL),
-            POSTGRES_URL: Boolean(process.env.POSTGRES_URL),
-            POSTGRES_PRISMA_URL: Boolean(process.env.POSTGRES_PRISMA_URL),
-            POSTGRES_URL_NON_POOLING: Boolean(process.env.POSTGRES_URL_NON_POOLING),
-            SUPABASE_DATABASE_URL: Boolean(process.env.SUPABASE_DATABASE_URL),
-            POSTGRES_HOST: Boolean(process.env.POSTGRES_HOST)
-          },
+          supabase: sbConfig,
           timestamp: new Date().toISOString()
         });
       }
