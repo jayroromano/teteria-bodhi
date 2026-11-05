@@ -13,13 +13,13 @@
   // Datos completos de la carta precargados para visualización instantánea (incluso sin servidor)
   let cartaData = [
   {
-    "id": "mojito-tradicional",
+    "id": "mojito-clasico-y-de-sabor",
     "category": "Cócteles",
-    "name": "Mojito Tradicional",
-    "description": "Empieza suave, como quien no quiere la cosa... y acaba haciendo que le escribas a tu ex. Lima, hierbabuena y ron con ganas de joderte el autocontrol.",
-    "price": 6.5,
-    "badge": "Favorito",
-    "image": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=400&q=80",
+    "name": "Mojito clásico y de sabor",
+    "description": "Lima, hierbabuena, azúcar y ron. También con puré de fruta, por si te gusta pensar que tienes criterio.",
+    "price": 6,
+    "badge": "Clásico",
+    "image": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80",
     "available": true
   },
   {
@@ -27,109 +27,89 @@
     "category": "Cócteles",
     "name": "Piña Colada",
     "description": "Sabe a coco, piña, ron y decisiones cuestionables. Ideal para olvidarte de todo… incluido cómo llegaste a casa anoche.",
-    "price": 7,
+    "price": 6.5,
     "badge": "Tropical",
-    "image": "https://images.unsplash.com/photo-1587223962716-6ddaaa2566b6?auto=format&fit=crop&w=400&q=80",
-    "available": true
-  },
-  {
-    "id": "rebujito-frozen",
-    "category": "Cócteles",
-    "name": "Rebujito Frozen",
-    "description": "Para los que van a la feria solo a llenar el feed de postureo. Vino fino, limón, hierbabuena y gaseosa hechos hielo para que sigas con la nostalgia sin perder la frescura.",
-    "price": 6.5,
-    "badge": "Especial Jerez",
-    "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=400&q=80",
-    "available": true
-  },
-  {
-    "id": "el-hdp",
-    "category": "Cócteles",
-    "name": "El \"HDP\"",
-    "description": "Nuestra versión del vodka negro con lima, pero frozen. El mismo que ha provocado más locuras en La Avenida que el calor, el ego y la música mala juntos. Negro, ácido… y sin piedad.",
-    "price": 6.5,
-    "badge": "Top Locura",
-    "image": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80",
-    "available": true
-  },
-  {
-    "id": "san-francisco",
-    "category": "Cócteles",
-    "name": "San Francisco",
-    "description": "Este cóctel es más viejo que una mesa camilla, pero aquí sigue, liándola con zumos de frutas, vodka y granadina. Listo para recordarte que las modas van y vienen, pero el San Francisco nunca pasa de moda.",
-    "price": 6.5,
-    "badge": "Clásico",
-    "image": "https://images.unsplash.com/photo-1546171753-97d7676e4602?auto=format&fit=crop&w=400&q=80",
-    "available": true
-  },
-  {
-    "id": "daiquiri-frozen",
-    "category": "Cócteles",
-    "name": "Daiquiri Frozen",
-    "description": "Ron, azúcar y limón exprimido. Dulce, ácido y tan traicionero como un \"A ver si quedamos\".",
-    "price": 6.5,
-    "badge": "Refrescante",
-    "image": "https://images.unsplash.com/photo-1560512823-829485b8bf24?auto=format&fit=crop&w=400&q=80",
-    "available": true
-  },
-  {
-    "id": "daiquiri-sabores",
-    "category": "Cócteles",
-    "name": "Daiquiri de Sabores",
-    "description": "No queremos aburrirte con lo mismo, pero es lo de arriba con puré de fruta. Pregunta por los sabores, que aquí no hay bola de cristal ni vidente.",
-    "price": 7,
-    "badge": "Frutas",
-    "image": "https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?auto=format&fit=crop&w=400&q=80",
-    "available": true
-  },
-  {
-    "id": "mojito-sabores",
-    "category": "Cócteles",
-    "name": "Mojito de Sabores",
-    "description": "Lleva puré de fruta natural: fresa, sandía, melón y algún misterio fuera de carta. No hace falta ser Tom Cruise en \"Cocktail\" para entenderlo.",
-    "price": 7,
-    "badge": "Top Ventas",
-    "image": "https://images.unsplash.com/photo-1546171753-97d7676e4602?auto=format&fit=crop&w=400&q=80",
-    "available": true
-  },
-  {
-    "id": "tangerine-collins",
-    "category": "Cócteles",
-    "name": "Tangerine Collins",
-    "description": "Nuestra versión de un cóctel de más de 100 años: ron miel, mandarina, limón y gaseosa para que te rías... hasta que empieces a mandar audios que no deberías.",
-    "price": 7,
-    "badge": "Tiquismiquis",
-    "image": "https://images.unsplash.com/photo-1536935338788-846bb9981813?auto=format&fit=crop&w=400&q=80",
-    "available": true
-  },
-  {
-    "id": "martian",
-    "category": "Cócteles",
-    "name": "Martian",
-    "description": "Tan radiactivo como Chernobyl, pero con más estilo. Lo bebes y te derrites como un personaje secundario de The Boys.",
-    "price": 7,
-    "badge": "Radiactivo",
-    "image": "https://images.unsplash.com/photo-1575444758702-4a6b9222336e?auto=format&fit=crop&w=400&q=80",
-    "available": true
-  },
-  {
-    "id": "deep-water",
-    "category": "Cócteles",
-    "name": "Deep Water",
-    "description": "Tan azul que parece salido de Pandora, pero te manda directo al fondo como si fueras Rose tirando el diamante.",
-    "price": 7,
-    "badge": "Azul Pandora",
-    "image": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",
+    "image": "https://images.unsplash.com/photo-1587223962716-6ddaaa2566b6?auto=format&fit=crop&w=600&q=80",
     "available": true
   },
   {
     "id": "rosa-acida",
     "category": "Cócteles",
     "name": "Rosa Ácida",
-    "description": "Como si tu ex volviera… pero esta vez en forma de cóctel bonito y vengativo. Rosa, preciosa y tan peligrosa como un \"tenemos que hablar\" sin contexto.",
-    "price": 7,
-    "badge": "Vengativo",
-    "image": "https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=400&q=80",
+    "description": "Como si tu ex volviera… pero esta vez en forma de cóctel bonito y vengativo. Rosa, preciosa y tan peligrosa como un “tenemos que hablar” sin contexto.",
+    "price": 6,
+    "badge": "Especial Bodhi",
+    "image": "https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=600&q=80",
+    "available": true
+  },
+  {
+    "id": "el-hdp",
+    "category": "Cócteles",
+    "name": "El “HDP”",
+    "description": "Nuestra versión del vodka negro con lima, pero frozen. El mismo que ha provocado más locuras en La Avenida que el calor, el ego y la música mala juntos. Negro, ácido… y sin piedad.",
+    "price": 6,
+    "badge": "Frozen",
+    "image": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80",
+    "available": true
+  },
+  {
+    "id": "san-francisco",
+    "category": "Cócteles",
+    "name": "San Francisco",
+    "description": "Este cóctel es más viejo que una mesa camilla, pero aquí sigue, liándola con zumos de frutas, amaretto y granadina. Listo para recordarte que las modas van y vienen, pero el San Francisco nunca pasa de moda (aunque tú sí).",
+    "price": 6,
+    "badge": "Un Clásico",
+    "image": "https://images.unsplash.com/photo-1536935338788-846bb9981813?auto=format&fit=crop&w=600&q=80",
+    "available": true
+  },
+  {
+    "id": "daiquiri-frozen-y-de-sabor",
+    "category": "Cócteles",
+    "name": "Daiquiri frozen y de sabor",
+    "description": "Ron, azúcar, limón exprimido y puré de fruta si lo pides de sabor. Dulce, ácido y tan traicionero como un “A ver si quedamos”.",
+    "price": 6.5,
+    "badge": "Frozen",
+    "image": "https://images.unsplash.com/photo-1560512823-829485b8bf24?auto=format&fit=crop&w=600&q=80",
+    "available": true
+  },
+  {
+    "id": "beso-negro",
+    "category": "Cócteles",
+    "name": "Beso Negro",
+    "description": "Vodka negro, puré de melón, limón exprimido y un poco de lima. Este cóctel es tan guarro que decidimos ponerle este nombre.",
+    "price": 6,
+    "badge": "Gamberro",
+    "image": "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=600&q=80",
+    "available": true
+  },
+  {
+    "id": "elena-passion",
+    "category": "Cócteles",
+    "name": "Elena Passion",
+    "description": "Maracuyá, mango, vodka y un toque cítrico. Tan bonito que parece caro. Y aun así sigue siendo mejor inversión que la mitad de criptomonedas que compró la gente en 2021. 🌶️ Versión picante disponible: pica más lento que Hacienda… pero al final llega.",
+    "price": 6.5,
+    "badge": "👑 Top Ventas",
+    "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80",
+    "available": true
+  },
+  {
+    "id": "alba-sunset",
+    "category": "Cócteles",
+    "name": "Alba Sunset",
+    "description": "Mango, coco y ron. Dulce, refrescante y más traicionero que el “acepto términos y condiciones” que firmas sin leer nunca. 🌶️ Versión picante disponible: tan innecesariamente intenso como discutir de política en una cena familiar después de tres copas.",
+    "price": 6.5,
+    "badge": "🌴 Tropical",
+    "image": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80",
+    "available": true
+  },
+  {
+    "id": "crisberry",
+    "category": "Cócteles",
+    "name": "Crisberry",
+    "description": "Frutas del bosque, licor de mora, vodka y un toque cítrico. Oscuro, adictivo y con más capacidad de arruinar mañanas que dormir “solo 20 minutitos más”.",
+    "price": 6.5,
+    "badge": "🌙 De Autor",
+    "image": "https://images.unsplash.com/photo-1546171753-97d7676e4602?auto=format&fit=crop&w=600&q=80",
     "available": true
   },
   {

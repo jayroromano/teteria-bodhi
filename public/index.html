@@ -200,21 +200,21 @@
         <button type="button" class="tab" aria-pressed="false">✨ Todos</button>
       </div>
 
-      <div class="items-grid" id="items" aria-live="polite">
+            <div class="items-grid" id="items" aria-live="polite">
         <!-- Tarjeta 1: Mojito -->
         <article class="menu-card">
           <div class="thumb">
-            <img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=400&q=80" alt="Mojito Tradicional">
+            <img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=400&q=80" alt="Mojito clásico y de sabor">
           </div>
           <div class="info">
             <div>
               <div class="title-row">
-                <h3>Mojito Tradicional</h3>
-                <span class="price">6,50 €</span>
+                <h3>Mojito clásico y de sabor</h3>
+                <span class="price">6,00 €</span>
               </div>
-              <p>Empieza suave, como quien no quiere la cosa... y acaba haciendo que le escribas a tu ex. Lima, hierbabuena y ron con ganas de joderte el autocontrol.</p>
+              <p>Lima, hierbabuena, azúcar y ron. También con puré de fruta, por si te gusta pensar que tienes criterio.</p>
             </div>
-            <span class="badge top">Favorito</span>
+            <span class="badge top">Clásico</span>
           </div>
         </article>
 
@@ -227,7 +227,7 @@
             <div>
               <div class="title-row">
                 <h3>Piña Colada</h3>
-                <span class="price">7,00 €</span>
+                <span class="price">6,50 €</span>
               </div>
               <p>Sabe a coco, piña, ron y decisiones cuestionables. Ideal para olvidarte de todo… incluido cómo llegaste a casa anoche.</p>
             </div>
@@ -235,24 +235,58 @@
           </div>
         </article>
 
-        <!-- Tarjeta 3: Rebujito Frozen -->
+        <!-- Tarjeta 3: Rosa Ácida -->
         <article class="menu-card">
           <div class="thumb">
-            <img src="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=400&q=80" alt="Rebujito Frozen">
+            <img src="https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=400&q=80" alt="Rosa Ácida">
           </div>
           <div class="info">
             <div>
               <div class="title-row">
-                <h3>Rebujito Frozen</h3>
-                <span class="price">6,50 €</span>
+                <h3>Rosa Ácida</h3>
+                <span class="price">6,00 €</span>
               </div>
-              <p>Para los que van a la feria solo a llenar el feed de postureo. Vino fino, limón, hierbabuena y gaseosa hechos hielo.</p>
+              <p>Como si tu ex volviera… pero esta vez en forma de cóctel bonito y vengativo. Rosa, preciosa y tan peligrosa como un “tenemos que hablar”.</p>
             </div>
-            <span class="badge">Especial Jerez</span>
+            <span class="badge">Especial Bodhi</span>
           </div>
         </article>
 
-        <!-- Tarjeta 4: Cachimba -->
+        <!-- Tarjeta 4: Elena Passion -->
+        <article class="menu-card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=400&q=80" alt="Elena Passion">
+          </div>
+          <div class="info">
+            <div>
+              <div class="title-row">
+                <h3>Elena Passion</h3>
+                <span class="price">6,50 €</span>
+              </div>
+              <p>Maracuyá, mango, vodka y un toque cítrico. Tan bonito que parece caro. 🌶️ Opción versión picante disponible.</p>
+            </div>
+            <span class="badge top">👑 Top Ventas</span>
+          </div>
+        </article>
+
+        <!-- Tarjeta 5: El "HDP" -->
+        <article class="menu-card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80" alt="El “HDP”">
+          </div>
+          <div class="info">
+            <div>
+              <div class="title-row">
+                <h3>El “HDP”</h3>
+                <span class="price">6,00 €</span>
+              </div>
+              <p>Nuestra versión del vodka negro con lima, pero frozen. Negro, ácido… y sin piedad.</p>
+            </div>
+            <span class="badge">Frozen</span>
+          </div>
+        </article>
+
+        <!-- Tarjeta 6: Cachimba -->
         <article class="menu-card">
           <div class="thumb">
             <img src="https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=400&q=80" alt="Cachimba Sabores Afrutados">
@@ -268,6 +302,24 @@
             <span class="badge top">10€ Completa</span>
           </div>
         </article>
+      </div>
+
+      <!-- Banner de notas de carta / Fuera de carta & alérgenos de Bodhi -->
+      <div class="carta-cocktail-banner" style="margin-top: 36px; background: var(--sand); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px clamp(18px, 3vw, 32px); display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <div style="display: flex; gap: 14px; align-items: flex-start;">
+          <span style="font-size: 1.8rem; line-height: 1;">🍸</span>
+          <div>
+            <h4 style="font-size: 1.05rem; margin-bottom: 4px; font-weight: 700; color: var(--ink);">¿Y fuera de carta?</h4>
+            <p style="margin: 0; font-size: 0.92rem; color: var(--mut); line-height: 1.5;">También tenemos invenciones sorpresa. No las eliges tú, las hacemos nosotros: intensas, inesperadas y con carácter. <strong style="color: var(--ink);">Y sí, ¡TODOS nuestros cócteles se pueden preparar sin alcohol!</strong></p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 14px; align-items: flex-start; border-top: 1px dashed var(--line); padding-top: 16px;">
+          <span style="font-size: 1.8rem; line-height: 1;">📋</span>
+          <div>
+            <h4 style="font-size: 1.05rem; margin-bottom: 4px; font-weight: 700; color: var(--ink);">Información de Alérgenos</h4>
+            <p style="margin: 0; font-size: 0.92rem; color: var(--mut); line-height: 1.5;">Disponemos de la lista completa de alérgenos de cada bebida y combinado. Pregunta a nuestro equipo en barra o terraza y te informaremos al detalle.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
