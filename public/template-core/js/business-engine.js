@@ -161,8 +161,8 @@ window.BusinessEngine = (function () {
       }
     }
 
-    // SOBRE NOSOTROS (ABOUT)
-    if (config.about) {
+    // SOBRE NOSOTROS (ABOUT) - Conservar maquetación nativa para Bodhi
+    if (config.about && config.identity?.id !== 'bodhi') {
       const aboutSec = document.querySelector('#teteria, #about');
       if (aboutSec) {
         const tag = aboutSec.querySelector('.section-tag');
