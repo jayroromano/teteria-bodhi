@@ -973,7 +973,7 @@
 
   function translateZone(z) {
     if (z === 'int' || z === 'interior') return 'Interior Lounge';
-    if (z === 'ter' || z === 'terraza') return 'Terraza Andalusí';
+    if (z === 'ter' || z === 'terraza') return 'Terraza Exterior';
     return 'Indiferente';
   }
 

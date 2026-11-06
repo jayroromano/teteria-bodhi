@@ -3,13 +3,13 @@
     "name": "Tetería Bodhi",
     "slug": "bodhi",
     "businessType": "hospitality",
-    "categoryLabel": "Tetería & Chill-out",
+    "categoryLabel": "Shisha Lounge & Cocktail Bar",
     "city": "Jerez de la Frontera",
     "logoEmoji": "☕",
     "logoText": "Tetería Bodhi",
-    "tagline": "Oasis Andalusí & Chill-out",
-    "seoTitle": "Tetería Bodhi | Tés del Mundo, Cachimbas y Cócteles en Jerez",
-    "seoDescription": "Descubre Tetería Bodhi en Jerez de la Frontera: tés e infusiones del mundo, cachimbas premium, cócteles de autor y sofás lounge.",
+    "tagline": "Shisha Lounge, Cócteles & Chill-out",
+    "seoTitle": "Tetería Bodhi | Shisha Lounge, Cócteles y Chill-out en Jerez",
+    "seoDescription": "Tetería Bodhi en Jerez de la Frontera (Av. de Méjico): cachimbas premium con carbón natural, cócteles de autor, sofás lounge y el mejor ambiente chill-out.",
     "primaryCta": {
       "text": "Reservar mesa online",
       "href": "#reservas"
@@ -21,47 +21,51 @@
     "logoImage": "img/logo-bodhi.png"
   },
   "hero": {
-    "tag": "Oasis Andalusí & Chill-out",
+    "tag": "Shisha Lounge · Cócteles & Chill-out",
     "title": "Tetería Bodhi",
-    "subtitle": "El aroma del té moruno recién servido, el susurro del agua y la calidez de nuestras cachimbas en el corazón de Jerez de la Frontera.",
+    "subtitle": "El punto de encuentro en Jerez para desconectar: sofás comodísimos, cachimbas premium, cócteles de autor y ambiente chill-out.",
     "badges": [
-      "🌿 Tés e infusiones del mundo",
-      "💨 Shishas premium artesanales",
-      "🍸 Cócteles de autor",
-      "🛋️ Sofás lounge y terraza"
+      "💨 Cachimbas premium & carbón natural",
+      "🍸 Cócteles de autor & copas",
+      "🛋️ Zona Lounge con sofás",
+      "✨ Ambiente chill-out & buen rollo"
     ],
-    "mainImage": "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=800&q=80",
+    "mainImage": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
     "floatingCard": {
-      "tag": "Especialidad de la casa",
-      "title": "Té Verde Moruno con Hierbabuena Fresca",
-      "price": "3,80 €",
-      "sub": "En tetera tradicional andalusí"
+      "tag": "Top Ventas",
+      "title": "Cachimba Premium & Cócteles de Autor",
+      "price": "Desde 6,00 €",
+      "sub": "Ambiente chill-out y tabacos de primera calidad"
+    },
+    "featuredDish": {
+      "title": "Cachimba Premium & Cócteles de Autor",
+      "sub": "Ambiente chill-out y tabacos de primera calidad"
     }
   },
   "about": {
-    "tag": "Nuestra Esencia",
-    "title": "Un refugio andalusí para desconectar del tiempo",
-    "description": "Inspirados en la tradición andalusí y oriental, combinamos una cuidada selección de tés importados de Marruecos, India y Japón con cachimbas de tabaco premium, cócteles de autor y los clásicos bocados y dulces de hojaldre, pistacho y miel.",
+    "tag": "Tu punto de encuentro en Jerez",
+    "title": "El local · Ambiente & Chill-out",
+    "description": "Bodhi es ese espacio en la Avenida de Méjico pensado para bajar revoluciones, compartir risas con amigos y alargar las conversaciones con una copa o una buena cachimba en sofás comodísimos.",
     "features": [
       {
         "icon": "🛋️",
-        "title": "Zona Lounge Interior",
-        "description": "Banqueta de terciopelo, cojines marroquíes y luz tenue para desconectar sin prisa."
+        "title": "Zona Lounge & Sofás",
+        "description": "Asientos súper cómodos, luz tenue y la atmósfera perfecta para relajarte en pareja o con amigos."
       },
       {
-        "icon": "🌿",
-        "title": "Terraza Árabe",
-        "description": "Espacio al aire libre con vegetación para disfrutar de las noches templadas de Jerez."
+        "icon": "💨",
+        "title": "Cachimbas Premium",
+        "description": "Carbón natural, cazoletas cuidadas al milímetro y las mejores marcas para una fumada suave y duradera."
       },
       {
         "icon": "🍸",
-        "title": "Cócteles Premium",
-        "description": "Combinaciones exclusivas de té macerado, frutas frescas y licores seleccionados."
+        "title": "Cócteles & Copas de Autor",
+        "description": "Recetas originales, combinados frozen y copas bien servidas para disfrutar desde la tarde hasta la noche."
       },
       {
-        "icon": "🫖",
-        "title": "Ceremonia del Té",
-        "description": "Servicio en tetera artesanal de metal plateado con hierbabuena fresca andaluza."
+        "icon": "🌿",
+        "title": "Terraza Exterior & Tardeo",
+        "description": "Espacio al aire libre para disfrutar del buen tiempo de Jerez, con meriendas, batidos y cervezas frías."
       }
     ],
     "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=700&q=80"
@@ -134,7 +138,7 @@
       },
       {
         "value": "terraza",
-        "label": "Terraza Andalusí"
+        "label": "Terraza Exterior"
       },
       {
         "value": "indiferente",
@@ -178,7 +182,7 @@
     "phoneDisplay": "+34 956 00 00 00",
     "whatsapp": "34600000000",
     "whatsappDisplay": "+34 600 00 00 00 (Atención rápida)",
-    "mapsUrl": "https://maps.app.goo.gl/H2KiVLzKZJ9Xpcpn9",
+    "mapsUrl": "https://maps.app.goo.gl/NzjgemTgAFJaaZcv6",
     "mapsEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3199.176!2d-6.130892!3d36.692342!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd0dc6c103ff59fd%3A0xfbbe188e1fadbe7e!2sTeter%C3%ADa%20Bodhi!5e0!3m2!1ses!2ses!4v1710000000000!5m2!1ses!2ses"
   },
   "schedule": {
