@@ -18,7 +18,8 @@
       "text": "Ver la carta",
       "href": "#carta"
     },
-    "logoImage": "img/logo-bodhi.png"
+    "logoImage": "img/logo-bodhi.png",
+    "id": "bodhi"
   },
   "hero": {
     "tag": "Shisha Lounge · Cócteles & Chill-out",

@@ -91,6 +91,9 @@ window.BusinessEngine = (function () {
   function applyContent(config, catalog) {
     if (!config) return;
 
+    const activeSlug = getActiveSlug();
+    const isBodhi = (activeSlug === 'bodhi') || (config.identity?.slug === 'bodhi') || (config.identity?.id === 'bodhi') || (config.identity?.name === 'Tetería Bodhi');
+
     // Título y SEO
     if (config.identity?.seoTitle) {
       document.title = config.identity.seoTitle;
@@ -101,7 +104,7 @@ window.BusinessEngine = (function () {
     }
 
     // Logo & Nombre (solo personalizar dinámicamente si no es Bodhi nativo o si se especifica logoImage)
-    if (config.identity?.id !== 'bodhi' || config.identity?.logoImage) {
+    if (!isBodhi || config.identity?.logoImage) {
       const logoEls = document.querySelectorAll('.logo');
       logoEls.forEach(el => {
         const text = config.identity?.name || '';
@@ -129,7 +132,7 @@ window.BusinessEngine = (function () {
       if (heroTitle) heroTitle.textContent = config.hero.title || config.identity?.name || '';
 
       const heroSub = document.querySelector('#hero .lead, #hero p.sub, #hero .hero-desc');
-      if (heroSub) heroSub.textContent = config.hero.subtitle || '';
+      if (heroSub && !isBodhi) heroSub.textContent = config.hero.subtitle || '';
 
       // Badges
       const badgesContainer = document.querySelector('#hero .chips, #hero .hero-badges');
@@ -161,8 +164,8 @@ window.BusinessEngine = (function () {
       }
     }
 
-    // SOBRE NOSOTROS (ABOUT) - Conservar maquetación nativa para Bodhi
-    if (config.about && config.identity?.id !== 'bodhi') {
+    // SOBRE NOSOTROS (ABOUT) - Conservar maquetación nativa intacta para Bodhi
+    if (config.about && !isBodhi) {
       const aboutSec = document.querySelector('#teteria, #about');
       if (aboutSec) {
         const tag = aboutSec.querySelector('.section-tag');
@@ -217,14 +220,14 @@ window.BusinessEngine = (function () {
       const galSec = document.querySelector('#galeria');
       if (galSec) {
         const tag = galSec.querySelector('.section-tag');
-        if (tag && config.gallery.sectionTag && config.identity?.id !== 'bodhi') tag.textContent = config.gallery.sectionTag;
+        if (tag && config.gallery.sectionTag && !isBodhi) tag.textContent = config.gallery.sectionTag;
         const title = galSec.querySelector('h2');
-        if (title && config.gallery.title && config.identity?.id !== 'bodhi') title.textContent = config.gallery.title;
+        if (title && config.gallery.title && !isBodhi) title.textContent = config.gallery.title;
         const sub = galSec.querySelector('.sub');
-        if (sub && config.gallery.subtitle && config.identity?.id !== 'bodhi') sub.textContent = config.gallery.subtitle;
+        if (sub && config.gallery.subtitle && !isBodhi) sub.textContent = config.gallery.subtitle;
 
         const mosaic = galSec.querySelector('.mosaic, .gallery-grid');
-        if (mosaic && config.identity?.id !== 'bodhi') {
+        if (mosaic && !isBodhi) {
           mosaic.innerHTML = '';
           config.gallery.items.forEach((item, idx) => {
             const itemDiv = document.createElement('div');
