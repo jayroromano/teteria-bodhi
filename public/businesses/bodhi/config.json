@@ -43,9 +43,9 @@
     }
   },
   "about": {
-    "tag": "Tu punto de encuentro en Jerez",
-    "title": "El local · Ambiente & Chill-out",
-    "description": "Bodhi es ese espacio en la Avenida de Méjico pensado para bajar revoluciones, compartir risas con amigos y alargar las conversaciones con una copa o una buena cachimba en sofás comodísimos.",
+    "tag": "Nuestra Esencia",
+    "title": "Tetería Bodhi, mucho más que un lugar donde tomar algo",
+    "description": "Somos un local familiar con un espíritu joven, donde conviven la cercanía, la tranquilidad y el buen ambiente. Un lugar acogedor, acompañado de música agradable y un entorno pensado para que cada visita se convierta en un momento especial. Ya sea para disfrutar de un buen té, descubrir nuestros cócteles, darte un capricho con nuestras meriendas o simplemente reunirte con amigos, en Bodhi encontrarás el ambiente perfecto para cada ocasión. Porque Bodhi no es solamente un sitio donde venir a tomar algo, es un lugar donde quedarse, compartir y disfrutar.",
     "features": [
       {
         "icon": "🛋️",
@@ -68,7 +68,8 @@
         "description": "Espacio al aire libre para disfrutar del buen tiempo de Jerez, con meriendas, batidos y cervezas frías."
       }
     ],
-    "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=700&q=80"
+    "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=700&q=80",
+    "subtitle": "En Tetería Bodhi creemos que los mejores momentos son aquellos que se comparten. Por eso, hemos creado un espacio donde sentirse como en casa, disfrutar de buena compañía y desconectar del ritmo del día a día."
   },
   "catalog": {
     "sectionTag": "Sabores & Experiencias",
