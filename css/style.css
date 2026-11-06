@@ -56,6 +56,14 @@
   padding: 0;
 }
 
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-text-size-adjust: 100%;
+}
+
 html {
   scroll-padding-top: 86px;
   scroll-behavior: smooth;
@@ -89,8 +97,10 @@ img {
 
 .wrap {
   max-width: 1420px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 clamp(20px, 4vw, 64px);
+  padding: 0 clamp(16px, 4vw, 64px);
+  box-sizing: border-box;
 }
 
 .header-wrap {
@@ -103,6 +113,10 @@ img {
 section {
   padding: clamp(64px, 8vw, 112px) 0;
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: clip;
 }
 
 h2 {
@@ -447,9 +461,10 @@ header {
 @media (max-width: 768px) {
   .wa-float {
     bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-    right: 18px;
-    width: 54px;
-    height: 54px;
+    left: 18px;
+    right: auto;
+    width: 52px;
+    height: 52px;
   }
 }
 
@@ -530,14 +545,19 @@ header {
   padding: clamp(36px, 6vw, 80px) 0 clamp(64px, 8vw, 110px);
   position: relative;
   overflow: hidden;
+  overflow: clip;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .hero-glow {
   position: absolute;
   top: 10%;
-  right: -10%;
-  width: 550px;
-  height: 550px;
+  right: 0;
+  max-width: 100%;
+  width: min(550px, 90vw);
+  height: min(550px, 90vw);
   border-radius: 50%;
   background: radial-gradient(circle, rgba(166, 106, 59, 0.18) 0%, transparent 70%);
   pointer-events: none;
@@ -630,6 +650,13 @@ header {
 }
 
 @media (max-width: 680px) {
+  .hero-glow {
+    width: 240px;
+    height: 240px;
+    right: 0;
+    top: 5%;
+    opacity: 0.6;
+  }
   .hero {
     gap: 28px;
     padding-top: 10px;
@@ -673,6 +700,9 @@ header {
     font-size: 0.78rem;
     padding: 8px 16px;
     white-space: nowrap;
+    max-width: calc(100% - 24px);
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -782,6 +812,8 @@ header {
 .stack {
   position: relative;
   min-height: 460px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .stack .a, .stack .b {
@@ -883,6 +915,9 @@ header {
   display: flex;
   gap: 10px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  width: 100%;
   padding-bottom: 8px;
   margin-bottom: 32px;
   scrollbar-width: thin;
