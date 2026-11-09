@@ -1,5 +1,5 @@
 const db = require('../lib/db');
-const { verifyAdminPassword, generateToken, verifyToken, checkRateLimit, isProduction, getSessionSecret } = require('../lib/auth');
+const { verifyAdminPassword, generateToken, verifyToken, checkRateLimit, hashRateLimitKey, isProduction, getSessionSecret } = require('../lib/auth');
 const { setCors } = require('../lib/cors');
 
 function getClientIp(req) {
@@ -55,8 +55,9 @@ module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
     const clientIp = getClientIp(req);
 
-    // Protección distribuida contra fuerza bruta: 5 intentos cada 5 minutos por IP/origen
-    const rateResult = await checkRateLimit(`login_${clientIp}`, 5, 5 * 60 * 1000);
+    // Protección distribuida contra fuerza bruta: 5 intentos cada 5 minutos con IP anonimizada (RGPD)
+    const rateKey = hashRateLimitKey('login', clientIp);
+    const rateResult = await checkRateLimit(rateKey, 5, 5 * 60 * 1000);
     if (!rateResult.allowed) {
       if (rateResult.status === 503 || rateResult.unavailable) {
         return res.status(503).json({

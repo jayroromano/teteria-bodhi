@@ -1,0 +1,36 @@
+# Ficheros excluidos del despliegue en Vercel
+# Previene la exposicion publica de scripts SQL, datos locales de test y documentacion interna
+
+# Scripts SQL y base de datos
+*.sql
+supabase_security_patch.sql
+schema.sql
+
+# Pruebas y suites de seguridad
+tests/
+tests/**
+
+# Datos locales y persistencia en desarrollo/test
+data/
+data/**
+
+# Variables de entorno locales
+.env
+.env.*
+!.env.example
+
+# Control de versiones
+.git/
+.gitignore
+.gitattributes
+
+# Documentacion de auditorias e informes tecnicos
+AUDITORIA*.md
+INFORME*.md
+*.patch
+
+# Archivos de depuracion y temporales
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

@@ -1,12 +1,24 @@
 const express = require('express');
-const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+const { setCors } = require('./lib/cors');
+if (process.env.NODE_ENV !== 'test') {
+  try {
+    require('dotenv').config();
+  } catch (e) {}
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Configuración estricta de CORS idéntica a las funciones serverless de producción
+app.use((req, res, next) => {
+  setCors(req, res, 'GET, POST, PATCH, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
