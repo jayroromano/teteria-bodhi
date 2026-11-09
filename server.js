@@ -46,6 +46,7 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   const isCloud = Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL);
+  const passStatus = process.env.ADMIN_PASSWORD ? 'Configurada en .env' : 'Configura ADMIN_PASSWORD en .env';
   console.log(`
 ╔══════════════════════════════════════════════════════════════╗
 ║              🫖 TETERÍA BODHI · SERVIDOR LOCAL               ║
@@ -53,7 +54,7 @@ app.listen(PORT, () => {
 ║                                                              ║
 ║  🌐 Web Principal:     http://localhost:${PORT}                 ║
 ║  🛡️  Panel de Admin:    http://localhost:${PORT}/admin           ║
-║  🔑 Contraseña Admin:  bodhi2026                             ║
+║  🔑 Contraseña Admin:  ${passStatus.padEnd(38)}║
 ║  📦 Base de datos:     ${isCloud ? '🟢 PostgreSQL Cloud' : '🟡 JSON Local (data/)'}          ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝

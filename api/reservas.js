@@ -1,14 +1,17 @@
 const db = require('../lib/db');
 const { verifyToken, checkRateLimit } = require('../lib/auth');
+const { setCors } = require('../lib/cors');
 const https = require('https');
 
 function getClientIp(req) {
   const xForwardedFor = req.headers['x-forwarded-for'];
   if (xForwardedFor) return xForwardedFor.split(',')[0].trim();
-  return req.socket?.remoteAddress || '127.0.0.1';
+  return req.socket?.remoteAddress || 'unknown_client';
 }
 
-// Notificaciones automáticas al administrador cuando entra una reserva
+/**
+ * Notificaciones automáticas al administrador cuando entra una reserva
+ */
 async function sendAdminNotifications(reservation) {
   const textMsg = `🛎️ ¡NUEVA RESERVA EN TETERÍA BODHI!
 👤 Cliente: ${reservation.name}
@@ -82,12 +85,6 @@ async function sendAdminNotifications(reservation) {
   }
 }
 
-function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-}
-
 function parseBody(req) {
   if (req.body && typeof req.body === 'object') return Promise.resolve(req.body);
   if (!req.on || typeof req.on !== 'function') return Promise.resolve({});
@@ -110,7 +107,7 @@ function isAdmin(req) {
 }
 
 module.exports = async function handler(req, res) {
-  setCors(res);
+  setCors(req, res, 'GET, POST, PATCH, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -120,28 +117,32 @@ module.exports = async function handler(req, res) {
   try {
     // GET: Listado de reservas, estadísticas o test de conexión
     if (method === 'GET') {
+      // Diagnóstico de base de datos restringido a administradores
       if (query.health === 'true') {
+        if (!isAdmin(req)) {
+          return res.status(401).json({ error: 'No autorizado. Se requiere acceso de administrador.' });
+        }
         const testRes = await db.testCloudConnection();
-        const sbConfig = db.getSupabaseConfig ? db.getSupabaseConfig() : null;
         return res.status(200).json({
-          status: testRes.ok ? 'connected' : 'needs_table',
+          status: testRes.ok ? 'connected' : 'error',
           provider: testRes.provider || db.getProviderName(),
           cloudDbConfigured: db.isCloudDb(),
           tableReady: Boolean(testRes.tableReady),
-          pgConnected: testRes.ok,
-          pgDetail: testRes,
-          lastDbError: db.getLastError() || null,
-          supabase: sbConfig,
+          pgConnected: Boolean(testRes.ok),
           timestamp: new Date().toISOString()
         });
       }
 
+      // Estadísticas protegidas: contienen métricas de aforo e ingresos
       if (query.stats === 'true') {
+        if (!isAdmin(req)) {
+          return res.status(401).json({ error: 'No autorizado. Se requiere acceso de administrador.' });
+        }
         const stats = await db.getStats();
         return res.status(200).json({ success: true, stats });
       }
 
-      // El listado completo requiere ser admin para proteger datos personales de clientes
+      // Consulta de listado completo restringida para proteger datos personales de clientes
       if (!isAdmin(req)) {
         return res.status(401).json({
           error: 'No autorizado. Se requiere acceso de administrador.'
@@ -161,28 +162,29 @@ module.exports = async function handler(req, res) {
         count: reservations.length,
         stats,
         reservations,
-        cloudDb: db.isCloudDb(),
-        lastDbError: db.getLastError() || null
+        cloudDb: db.isCloudDb()
       });
     }
 
-    // POST: Nueva reserva de cliente o manual desde admin
+    // POST: Nueva reserva de cliente o creación desde panel admin
     if (method === 'POST') {
       const clientIp = getClientIp(req);
       const isReqAdmin = isAdmin(req);
 
-      // 1. Protección Anti-Spam: Rate Limiting (máximo 6 reservas cada 10 min por IP, excepto admin)
-      if (!isReqAdmin && !checkRateLimit(`res_${clientIp}`, 6, 10 * 60 * 1000)) {
-        return res.status(429).json({
-          error: 'Has enviado varias solicitudes recientemente. Por favor espera unos minutos o confirma tu reserva por WhatsApp.'
-        });
+      // 1. Protección Anti-Spam: Rate Limiting distribuido (máximo 6 reservas cada 10 min por IP, excepto admin)
+      if (!isReqAdmin) {
+        const allowed = await checkRateLimit(`res_${clientIp}`, 6, 10 * 60 * 1000);
+        if (!allowed) {
+          return res.status(429).json({
+            error: 'Has enviado varias solicitudes recientemente. Por favor espera unos minutos o contáctanos por WhatsApp.'
+          });
+        }
       }
 
       const body = await parseBody(req);
 
       // 2. Campo trampa Honeypot para detectar bots automatizados
       if (body.b_hp || body.website_url) {
-        // Respuesta fingida de éxito para engañar al bot sin escribir en la base de datos
         return res.status(201).json({
           success: true,
           message: 'Reserva registrada con éxito.'
@@ -197,37 +199,60 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      // 3. Verificación de RGPD: consentimiento explícito de tratamiento de datos personales
+      // 3. Verificación de RGPD: consentimiento explícito requerido en envíos públicos
       if (!isReqAdmin && !privacy) {
         return res.status(400).json({
           error: 'Es necesario aceptar la política de privacidad para tramitar la reserva conforme a la normativa de protección de datos.'
         });
       }
 
-      // Sanitización y límites de longitud para prevenir inyecciones
+      // Sanitización estricta y límites de longitud
       const cleanName = String(name).trim().slice(0, 100);
       const cleanPhone = String(phone).trim().slice(0, 30);
       const cleanEmail = email ? String(email).trim().slice(0, 150) : '';
-      const cleanDate = String(date).trim().slice(0, 20);
-      const cleanTime = String(time).trim().slice(0, 10);
-      const cleanZone = String(zone || 'indiferente').trim().slice(0, 50);
+      const cleanDate = String(date).trim().slice(0, 10);
+      const cleanTime = String(time).trim().slice(0, 8);
       const cleanNotes = notes ? String(notes).trim().slice(0, 500) : '';
+
+      if (cleanName.length < 2) {
+        return res.status(400).json({ error: 'El nombre debe tener al menos 2 caracteres.' });
+      }
+
+      if (cleanPhone.length < 6 || !/^[0-9+\s()-]+$/.test(cleanPhone)) {
+        return res.status(400).json({ error: 'Por favor introduce un número de teléfono válido.' });
+      }
+
+      // Validar formato de fecha YYYY-MM-DD
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
+        return res.status(400).json({ error: 'Formato de fecha inválido. Utilice el selector de fecha.' });
+      }
+
+      // Validar zona en lista blanca
+      const allowedZones = ['interior', 'terraza', 'indiferente', 'Interior Lounge', 'Terraza Exterior'];
+      const rawZone = String(zone || 'indiferente').trim();
+      const cleanZone = allowedZones.includes(rawZone) ? rawZone : 'indiferente';
+
+      // Validar comensales (1 a 20)
+      const numGuests = parseInt(guests, 10);
+      if (isNaN(numGuests) || numGuests < 1 || numGuests > 20) {
+        return res.status(400).json({ error: 'El número de comensales debe estar entre 1 y 20 personas.' });
+      }
 
       const businessSlug = body.business || 'bodhi';
 
-      // Validaciones específicas para Bodhi (Lunes cerrado, horario de tarde/noche)
+      // Reglas comerciales específicas de Tetería Bodhi
       if (businessSlug === 'bodhi') {
         const dateParts = cleanDate.split('-');
-        if (dateParts.length === 3) {
-          const testDate = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 12, 0, 0);
-          if (testDate.getDay() === 1) {
-            return res.status(400).json({
-              error: 'Los lunes la tetería permanece cerrada por descanso del personal. Por favor selecciona una fecha de martes a domingo.'
-            });
-          }
+        const testDate = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 12, 0, 0);
+
+        // Lunes cerrado por descanso
+        if (testDate.getDay() === 1) {
+          return res.status(400).json({
+            error: 'Los lunes la tetería permanece cerrada por descanso del personal. Por favor selecciona una fecha de martes a domingo.'
+          });
         }
 
-        const [h, m] = cleanTime.split(':').map(Number);
+        const [h] = cleanTime.split(':').map(Number);
         if (!isNaN(h) && (h >= 4 && h < 16)) {
           return res.status(400).json({
             error: 'Nuestro horario de apertura es de 18:00 a 02:00 h (hasta las 03:00 h los fines de semana).'
@@ -235,21 +260,25 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      const newReservation = await db.createReservation({
+      // Los clientes no pueden forzar estados arbitrarios ni notas internas
+      const reservationData = {
         name: cleanName,
         phone: cleanPhone,
         email: cleanEmail,
         date: cleanDate,
         time: cleanTime,
-        guests: Math.max(1, parseInt(guests, 10) || 2),
+        guests: numGuests,
         zone: cleanZone,
-        notes: cleanNotes
-      });
+        notes: cleanNotes,
+        status: isReqAdmin && body.status ? body.status : (numGuests > 4 ? 'pending' : 'confirmed'),
+        admin_notes: isReqAdmin && body.admin_notes ? String(body.admin_notes).slice(0, 500) : null
+      };
 
-      // Disparar notificaciones configuradas de forma asíncrona
+      const newReservation = await db.createReservation(reservationData);
+
+      // Disparar notificaciones asíncronas
       sendAdminNotifications(newReservation).catch(() => {});
 
-      // Construir enlace de WhatsApp directo para confirmación del cliente
       const teteriaWhatsapp = '34600000000';
       const waMsg = encodeURIComponent(
         `¡Hola Bodhi! He solicitado una reserva a nombre de *${newReservation.name}* para el día *${newReservation.date}* a las *${newReservation.time}* (${newReservation.guests} personas, zona ${newReservation.zone}). Código: *${newReservation.code}*. ¡Muchas gracias!`
@@ -261,27 +290,39 @@ module.exports = async function handler(req, res) {
         message: 'Reserva registrada con éxito.',
         reservation: newReservation,
         whatsappUrl,
-        cloudDb: db.isCloudDb(),
-        storage: newReservation.isCloudDb ? 'PostgreSQL Cloud' : 'Local Fallback',
-        dbError: db.getLastError() || null
+        cloudDb: db.isCloudDb()
       });
     }
 
-    // PATCH: Actualizar estado o notas de la reserva (Admin)
+    // PATCH: Modificación de reserva restringida a administradores
     if (method === 'PATCH') {
       if (!isAdmin(req)) {
         return res.status(401).json({ error: 'No autorizado.' });
       }
 
       const body = await parseBody(req);
+      const url = new URL(req.url, 'http://localhost');
       const { id, ...updates } = body;
-      const targetId = id || query.id;
+      const targetId = id || query?.id || url.searchParams.get('id');
 
       if (!targetId) {
         return res.status(400).json({ error: 'Se requiere id de reserva.' });
       }
 
-      const updated = await db.updateReservation(targetId, updates);
+      // Lista blanca de campos actualizables
+      const allowedPatch = ['status', 'admin_notes', 'zone', 'guests', 'date', 'time', 'notes'];
+      const filtered = {};
+      for (const k of allowedPatch) {
+        if (updates[k] !== undefined) {
+          filtered[k] = updates[k];
+        }
+      }
+
+      if (Object.keys(filtered).length === 0) {
+        return res.status(400).json({ error: 'No se enviaron campos válidos para actualizar.' });
+      }
+
+      const updated = await db.updateReservation(targetId, filtered);
       if (!updated) {
         return res.status(404).json({ error: 'Reserva no encontrada.' });
       }
@@ -289,13 +330,15 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true, reservation: updated });
     }
 
-    // DELETE: Cancelar / Eliminar reserva (Admin)
+    // DELETE: Cancelación de reserva restringida a administradores
     if (method === 'DELETE') {
       if (!isAdmin(req)) {
         return res.status(401).json({ error: 'No autorizado.' });
       }
 
-      const targetId = query.id;
+      const body = await parseBody(req);
+      const url = new URL(req.url, 'http://localhost');
+      const targetId = query?.id || url.searchParams.get('id') || body?.id;
       if (!targetId) {
         return res.status(400).json({ error: 'Se requiere id de reserva.' });
       }
@@ -310,10 +353,9 @@ module.exports = async function handler(req, res) {
 
     return res.status(405).json({ error: `Método ${method} no permitido.` });
   } catch (error) {
-    console.error('Error en /api/reservas:', error);
+    console.error('[API Reservas Error]:', error.message);
     return res.status(500).json({
-      error: 'Error interno del servidor procesando la reserva.',
-      details: error.message
+      error: 'Error procesando la solicitud en el servidor. Por favor inténtalo de nuevo.'
     });
   }
 };

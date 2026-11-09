@@ -1,11 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-
-function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-}
+const { setCors } = require('../lib/cors');
 
 function findBusinessesDir() {
   const candidates = [
@@ -27,6 +22,8 @@ function getAvailableBusinesses() {
     if (fs.existsSync(dir)) {
       const items = fs.readdirSync(dir);
       for (const item of items) {
+        // Ignorar carpetas ocultas o de sistema
+        if (item.startsWith('.')) continue;
         const confPath = path.join(dir, item, 'config.json');
         if (fs.existsSync(confPath)) {
           try {
@@ -46,29 +43,34 @@ function getAvailableBusinesses() {
 }
 
 module.exports = async function handler(req, res) {
-  setCors(res);
+  setCors(req, res, 'GET, OPTIONS');
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const url = new URL(req.url, 'http://localhost');
-  const requestedSlug = req.query?.b || url.searchParams.get('b') || process.env.ACTIVE_BUSINESS || 'bodhi';
-  const cleanSlug = requestedSlug.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-
-  const dir = findBusinessesDir();
-  const available = getAvailableBusinesses();
-  
-  let targetSlug = cleanSlug;
-  let confPath = path.join(dir, targetSlug, 'config.json');
-  let catPath = path.join(dir, targetSlug, 'catalog.json');
-
-  if (!fs.existsSync(confPath)) {
-    targetSlug = 'bodhi';
-    confPath = path.join(dir, 'bodhi', 'config.json');
-    catPath = path.join(dir, 'bodhi', 'catalog.json');
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Método no permitido. Este endpoint solo acepta consultas GET.' });
   }
 
   try {
+    const url = new URL(req.url, 'http://localhost');
+    const requestedSlug = req.query?.b || url.searchParams.get('b') || process.env.ACTIVE_BUSINESS || 'bodhi';
+    const cleanSlug = String(requestedSlug).toLowerCase().replace(/[^a-z0-9_-]/g, '');
+
+    const dir = findBusinessesDir();
+    const available = getAvailableBusinesses();
+
+    let targetSlug = cleanSlug;
+    let confPath = path.join(dir, targetSlug, 'config.json');
+    let catPath = path.join(dir, targetSlug, 'catalog.json');
+
+    if (!fs.existsSync(confPath)) {
+      targetSlug = 'bodhi';
+      confPath = path.join(dir, 'bodhi', 'config.json');
+      catPath = path.join(dir, 'bodhi', 'catalog.json');
+    }
+
     let config = null;
     let catalog = [];
 
@@ -83,6 +85,7 @@ module.exports = async function handler(req, res) {
       return res.status(404).json({ error: 'Configuración de negocio no encontrada.' });
     }
 
+    // Respuesta pública estructurada para el frontend
     return res.status(200).json({
       success: true,
       activeSlug: targetSlug,
@@ -91,7 +94,7 @@ module.exports = async function handler(req, res) {
       availableBusinesses: available
     });
   } catch (error) {
-    console.error('Error cargando configuración de negocio:', error);
-    return res.status(500).json({ error: 'Error interno del servidor.', details: error.message });
+    console.error('[API Business-Config Error]:', error.message);
+    return res.status(500).json({ error: 'Error interno obteniendo la configuración del negocio.' });
   }
 };

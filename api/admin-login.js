@@ -1,20 +1,16 @@
 const db = require('../lib/db');
-const { generateToken, verifyToken, checkRateLimit } = require('../lib/auth');
-
-function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-}
+const { verifyAdminPassword, generateToken, verifyToken, checkRateLimit, isProduction, getSessionSecret } = require('../lib/auth');
+const { setCors } = require('../lib/cors');
 
 function getClientIp(req) {
   const xForwardedFor = req.headers['x-forwarded-for'];
   if (xForwardedFor) return xForwardedFor.split(',')[0].trim();
-  return req.socket?.remoteAddress || '127.0.0.1';
+  return req.socket?.remoteAddress || 'unknown_client';
 }
 
 function parseBody(req) {
   if (req.body && typeof req.body === 'object') return Promise.resolve(req.body);
+  if (!req.on || typeof req.on !== 'function') return Promise.resolve({});
   return new Promise((resolve) => {
     let data = '';
     req.on('data', chunk => { data += chunk; });
@@ -29,15 +25,23 @@ function parseBody(req) {
 }
 
 module.exports = async function handler(req, res) {
-  setCors(res);
+  setCors(req, res, 'GET, POST, OPTIONS');
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const clientIp = getClientIp(req);
-  const defaultPass = process.env.ADMIN_PASSWORD || 'bodhi2026';
+  // Verificación de configuración segura en producción
+  if (isProduction()) {
+    if (!process.env.ADMIN_PASSWORD || !getSessionSecret()) {
+      console.error('[Seguridad] Error crítico: ADMIN_PASSWORD o ADMIN_SESSION_SECRET ausente en producción.');
+      return res.status(500).json({
+        error: 'El servidor no está configurado correctamente para permitir accesos administrativos.'
+      });
+    }
+  }
 
-  // GET: Verificar si el token actual sigue siendo válido criptográficamente
+  // GET: Verificar si el token actual en cabecera sigue siendo válido
   if (req.method === 'GET') {
     const auth = req.headers['authorization'] || '';
     const isValid = verifyToken(auth);
@@ -47,9 +51,13 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  // POST: Inicio de sesión con contraseña
   if (req.method === 'POST') {
-    // Protección contra fuerza bruta: máx 5 intentos cada 5 minutos por IP
-    if (!checkRateLimit(`login_${clientIp}`, 5, 5 * 60 * 1000)) {
+    const clientIp = getClientIp(req);
+
+    // Protección distribuida contra fuerza bruta: 5 intentos cada 5 minutos por IP/origen
+    const allowed = await checkRateLimit(`login_${clientIp}`, 5, 5 * 60 * 1000);
+    if (!allowed) {
       return res.status(429).json({
         error: 'Demasiados intentos fallidos. Por seguridad, espera 5 minutos antes de volver a intentar.'
       });
@@ -58,13 +66,19 @@ module.exports = async function handler(req, res) {
     const body = await parseBody(req);
     const { password } = body;
 
-    if (!password) {
+    if (!password || typeof password !== 'string') {
       return res.status(400).json({ error: 'Por favor introduce la contraseña de administrador.' });
     }
 
-    if (password === defaultPass) {
+    if (verifyAdminPassword(password)) {
       const token = generateToken();
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      if (!token) {
+        return res.status(500).json({
+          error: 'Error interno generando la sesión criptográfica segura.'
+        });
+      }
+
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
       return res.status(200).json({
         success: true,

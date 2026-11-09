@@ -1,11 +1,8 @@
 const db = require('../lib/db');
 const { verifyToken } = require('../lib/auth');
-
-function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-}
+const { setCors } = require('../lib/cors');
+const fs = require('fs');
+const path = require('path');
 
 function parseBody(req) {
   if (req.body && typeof req.body === 'object') return Promise.resolve(req.body);
@@ -29,19 +26,18 @@ function isAdmin(req) {
 }
 
 module.exports = async function handler(req, res) {
-  setCors(res);
+  setCors(req, res, 'GET, POST, PATCH, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   try {
+    // GET: Consulta pública de la carta
     if (req.method === 'GET') {
       const url = new URL(req.url, 'http://localhost');
       const b = req.query?.b || url.searchParams.get('b');
       if (b && b !== 'bodhi') {
-        const fs = require('fs');
-        const path = require('path');
-        const cleanB = b.replace(/[^a-z0-9_-]/g, '');
+        const cleanB = String(b).toLowerCase().replace(/[^a-z0-9_-]/g, '');
         const candidates = [
           path.join(process.cwd(), 'businesses', cleanB, 'catalog.json'),
           path.join(__dirname, '..', 'businesses', cleanB, 'catalog.json'),
@@ -51,7 +47,7 @@ module.exports = async function handler(req, res) {
           if (fs.existsSync(catPath)) {
             try {
               const customItems = JSON.parse(fs.readFileSync(catPath, 'utf8'));
-              return res.status(200).json({ success: true, items: customItems, business: b });
+              return res.status(200).json({ success: true, items: customItems, business: cleanB });
             } catch (e) {}
           }
         }
@@ -61,34 +57,44 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true, items });
     }
 
+    // POST: Añadir nuevo producto (Requiere autenticación admin)
     if (req.method === 'POST') {
       if (!isAdmin(req)) {
         return res.status(401).json({ error: 'No autorizado para añadir productos a la carta.' });
       }
 
       const body = await parseBody(req);
-      const { name, price, category, image, description, badge } = body;
+      const { name, price, category, image, description, badge, available } = body;
 
-      if (!name || !String(name).trim()) {
-        return res.status(400).json({ error: 'El nombre del producto es obligatorio.' });
+      if (!name || typeof name !== 'string' || name.trim().length < 2) {
+        return res.status(400).json({ error: 'El nombre del producto es obligatorio (mínimo 2 caracteres).' });
       }
 
-      if (price === undefined || isNaN(Number(price)) || Number(price) < 0) {
-        return res.status(400).json({ error: 'El precio debe ser un número válido mayor o igual a 0.' });
+      const numPrice = Number(price);
+      if (price === undefined || isNaN(numPrice) || numPrice < 0 || numPrice > 1000) {
+        return res.status(400).json({ error: 'El precio debe ser un número válido entre 0 y 1000 €.' });
       }
+
+      const cleanCategory = category && typeof category === 'string' ? category.trim().slice(0, 60) : 'Cócteles';
+      const cleanDescription = description && typeof description === 'string' ? description.trim().slice(0, 500) : '';
+      const cleanImage = image && typeof image === 'string' ? image.trim().slice(0, 500) : '';
+      const cleanBadge = badge && typeof badge === 'string' ? badge.trim().slice(0, 50) : null;
+      const isAvailable = available !== undefined ? Boolean(available) : true;
 
       const created = await db.createMenuItem({
-        name: String(name).trim(),
-        price: Number(price),
-        category: category || 'Otro',
-        image: image || '',
-        description: description || '',
-        badge: badge || ''
+        name: name.trim().slice(0, 120),
+        price: numPrice,
+        category: cleanCategory,
+        image: cleanImage,
+        description: cleanDescription,
+        badge: cleanBadge,
+        available: isAvailable
       });
 
       return res.status(201).json({ success: true, item: created });
     }
 
+    // PATCH: Modificar disponibilidad, precio u otros datos del producto (Admin)
     if (req.method === 'PATCH') {
       if (!isAdmin(req)) {
         return res.status(401).json({ error: 'No autorizado para modificar la carta.' });
@@ -97,11 +103,24 @@ module.exports = async function handler(req, res) {
       const body = await parseBody(req);
       const { id, available, price, name, description, category, image, badge } = body;
 
-      if (!id) {
+      if (!id || typeof id !== 'string') {
         return res.status(400).json({ error: 'Se requiere id del producto.' });
       }
 
-      const updated = await db.updateMenuItem(id, { available, price, name, description, category, image, badge });
+      const updates = {};
+      if (available !== undefined) updates.available = Boolean(available);
+      if (price !== undefined && !isNaN(Number(price)) && Number(price) >= 0) updates.price = Number(price);
+      if (name && typeof name === 'string') updates.name = name.trim().slice(0, 120);
+      if (description !== undefined && typeof description === 'string') updates.description = description.trim().slice(0, 500);
+      if (category && typeof category === 'string') updates.category = category.trim().slice(0, 60);
+      if (image !== undefined && typeof image === 'string') updates.image = image.trim().slice(0, 500);
+      if (badge !== undefined) updates.badge = badge ? String(badge).trim().slice(0, 50) : null;
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ error: 'No se enviaron campos válidos para actualizar.' });
+      }
+
+      const updated = await db.updateMenuItem(id, updates);
       if (!updated) {
         return res.status(404).json({ error: 'Producto no encontrado.' });
       }
@@ -109,6 +128,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true, item: updated });
     }
 
+    // DELETE: Eliminar producto de la carta (Admin)
     if (req.method === 'DELETE') {
       if (!isAdmin(req)) {
         return res.status(401).json({ error: 'No autorizado para eliminar productos de la carta.' });
@@ -123,12 +143,16 @@ module.exports = async function handler(req, res) {
       }
 
       const success = await db.deleteMenuItem(id);
-      return res.status(200).json({ success, deletedId: id });
+      if (!success) {
+        return res.status(404).json({ error: 'Producto no encontrado o no se pudo eliminar.' });
+      }
+
+      return res.status(200).json({ success: true, deletedId: id });
     }
 
     return res.status(405).json({ error: 'Método no permitido.' });
   } catch (error) {
-    console.error('Error en /api/carta:', error);
-    return res.status(500).json({ error: 'Error interno obteniendo la carta.', details: error.message });
+    console.error('[API Carta Error]:', error.message);
+    return res.status(500).json({ error: 'Error procesando la solicitud de la carta.' });
   }
 };
