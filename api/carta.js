@@ -4,6 +4,16 @@ const { setCors } = require('../lib/cors');
 const fs = require('fs');
 const path = require('path');
 
+function parseStrictBoolean(val) {
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'string') {
+    const s = val.trim().toLowerCase();
+    if (s === 'true' || s === '1') return true;
+    if (s === 'false' || s === '0') return false;
+  }
+  return null;
+}
+
 function parseBody(req) {
   if (req.body && typeof req.body === 'object') return Promise.resolve(req.body);
   if (!req.on || typeof req.on !== 'function') return Promise.resolve({});
@@ -66,8 +76,8 @@ module.exports = async function handler(req, res) {
       const body = await parseBody(req);
       const { name, price, category, image, description, badge, available } = body;
 
-      if (!name || typeof name !== 'string' || name.trim().length < 2) {
-        return res.status(400).json({ error: 'El nombre del producto es obligatorio (mínimo 2 caracteres).' });
+      if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 120) {
+        return res.status(400).json({ error: 'El nombre del producto es obligatorio (entre 2 y 120 caracteres).' });
       }
 
       const numPrice = Number(price);
@@ -75,15 +85,23 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'El precio debe ser un número válido entre 0 y 1000 €.' });
       }
 
+      let isAvailable = true;
+      if (available !== undefined) {
+        const parsedBool = parseStrictBoolean(available);
+        if (parsedBool === null) {
+          return res.status(400).json({ error: 'El campo "available" debe ser un booleano (true o false).' });
+        }
+        isAvailable = parsedBool;
+      }
+
       const cleanCategory = category && typeof category === 'string' ? category.trim().slice(0, 60) : 'Cócteles';
       const cleanDescription = description && typeof description === 'string' ? description.trim().slice(0, 500) : '';
       const cleanImage = image && typeof image === 'string' ? image.trim().slice(0, 500) : '';
       const cleanBadge = badge && typeof badge === 'string' ? badge.trim().slice(0, 50) : null;
-      const isAvailable = available !== undefined ? Boolean(available) : true;
 
       const created = await db.createMenuItem({
-        name: name.trim().slice(0, 120),
-        price: numPrice,
+        name: name.trim(),
+        price: Math.round(numPrice * 100) / 100,
         category: cleanCategory,
         image: cleanImage,
         description: cleanDescription,
@@ -108,13 +126,57 @@ module.exports = async function handler(req, res) {
       }
 
       const updates = {};
-      if (available !== undefined) updates.available = Boolean(available);
-      if (price !== undefined && !isNaN(Number(price)) && Number(price) >= 0) updates.price = Number(price);
-      if (name && typeof name === 'string') updates.name = name.trim().slice(0, 120);
-      if (description !== undefined && typeof description === 'string') updates.description = description.trim().slice(0, 500);
-      if (category && typeof category === 'string') updates.category = category.trim().slice(0, 60);
-      if (image !== undefined && typeof image === 'string') updates.image = image.trim().slice(0, 500);
-      if (badge !== undefined) updates.badge = badge ? String(badge).trim().slice(0, 50) : null;
+
+      if (available !== undefined) {
+        const parsedBool = parseStrictBoolean(available);
+        if (parsedBool === null) {
+          return res.status(400).json({ error: 'El campo "available" debe ser un booleano válido (true o false).' });
+        }
+        updates.available = parsedBool;
+      }
+
+      if (price !== undefined) {
+        const numPrice = Number(price);
+        if (isNaN(numPrice) || numPrice < 0 || numPrice > 1000) {
+          return res.status(400).json({ error: 'El precio debe ser un número válido entre 0 y 1000 €.' });
+        }
+        updates.price = Math.round(numPrice * 100) / 100;
+      }
+
+      if (name !== undefined) {
+        if (typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 120) {
+          return res.status(400).json({ error: 'El nombre debe tener entre 2 y 120 caracteres.' });
+        }
+        updates.name = name.trim();
+      }
+
+      if (description !== undefined) {
+        if (typeof description !== 'string' || description.trim().length > 500) {
+          return res.status(400).json({ error: 'La descripción no puede exceder 500 caracteres.' });
+        }
+        updates.description = description.trim();
+      }
+
+      if (category !== undefined) {
+        if (typeof category !== 'string' || category.trim().length === 0 || category.trim().length > 60) {
+          return res.status(400).json({ error: 'La categoría no puede exceder 60 caracteres.' });
+        }
+        updates.category = category.trim();
+      }
+
+      if (image !== undefined) {
+        if (typeof image !== 'string' || image.trim().length > 500) {
+          return res.status(400).json({ error: 'La URL de la imagen no puede exceder 500 caracteres.' });
+        }
+        updates.image = image.trim();
+      }
+
+      if (badge !== undefined) {
+        if (badge !== null && (typeof badge !== 'string' || badge.trim().length > 50)) {
+          return res.status(400).json({ error: 'El distintivo no puede exceder 50 caracteres.' });
+        }
+        updates.badge = badge ? badge.trim() : null;
+      }
 
       if (Object.keys(updates).length === 0) {
         return res.status(400).json({ error: 'No se enviaron campos válidos para actualizar.' });

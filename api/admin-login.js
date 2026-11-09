@@ -56,8 +56,13 @@ module.exports = async function handler(req, res) {
     const clientIp = getClientIp(req);
 
     // Protección distribuida contra fuerza bruta: 5 intentos cada 5 minutos por IP/origen
-    const allowed = await checkRateLimit(`login_${clientIp}`, 5, 5 * 60 * 1000);
-    if (!allowed) {
+    const rateResult = await checkRateLimit(`login_${clientIp}`, 5, 5 * 60 * 1000);
+    if (!rateResult.allowed) {
+      if (rateResult.status === 503 || rateResult.unavailable) {
+        return res.status(503).json({
+          error: 'El servicio de seguridad no está disponible en este momento. Por favor inténtelo más tarde.'
+        });
+      }
       return res.status(429).json({
         error: 'Demasiados intentos fallidos. Por seguridad, espera 5 minutos antes de volver a intentar.'
       });

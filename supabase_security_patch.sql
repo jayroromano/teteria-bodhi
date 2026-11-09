@@ -5,12 +5,30 @@
 -- Este script debe ser revisado y ejecutado manualmente por el propietario en el
 -- SQL Editor de Supabase (https://supabase.com/dashboard/project/_/sql/new).
 -- No contiene contraseñas ni claves privadas.
+-- NO ejecutar automáticamente.
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- 1. TABLA DE CONTROL DE PETICIONES (RATE LIMITING DISTRIBUIDO SERVERLESS)
+-- 1. LIMPIEZA EXHAUSTIVA DE TODAS LAS POLÍTICAS ANTERIORES
 -- ------------------------------------------------------------------------------
--- Permite proteger inicios de sesión y reservas entre diferentes instancias de Vercel.
+-- Evita que cualquier política permisiva previa (conocida o desconocida) sobreviva.
+DO $$
+DECLARE
+    pol RECORD;
+BEGIN
+    FOR pol IN
+        SELECT policyname, tablename
+        FROM pg_policies
+        WHERE schemaname = 'public' 
+          AND tablename IN ('reservations', 'menu_items', 'rate_limits')
+    LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', pol.policyname, pol.tablename);
+    END LOOP;
+END $$;
+
+-- ------------------------------------------------------------------------------
+-- 2. TABLA DE CONTROL DE PETICIONES (RATE LIMITING DISTRIBUIDO SERVERLESS)
+-- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.rate_limits (
     key TEXT PRIMARY KEY,
     count INTEGER NOT NULL DEFAULT 1,
@@ -18,18 +36,23 @@ CREATE TABLE IF NOT EXISTS public.rate_limits (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Habilitar RLS estricto: ningún cliente anónimo ni usuario regular puede acceder directamente
+-- Habilitar y forzar RLS
 ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rate_limits FORCE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "service_role_gestiona_rate_limits" ON public.rate_limits;
-CREATE POLICY "service_role_gestiona_rate_limits"
+-- Política: Únicamente accesible por el rol de servicio backend (service_role)
+CREATE POLICY "service_role_rate_limits_policy"
     ON public.rate_limits
     FOR ALL
     TO service_role
     USING (true)
     WITH CHECK (true);
 
--- Función atómica para control de límites de peticiones en Supabase
+-- ------------------------------------------------------------------------------
+-- 3. FUNCIÓN ATÓMICA DE RATE LIMITING CON PRIVILEGIOS RESTRINGIDOS
+-- ------------------------------------------------------------------------------
+-- Incrementa o reinicia atómicamente el contador en una única sentencia INSERT...ON CONFLICT,
+-- resolviendo cualquier condición de carrera ante peticiones concurrentes simultáneas.
 CREATE OR REPLACE FUNCTION public.check_rate_limit(
     p_key TEXT,
     p_max_requests INTEGER,
@@ -38,45 +61,57 @@ CREATE OR REPLACE FUNCTION public.check_rate_limit(
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, pg_temp
 AS $$
 DECLARE
     v_now TIMESTAMPTZ := NOW();
-    v_reset_at TIMESTAMPTZ;
     v_count INTEGER;
 BEGIN
-    -- Limpieza periódica de ventanas expiradas
-    DELETE FROM public.rate_limits WHERE reset_at < v_now;
-
-    SELECT count, reset_at INTO v_count, v_reset_at
-    FROM public.rate_limits
-    WHERE key = p_key
-    FOR UPDATE;
-
-    IF NOT FOUND OR v_reset_at < v_now THEN
-        INSERT INTO public.rate_limits (key, count, reset_at)
-        VALUES (p_key, 1, v_now + (p_window_seconds || ' seconds')::INTERVAL)
-        ON CONFLICT (key) DO UPDATE
-        SET count = 1, reset_at = v_now + (p_window_seconds || ' seconds')::INTERVAL;
-        RETURN TRUE;
+    -- Validación estricta de parámetros de entrada
+    IF p_key IS NULL OR length(trim(p_key)) = 0 OR length(p_key) > 255 THEN
+        RAISE EXCEPTION 'Parámetro p_key inválido: debe ser una cadena no vacía de máx. 255 caracteres';
     END IF;
 
-    IF v_count >= p_max_requests THEN
-        RETURN FALSE;
+    IF p_max_requests IS NULL OR p_max_requests <= 0 OR p_max_requests > 10000 THEN
+        RAISE EXCEPTION 'Parámetro p_max_requests inválido: debe estar entre 1 y 10000';
     END IF;
 
-    UPDATE public.rate_limits
-    SET count = count + 1
-    WHERE key = p_key;
+    IF p_window_seconds IS NULL OR p_window_seconds <= 0 OR p_window_seconds > 86400 THEN
+        RAISE EXCEPTION 'Parámetro p_window_seconds inválido: debe estar entre 1 y 86400 segundos';
+    END IF;
 
-    RETURN TRUE;
+    -- Operación atómica con bloqueo de fila en caso de conflicto
+    -- Reinicia a 1 si la ventana expiró; de lo contrario incrementa el contador
+    INSERT INTO public.rate_limits (key, count, reset_at)
+    VALUES (p_key, 1, v_now + (p_window_seconds || ' seconds')::INTERVAL)
+    ON CONFLICT (key) DO UPDATE
+    SET count = CASE
+            WHEN public.rate_limits.reset_at < v_now THEN 1
+            ELSE public.rate_limits.count + 1
+        END,
+        reset_at = CASE
+            WHEN public.rate_limits.reset_at < v_now THEN v_now + (p_window_seconds || ' seconds')::INTERVAL
+            ELSE public.rate_limits.reset_at
+        END
+    RETURNING count INTO v_count;
+
+    -- Devuelve true si está dentro del límite permitido, false si lo ha excedido
+    RETURN (v_count <= p_max_requests);
 END;
 $$;
 
+-- Restricción estricta de permisos de ejecución sobre la función
+-- Se revoca el permiso a PUBLIC, anon y authenticated
+REVOKE ALL ON FUNCTION public.check_rate_limit(TEXT, INTEGER, INTEGER) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.check_rate_limit(TEXT, INTEGER, INTEGER) FROM anon;
+REVOKE ALL ON FUNCTION public.check_rate_limit(TEXT, INTEGER, INTEGER) FROM authenticated;
+
+-- Se concede exclusivamente a service_role (backend de Vercel)
+GRANT EXECUTE ON FUNCTION public.check_rate_limit(TEXT, INTEGER, INTEGER) TO service_role;
+
 -- ------------------------------------------------------------------------------
--- 2. TABLA DE RESERVAS (PROTECCIÓN DE DATOS PERSONALES RGPD / LOPDGDD)
+-- 4. TABLA DE RESERVAS (PROTECCIÓN TOTAL RGPD / LOPDGDD)
 -- ------------------------------------------------------------------------------
--- Garantiza que las tablas existan con los campos requeridos
 CREATE TABLE IF NOT EXISTS public.reservations (
     id SERIAL PRIMARY KEY,
     code VARCHAR(30) UNIQUE NOT NULL,
@@ -97,61 +132,28 @@ CREATE INDEX IF NOT EXISTS idx_reservations_date ON public.reservations(date);
 CREATE INDEX IF NOT EXISTS idx_reservations_status ON public.reservations(status);
 CREATE INDEX IF NOT EXISTS idx_reservations_code ON public.reservations(code);
 
--- Habilitar RLS obligatorio
+-- Habilitar y forzar RLS
 ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reservations FORCE ROW LEVEL SECURITY;
 
--- Limpieza de políticas antiguas para evitar accesos indebidos heredados
-DROP POLICY IF EXISTS "Permitir crear reservas" ON public.reservations;
-DROP POLICY IF EXISTS "Permitir leer reservas" ON public.reservations;
-DROP POLICY IF EXISTS "Permitir actualizar reservas" ON public.reservations;
-DROP POLICY IF EXISTS "Permitir eliminar reservas" ON public.reservations;
-DROP POLICY IF EXISTS "Solo administradores leen reservas" ON public.reservations;
-DROP POLICY IF EXISTS "Solo administradores actualizan reservas" ON public.reservations;
-DROP POLICY IF EXISTS "Solo administradores eliminan reservas" ON public.reservations;
-DROP POLICY IF EXISTS "public_reservations_insert" ON public.reservations;
-DROP POLICY IF EXISTS "service_role_reservations_select" ON public.reservations;
-DROP POLICY IF EXISTS "service_role_reservations_update" ON public.reservations;
-DROP POLICY IF EXISTS "service_role_reservations_delete" ON public.reservations;
-
--- A) INSERCIÓN PÚBLICA CONTROLADA (Clientes en la web)
--- Los clientes anónimos SOLO pueden insertar reservas con campos mínimos validados
-CREATE POLICY "public_reservations_insert"
+-- Flujo de seguridad estricto:
+-- El rol 'anon' NO tiene permiso de INSERT directo en Supabase.
+-- Todo registro debe pasar obligatoriamente por la API de Vercel (/api/reservas),
+-- donde se validan campos, horarios, consentimiento RGPD y rate limit,
+-- persistiendo finalmente mediante SUPABASE_SERVICE_ROLE_KEY.
+CREATE POLICY "service_role_reservations_all"
     ON public.reservations
-    FOR INSERT
-    TO anon, authenticated, service_role
-    WITH CHECK (
-        length(trim(name)) >= 2 AND
-        length(trim(phone)) >= 6 AND
-        length(trim(date)) = 10 AND
-        length(trim(time)) >= 4
-    );
-
--- B) CONSULTA PRIVILEGIADA (Solo backend de administración mediante service_role)
--- Se excluye intencionadamente el rol 'authenticated' genérico para evitar que cualquier
--- usuario registrado en Supabase Auth obtenga acceso a los datos personales de clientes.
-CREATE POLICY "service_role_reservations_select"
-    ON public.reservations
-    FOR SELECT
-    TO service_role
-    USING (true);
-
--- C) MODIFICACIÓN PRIVILEGIADA (Solo backend de administración mediante service_role)
-CREATE POLICY "service_role_reservations_update"
-    ON public.reservations
-    FOR UPDATE
+    FOR ALL
     TO service_role
     USING (true)
     WITH CHECK (true);
 
--- D) ELIMINACIÓN PRIVILEGIADA (Solo backend de administración mediante service_role)
-CREATE POLICY "service_role_reservations_delete"
-    ON public.reservations
-    FOR DELETE
-    TO service_role
-    USING (true);
+-- Revocar permisos directos de inserción/lectura para anon y authenticated
+REVOKE ALL ON public.reservations FROM anon;
+REVOKE ALL ON public.reservations FROM authenticated;
 
 -- ------------------------------------------------------------------------------
--- 3. TABLA DE CARTA DIGITAL (MENU_ITEMS)
+-- 5. TABLA DE CARTA DIGITAL (MENU_ITEMS)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.menu_items (
     id VARCHAR(100) PRIMARY KEY,
@@ -166,55 +168,45 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
 );
 
 ALTER TABLE public.menu_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.menu_items FORCE ROW LEVEL SECURITY;
 
--- Limpieza de políticas anteriores
-DROP POLICY IF EXISTS "Lectura publica carta" ON public.menu_items;
-DROP POLICY IF EXISTS "Modificar carta" ON public.menu_items;
-DROP POLICY IF EXISTS "Solo administradores modifican carta" ON public.menu_items;
-DROP POLICY IF EXISTS "public_menu_select" ON public.menu_items;
-DROP POLICY IF EXISTS "service_role_menu_insert" ON public.menu_items;
-DROP POLICY IF EXISTS "service_role_menu_update" ON public.menu_items;
-DROP POLICY IF EXISTS "service_role_menu_delete" ON public.menu_items;
-
--- A) LECTURA PÚBLICA (Todos los usuarios pueden ver la carta digital)
-CREATE POLICY "public_menu_select"
+-- A) LECTURA PÚBLICA (Todos los usuarios pueden consultar la carta)
+CREATE POLICY "menu_items_select_public"
     ON public.menu_items
     FOR SELECT
     TO anon, authenticated, service_role
     USING (true);
 
--- B) OPERACIONES DE GESTIÓN (Añadir, modificar y eliminar productos)
--- Estrictamente restringidas al backend privilegiado (service_role)
-CREATE POLICY "service_role_menu_insert"
+-- B) MUTACIONES PRIVILEGIADAS (Añadir, modificar y eliminar productos)
+-- Exclusivo para el backend administrativo
+CREATE POLICY "menu_items_modify_service_role"
     ON public.menu_items
-    FOR INSERT
-    TO service_role
-    WITH CHECK (true);
-
-CREATE POLICY "service_role_menu_update"
-    ON public.menu_items
-    FOR UPDATE
+    FOR ALL
     TO service_role
     USING (true)
     WITH CHECK (true);
 
-CREATE POLICY "service_role_menu_delete"
-    ON public.menu_items
-    FOR DELETE
-    TO service_role
-    USING (true);
+-- ------------------------------------------------------------------------------
+-- 6. CONSULTA DE VERIFICACIÓN DE PERMISOS RESULTANTES
+-- ------------------------------------------------------------------------------
+-- Ejecuta este bloque al finalizar para comprobar el estado final de seguridad:
+/*
+SELECT 
+    schemaname, 
+    tablename, 
+    policyname, 
+    roles, 
+    cmd 
+FROM pg_policies 
+WHERE schemaname = 'public' 
+  AND tablename IN ('reservations', 'menu_items', 'rate_limits')
+ORDER BY tablename, policyname;
 
--- ==============================================================================
--- RESUMEN DE PERMISOS RESULTANTES TRAS APLICAR EL SCRIPT:
--- 1. Usuarios anónimos (navegador del cliente):
---    - Inserción de reservas: PERMITIDA con validaciones mínimas.
---    - Lectura de reservas ajenas: BLOQUEADA (Error 401/403 o array vacío por RLS).
---    - Modificación o borrado de reservas: BLOQUEADO.
---    - Lectura de carta digital: PERMITIDA.
---    - Modificación de carta digital: BLOQUEADA.
--- 2. Usuarios con rol 'authenticated' (usuarios generales sin claims específicos):
---    - Bloqueados para consultar o manipular reservas.
--- 3. Backend de Vercel (operando con SUPABASE_SERVICE_ROLE_KEY):
---    - Acceso controlado a operaciones administrativas, validado previamente en
---      las funciones serverless (/api/admin-login, /api/reservas, /api/carta).
--- ==============================================================================
+SELECT 
+    routine_name, 
+    grantee, 
+    privilege_type 
+FROM information_schema.routine_privileges 
+WHERE routine_schema = 'public' 
+  AND routine_name = 'check_rate_limit';
+*/

@@ -173,8 +173,13 @@ module.exports = async function handler(req, res) {
 
       // 1. Protección Anti-Spam: Rate Limiting distribuido (máximo 6 reservas cada 10 min por IP, excepto admin)
       if (!isReqAdmin) {
-        const allowed = await checkRateLimit(`res_${clientIp}`, 6, 10 * 60 * 1000);
-        if (!allowed) {
+        const rateResult = await checkRateLimit(`res_${clientIp}`, 6, 10 * 60 * 1000);
+        if (!rateResult.allowed) {
+          if (rateResult.status === 503 || rateResult.unavailable) {
+            return res.status(503).json({
+              error: 'El servicio de reservas no está disponible en este momento. Por favor inténtalo de nuevo más tarde o contáctanos por WhatsApp.'
+            });
+          }
           return res.status(429).json({
             error: 'Has enviado varias solicitudes recientemente. Por favor espera unos minutos o contáctanos por WhatsApp.'
           });
@@ -200,18 +205,28 @@ module.exports = async function handler(req, res) {
       }
 
       // 3. Verificación de RGPD: consentimiento explícito requerido en envíos públicos
-      if (!isReqAdmin && !privacy) {
+      // No convertir cadenas indiscriminadamente: "false" debe ser false
+      const isPrivacyAccepted = privacy === true || privacy === 'true';
+      if (!isReqAdmin && !isPrivacyAccepted) {
         return res.status(400).json({
           error: 'Es necesario aceptar la política de privacidad para tramitar la reserva conforme a la normativa de protección de datos.'
         });
       }
 
-      // Sanitización estricta y límites de longitud
+      // 4. Validación de comensales: debe ser un número entero válido entre 1 y 20
+      const guestsNum = Number(guests);
+      if (!Number.isInteger(guestsNum) || guestsNum < 1 || guestsNum > 20) {
+        return res.status(400).json({
+          error: 'El número de comensales debe ser un número entero entre 1 y 20 personas.'
+        });
+      }
+
+      // 5. Sanitización estricta y límites de longitud
       const cleanName = String(name).trim().slice(0, 100);
       const cleanPhone = String(phone).trim().slice(0, 30);
       const cleanEmail = email ? String(email).trim().slice(0, 150) : '';
-      const cleanDate = String(date).trim().slice(0, 10);
-      const cleanTime = String(time).trim().slice(0, 8);
+      const cleanDate = String(date).trim();
+      const cleanTime = String(time).trim();
       const cleanNotes = notes ? String(notes).trim().slice(0, 500) : '';
 
       if (cleanName.length < 2) {
@@ -222,9 +237,57 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Por favor introduce un número de teléfono válido.' });
       }
 
-      // Validar formato de fecha YYYY-MM-DD
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
-        return res.status(400).json({ error: 'Formato de fecha inválido. Utilice el selector de fecha.' });
+      // 6. Validación exacta de fecha YYYY-MM-DD y existencia real en el calendario
+      const dateMatch = cleanDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!dateMatch) {
+        return res.status(400).json({ error: 'Formato de fecha inválido. Utilice el formato YYYY-MM-DD.' });
+      }
+
+      const y = parseInt(dateMatch[1], 10);
+      const m = parseInt(dateMatch[2], 10);
+      const d = parseInt(dateMatch[3], 10);
+      const calendarDate = new Date(Date.UTC(y, m - 1, d));
+      if (calendarDate.getUTCFullYear() !== y || calendarDate.getUTCMonth() !== m - 1 || calendarDate.getUTCDate() !== d) {
+        return res.status(400).json({ error: 'La fecha indicada no existe en el calendario.' });
+      }
+
+      // Comprobar que la fecha no está en el pasado (zona horaria peninsular española)
+      const nowSpain = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+      if (cleanDate < nowSpain) {
+        return res.status(400).json({ error: 'No se pueden realizar reservas para fechas pasadas.' });
+      }
+
+      // 7. Validación de formato de hora HH:mm en 24 horas
+      if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(cleanTime)) {
+        return res.status(400).json({ error: 'Formato de hora inválido. Debe ser HH:mm en formato 24 horas.' });
+      }
+
+      // 8. Reglas de horario comercial y días de apertura de Tetería Bodhi
+      // El servidor utiliza el negocio activo configurado (no se permite falsear por el cliente)
+      const dayOfWeek = calendarDate.getUTCDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+
+      // Lunes: Cerrado por descanso del personal
+      if (dayOfWeek === 1) {
+        return res.status(400).json({
+          error: 'Los lunes la tetería permanece cerrada por descanso del personal. Por favor selecciona una fecha de martes a domingo.'
+        });
+      }
+
+      // Horario de apertura según configuración oficial:
+      // - Martes a Jueves y Domingo: 18:00 a 02:00
+      // - Viernes y Sábado: 18:00 a 03:00
+      const [h, min] = cleanTime.split(':').map(Number);
+      const minutesSinceMidnight = h * 60 + min;
+      const isWeekend = (dayOfWeek === 5 || dayOfWeek === 6);
+      const closeMinutes = isWeekend ? 3 * 60 : 2 * 60; // 03:00 o 02:00
+
+      // El local abre a las 18:00 (1080 min) y cierra de madrugada
+      const isOpen = (minutesSinceMidnight >= 18 * 60) || (minutesSinceMidnight <= closeMinutes);
+      if (!isOpen) {
+        const cierreStr = isWeekend ? '03:00 h' : '02:00 h';
+        return res.status(400).json({
+          error: `Nuestro horario para este día es de 18:00 a ${cierreStr}. Por favor elija una hora dentro del horario de apertura.`
+        });
       }
 
       // Validar zona en lista blanca
@@ -232,45 +295,17 @@ module.exports = async function handler(req, res) {
       const rawZone = String(zone || 'indiferente').trim();
       const cleanZone = allowedZones.includes(rawZone) ? rawZone : 'indiferente';
 
-      // Validar comensales (1 a 20)
-      const numGuests = parseInt(guests, 10);
-      if (isNaN(numGuests) || numGuests < 1 || numGuests > 20) {
-        return res.status(400).json({ error: 'El número de comensales debe estar entre 1 y 20 personas.' });
-      }
-
-      const businessSlug = body.business || 'bodhi';
-
-      // Reglas comerciales específicas de Tetería Bodhi
-      if (businessSlug === 'bodhi') {
-        const dateParts = cleanDate.split('-');
-        const testDate = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]), 12, 0, 0);
-
-        // Lunes cerrado por descanso
-        if (testDate.getDay() === 1) {
-          return res.status(400).json({
-            error: 'Los lunes la tetería permanece cerrada por descanso del personal. Por favor selecciona una fecha de martes a domingo.'
-          });
-        }
-
-        const [h] = cleanTime.split(':').map(Number);
-        if (!isNaN(h) && (h >= 4 && h < 16)) {
-          return res.status(400).json({
-            error: 'Nuestro horario de apertura es de 18:00 a 02:00 h (hasta las 03:00 h los fines de semana).'
-          });
-        }
-      }
-
-      // Los clientes no pueden forzar estados arbitrarios ni notas internas
+      // 9. Los clientes públicos no pueden forzar estados arbitrarios ni notas internas
       const reservationData = {
         name: cleanName,
         phone: cleanPhone,
         email: cleanEmail,
         date: cleanDate,
         time: cleanTime,
-        guests: numGuests,
+        guests: guestsNum,
         zone: cleanZone,
         notes: cleanNotes,
-        status: isReqAdmin && body.status ? body.status : (numGuests > 4 ? 'pending' : 'confirmed'),
+        status: isReqAdmin && body.status ? body.status : (guestsNum > 4 ? 'pending' : 'confirmed'),
         admin_notes: isReqAdmin && body.admin_notes ? String(body.admin_notes).slice(0, 500) : null
       };
 
@@ -309,10 +344,43 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Se requiere id de reserva.' });
       }
 
-      // Lista blanca de campos actualizables
+      // Validar campos en lista blanca
       const allowedPatch = ['status', 'admin_notes', 'zone', 'guests', 'date', 'time', 'notes'];
       const filtered = {};
-      for (const k of allowedPatch) {
+
+      if (updates.status !== undefined) {
+        const allowedStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+        if (!allowedStatuses.includes(updates.status)) {
+          return res.status(400).json({ error: 'Estado de reserva no válido.' });
+        }
+        filtered.status = updates.status;
+      }
+
+      if (updates.guests !== undefined) {
+        const gNum = Number(updates.guests);
+        if (!Number.isInteger(gNum) || gNum < 1 || gNum > 20) {
+          return res.status(400).json({ error: 'Comensales debe ser un número entero entre 1 y 20.' });
+        }
+        filtered.guests = gNum;
+      }
+
+      if (updates.date !== undefined) {
+        const dStr = String(updates.date).trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dStr)) {
+          return res.status(400).json({ error: 'Formato de fecha inválido. Utilice YYYY-MM-DD.' });
+        }
+        filtered.date = dStr;
+      }
+
+      if (updates.time !== undefined) {
+        const tStr = String(updates.time).trim();
+        if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(tStr)) {
+          return res.status(400).json({ error: 'Formato de hora inválido. Utilice HH:mm.' });
+        }
+        filtered.time = tStr;
+      }
+
+      for (const k of ['admin_notes', 'zone', 'notes']) {
         if (updates[k] !== undefined) {
           filtered[k] = updates[k];
         }
