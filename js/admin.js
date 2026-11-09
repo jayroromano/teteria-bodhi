@@ -207,11 +207,13 @@
         updateCloudDbPill(data.isCloudDb);
         loadDashboard();
       } else {
+        authToken = '';
+        localStorage.removeItem('bodhi_admin_token');
         showLogin();
       }
     } catch (e) {
-      hideLogin();
-      loadDashboard();
+      showLogin();
+      if (loginError) loginError.textContent = 'Error de conexión verificando credenciales.';
     }
   }
 

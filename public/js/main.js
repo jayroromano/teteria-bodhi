@@ -839,9 +839,17 @@
       const zoneEl = document.querySelector('input[name="z"]:checked');
       const zone = zoneEl ? zoneEl.value : 'indiferente';
       const notes = $('#o') ? $('#o').value.trim() : '';
+      const b_hp = $('#b_hp') ? $('#b_hp').value : '';
+      const privacyCheck = $('#privacy-check');
 
       if (!name || !phone || !date || !time) {
         showToast('Por favor completa todos los campos requeridos.', 'error');
+        return;
+      }
+
+      if (privacyCheck && !privacyCheck.checked) {
+        showToast('Debes aceptar la política de privacidad para gestionar la reserva.', 'error');
+        privacyCheck.focus();
         return;
       }
 
@@ -880,7 +888,7 @@
         const res = await fetch('/api/reservas', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, date, time, guests, zone, notes })
+          body: JSON.stringify({ name, phone, date, time, guests, zone, notes, b_hp, privacy: true })
         });
 
         const data = await res.json();
@@ -986,6 +994,74 @@
     if (z === 'int' || z === 'interior') return 'Interior Lounge';
     if (z === 'ter' || z === 'terraza') return 'Terraza Exterior';
     return 'Indiferente';
+  }
+
+  // ==========================================
+  // GESTIÓN DE MODALES LEGALES Y COOKIES (RGPD)
+  // ==========================================
+  function setupLegalModal(modalId, openBtnIds, closeBtnIds) {
+    const modal = $(modalId);
+    if (!modal) return;
+
+    openBtnIds.forEach(id => {
+      const btn = $(id);
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          modal.classList.add('active');
+        });
+      }
+    });
+
+    closeBtnIds.forEach(id => {
+      const btn = $(id);
+      if (btn) {
+        btn.addEventListener('click', () => modal.classList.remove('active'));
+      }
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('active');
+    });
+  }
+
+  setupLegalModal('#privacy-modal', ['#open-privacy-link', '#foot-open-privacy'], ['#privacy-modal-close', '#privacy-modal-accept']);
+  setupLegalModal('#legal-modal', ['#foot-open-legal'], ['#legal-modal-close', '#legal-modal-accept']);
+  setupLegalModal('#cookies-modal', ['#foot-open-cookies', '#cookie-open-policy'], ['#cookies-modal-close', '#cookies-modal-accept']);
+
+  // Accesibilidad: Cerrar cualquier modal activo al pulsar la tecla Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      $$('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+    }
+  });
+
+  // Banner Informativo de Cookies AEPD
+  const cookieBanner = $('#cookie-banner');
+  const cookieAcceptBtn = $('#cookie-btn-accept');
+  const cookieRejectBtn = $('#cookie-btn-reject');
+
+  if (cookieBanner) {
+    const consent = localStorage.getItem('bodhi_cookie_consent');
+    if (!consent) {
+      setTimeout(() => {
+        cookieBanner.classList.remove('hidden');
+      }, 1200);
+    }
+
+    if (cookieAcceptBtn) {
+      cookieAcceptBtn.addEventListener('click', () => {
+        localStorage.setItem('bodhi_cookie_consent', 'all');
+        cookieBanner.classList.add('hidden');
+      });
+    }
+
+    if (cookieRejectBtn) {
+      cookieRejectBtn.addEventListener('click', () => {
+        localStorage.setItem('bodhi_cookie_consent', 'essential');
+        cookieBanner.classList.add('hidden');
+      });
+    }
   }
 
 })();

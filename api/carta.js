@@ -1,4 +1,5 @@
 const db = require('../lib/db');
+const { verifyToken } = require('../lib/auth');
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,9 +25,7 @@ function parseBody(req) {
 
 function isAdmin(req) {
   const auth = req.headers['authorization'] || '';
-  const token = auth.replace('Bearer ', '').trim();
-  const validPass = process.env.ADMIN_PASSWORD || 'bodhi2026';
-  return token === validPass || token.startsWith('bodhi_token_');
+  return verifyToken(auth);
 }
 
 module.exports = async function handler(req, res) {

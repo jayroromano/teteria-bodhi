@@ -1,9 +1,16 @@
 const db = require('../lib/db');
+const { generateToken, verifyToken, checkRateLimit } = require('../lib/auth');
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
+
+function getClientIp(req) {
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  if (xForwardedFor) return xForwardedFor.split(',')[0].trim();
+  return req.socket?.remoteAddress || '127.0.0.1';
 }
 
 function parseBody(req) {
@@ -27,13 +34,13 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
+  const clientIp = getClientIp(req);
   const defaultPass = process.env.ADMIN_PASSWORD || 'bodhi2026';
 
-  // GET: Verificar si el token actual sigue siendo válido
+  // GET: Verificar si el token actual sigue siendo válido criptográficamente
   if (req.method === 'GET') {
     const auth = req.headers['authorization'] || '';
-    const token = auth.replace('Bearer ', '').trim();
-    const isValid = token === defaultPass || token.startsWith('bodhi_token_');
+    const isValid = verifyToken(auth);
     return res.status(200).json({
       valid: isValid,
       isCloudDb: db.isCloudDb()
@@ -41,6 +48,13 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
+    // Protección contra fuerza bruta: máx 5 intentos cada 5 minutos por IP
+    if (!checkRateLimit(`login_${clientIp}`, 5, 5 * 60 * 1000)) {
+      return res.status(429).json({
+        error: 'Demasiados intentos fallidos. Por seguridad, espera 5 minutos antes de volver a intentar.'
+      });
+    }
+
     const body = await parseBody(req);
     const { password } = body;
 
@@ -49,8 +63,8 @@ module.exports = async function handler(req, res) {
     }
 
     if (password === defaultPass) {
-      const token = `bodhi_token_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 días
+      const token = generateToken();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
       return res.status(200).json({
         success: true,
@@ -61,7 +75,7 @@ module.exports = async function handler(req, res) {
       });
     } else {
       return res.status(401).json({
-        error: 'Contraseña incorrecta. Por defecto es "bodhi2026" (configurable en variables de entorno).'
+        error: 'Contraseña incorrecta.'
       });
     }
   }

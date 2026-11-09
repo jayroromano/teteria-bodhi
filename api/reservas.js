@@ -1,5 +1,12 @@
 const db = require('../lib/db');
+const { verifyToken, checkRateLimit } = require('../lib/auth');
 const https = require('https');
+
+function getClientIp(req) {
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  if (xForwardedFor) return xForwardedFor.split(',')[0].trim();
+  return req.socket?.remoteAddress || '127.0.0.1';
+}
 
 // Notificaciones automáticas al administrador cuando entra una reserva
 async function sendAdminNotifications(reservation) {
@@ -99,10 +106,7 @@ function parseBody(req) {
 
 function isAdmin(req) {
   const auth = req.headers['authorization'] || '';
-  const token = auth.replace('Bearer ', '').trim();
-  const validPass = process.env.ADMIN_PASSWORD || 'bodhi2026';
-  // Acepta la contraseña directa o un token prefijado
-  return token === validPass || token.startsWith('bodhi_token_');
+  return verifyToken(auth);
 }
 
 module.exports = async function handler(req, res) {
@@ -164,8 +168,28 @@ module.exports = async function handler(req, res) {
 
     // POST: Nueva reserva de cliente o manual desde admin
     if (method === 'POST') {
+      const clientIp = getClientIp(req);
+      const isReqAdmin = isAdmin(req);
+
+      // 1. Protección Anti-Spam: Rate Limiting (máximo 6 reservas cada 10 min por IP, excepto admin)
+      if (!isReqAdmin && !checkRateLimit(`res_${clientIp}`, 6, 10 * 60 * 1000)) {
+        return res.status(429).json({
+          error: 'Has enviado varias solicitudes recientemente. Por favor espera unos minutos o confirma tu reserva por WhatsApp.'
+        });
+      }
+
       const body = await parseBody(req);
-      const { name, phone, email, date, time, guests, zone, notes } = body;
+
+      // 2. Campo trampa Honeypot para detectar bots automatizados
+      if (body.b_hp || body.website_url) {
+        // Respuesta fingida de éxito para engañar al bot sin escribir en la base de datos
+        return res.status(201).json({
+          success: true,
+          message: 'Reserva registrada con éxito.'
+        });
+      }
+
+      const { name, phone, email, date, time, guests, zone, notes, privacy } = body;
 
       if (!name || !phone || !date || !time) {
         return res.status(400).json({
@@ -173,8 +197,21 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const cleanDate = String(date).trim();
-      const cleanTime = String(time).trim();
+      // 3. Verificación de RGPD: consentimiento explícito de tratamiento de datos personales
+      if (!isReqAdmin && !privacy) {
+        return res.status(400).json({
+          error: 'Es necesario aceptar la política de privacidad para tramitar la reserva conforme a la normativa de protección de datos.'
+        });
+      }
+
+      // Sanitización y límites de longitud para prevenir inyecciones
+      const cleanName = String(name).trim().slice(0, 100);
+      const cleanPhone = String(phone).trim().slice(0, 30);
+      const cleanEmail = email ? String(email).trim().slice(0, 150) : '';
+      const cleanDate = String(date).trim().slice(0, 20);
+      const cleanTime = String(time).trim().slice(0, 10);
+      const cleanZone = String(zone || 'indiferente').trim().slice(0, 50);
+      const cleanNotes = notes ? String(notes).trim().slice(0, 500) : '';
 
       const businessSlug = body.business || 'bodhi';
 
@@ -199,14 +236,14 @@ module.exports = async function handler(req, res) {
       }
 
       const newReservation = await db.createReservation({
-        name: String(name).trim(),
-        phone: String(phone).trim(),
-        email: email ? String(email).trim() : '',
+        name: cleanName,
+        phone: cleanPhone,
+        email: cleanEmail,
         date: cleanDate,
         time: cleanTime,
         guests: Math.max(1, parseInt(guests, 10) || 2),
-        zone: zone || 'indiferente',
-        notes: notes ? String(notes).trim() : ''
+        zone: cleanZone,
+        notes: cleanNotes
       });
 
       // Disparar notificaciones configuradas de forma asíncrona
