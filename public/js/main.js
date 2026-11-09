@@ -739,6 +739,17 @@
       dateInput.value = `${yyyy}-${mm}-${dd}`;
     }
 
+    // Permitir abrir el calendario nativo al hacer clic en cualquier parte del campo
+    dateInput.addEventListener('click', () => {
+      if (typeof dateInput.showPicker === 'function') {
+        try {
+          dateInput.showPicker();
+        } catch (e) {
+          // Fallback silencioso si el navegador restringe showPicker
+        }
+      }
+    });
+
     dateInput.addEventListener('change', () => {
       validateDateSelection();
       populateTimeSlots();
