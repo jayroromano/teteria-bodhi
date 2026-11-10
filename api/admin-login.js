@@ -33,8 +33,14 @@ module.exports = async function handler(req, res) {
 
   // Verificación de configuración segura en producción
   if (isProduction()) {
-    if (!process.env.ADMIN_PASSWORD || !getSessionSecret()) {
-      console.error('[Seguridad] Error crítico: ADMIN_PASSWORD o ADMIN_SESSION_SECRET ausente en producción.');
+    const hasAdminPassword = Boolean(process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.trim());
+    const hasSessionSecret = Boolean(getSessionSecret());
+    if (!hasAdminPassword || !hasSessionSecret) {
+      // Diagnóstico seguro: solo indica qué falta, nunca el valor
+      console.error('[Seguridad] Error crítico: configuración administrativa incompleta en producción.', {
+        hasAdminPassword,
+        hasAdminSessionSecret: hasSessionSecret
+      });
       return res.status(500).json({
         error: 'El servidor no está configurado correctamente para permitir accesos administrativos.'
       });
