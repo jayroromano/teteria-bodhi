@@ -2063,3 +2063,182 @@ footer {
   height: 32px;
   fill: currentColor;
 }
+
+/* =========================================================
+   ACCESIBILIDAD WCAG 2.2 AA & MEJORAS DE FOCO
+   ========================================================= */
+:focus-visible {
+  outline: 2.5px solid var(--tost);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   RGPD: CONSENTIMIENTO, ENLACES LEGALES Y COOKIES
+   ========================================================= */
+.privacy-row {
+  margin-top: 6px;
+}
+
+.privacy-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--mut);
+  cursor: pointer;
+  line-height: 1.45;
+}
+
+.privacy-label input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  accent-color: var(--tost);
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.text-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: inherit;
+  color: var(--tost);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.text-link-btn:hover {
+  color: var(--ink);
+}
+
+.foot-legal-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.foot-link-btn {
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--mut);
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: var(--transition);
+}
+
+.foot-link-btn:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.foot-legal-links .sep {
+  opacity: 0.4;
+}
+
+/* Banner de Cookies AEPD */
+.cookie-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 20px;
+  right: 20px;
+  max-width: 580px;
+  margin: 0 auto;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  box-shadow: var(--shadow-lg);
+  border-radius: 16px;
+  padding: 20px 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: slideUpCookie 0.35s ease-out;
+}
+
+.cookie-banner.hidden {
+  display: none !important;
+}
+
+@keyframes slideUpCookie {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cookie-banner p {
+  font-size: 0.88rem;
+  color: var(--mut);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.cookie-btn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.cookie-btn.accept {
+  background: var(--btn);
+  color: var(--btnink);
+  border: 1.5px solid var(--btn);
+}
+
+.cookie-btn.accept:hover {
+  opacity: 0.92;
+}
+
+.cookie-btn.reject {
+  background: transparent;
+  color: var(--mut);
+  border: 1.5px solid var(--line);
+}
+
+.cookie-btn.reject:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.legal-content-box {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 12px;
+  font-size: 0.92rem;
+  color: var(--mut);
+  line-height: 1.6;
+}
+
+.legal-content-box h4 {
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin: 18px 0 6px;
+}
+
+.legal-content-box p {
+  margin-bottom: 12px;
+}
+
+.legal-content-box ul {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+.legal-content-box li {
+  margin-bottom: 6px;
+}

@@ -4,7 +4,72 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Tetería Bodhi | Shisha Lounge, Cócteles y Chill-out en Jerez</title>
-  <meta name="description" content="Tetería Bodhi en Jerez de la Frontera (Av. de Méjico): cachimbas premium con carbón natural, cócteles de autor, sofás lounge y el mejor ambiente chill-out para tus tardes y noches.">
+  <meta name="description" content="Tetería Bodhi en Jerez de la Frontera (Av. de Méjico): tés morunos tradicionales, cachimbas premium con carbón natural, cócteles de autor, sofás lounge y ambiente chill-out. ¡Reserva online!">
+  <meta name="keywords" content="tetería en Jerez de la Frontera, tetería Bodhi, cócteles en Jerez, cachimbas en Jerez, tomar algo en Jerez, shisha lounge Jerez">
+  <link rel="canonical" href="https://teteria-bodhi.vercel.app/">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+
+  <!-- Open Graph / Redes Sociales / WhatsApp -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://teteria-bodhi.vercel.app/">
+  <meta property="og:title" content="Tetería Bodhi | Shisha Lounge, Cócteles y Chill-out en Jerez">
+  <meta property="og:description" content="Tetería Bodhi en Jerez de la Frontera: tés del mundo, cachimbas premium con carbón natural y cócteles de autor. Reserva tu mesa online al instante.">
+  <meta property="og:image" content="https://teteria-bodhi.vercel.app/img/logo-bodhi.png">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:site_name" content="Tetería Bodhi Jerez">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://teteria-bodhi.vercel.app/">
+  <meta name="twitter:title" content="Tetería Bodhi | Shisha Lounge, Cócteles y Chill-out en Jerez">
+  <meta name="twitter:description" content="Tés artesanales, cachimbas premium y coctelería chill-out en Av. de Méjico, Jerez de la Frontera.">
+  <meta name="twitter:image" content="https://teteria-bodhi.vercel.app/img/logo-bodhi.png">
+
+  <!-- Schema.org Datos Estructurados (Negocio Local en Jerez de la Frontera) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": ["BarOrPub", "CafeOrCoffeeShop"],
+    "name": "Tetería Bodhi",
+    "image": "https://teteria-bodhi.vercel.app/img/logo-bodhi.png",
+    "@id": "https://teteria-bodhi.vercel.app/#teteria",
+    "url": "https://teteria-bodhi.vercel.app/",
+    "telephone": "+34956000000",
+    "priceRange": "€€",
+    "servesCuisine": ["Té tradicional", "Cócteles de autor", "Cachimba / Shisha", "Repostería artesanal"],
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Av. de Méjico, 3",
+      "addressLocality": "Jerez de la Frontera",
+      "addressRegion": "Cádiz",
+      "postalCode": "11405",
+      "addressCountry": "ES"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 36.6883,
+      "longitude": -6.1308
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Sunday"],
+        "opens": "18:00",
+        "closes": "02:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Friday", "Saturday"],
+        "opens": "18:00",
+        "closes": "03:00"
+      }
+    ],
+    "hasMap": "https://maps.app.goo.gl/NzjgemTgAFJaaZcv6",
+    "menu": "https://teteria-bodhi.vercel.app/#carta",
+    "acceptsReservations": "True"
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -450,6 +515,20 @@
             <label for="o">Observaciones o peticiones especiales</label>
             <textarea id="o" name="notes" placeholder="¿Celebración de cumpleaños? ¿Sabor preferido de cachimba? ¿Alergias o intolerancias?"></textarea>
           </div>
+
+          <!-- Campo anti-spam Honeypot invisible para humanos -->
+          <div style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;" aria-hidden="true">
+            <label for="b_hp">Si eres humano deja este campo en blanco</label>
+            <input type="text" name="b_hp" id="b_hp" tabindex="-1" autocomplete="off">
+          </div>
+
+          <!-- Consentimiento obligatorio RGPD -->
+          <div class="f1 privacy-row">
+            <label class="privacy-label" for="privacy-check">
+              <input type="checkbox" id="privacy-check" name="privacy" required>
+              <span>He leído y acepto la <button type="button" class="text-link-btn" id="open-privacy-link">política de privacidad</button> y el tratamiento de mis datos personales para la gestión de la reserva. *</span>
+            </label>
+          </div>
         </div>
 
         <div class="submit-btn-row">
@@ -717,6 +796,13 @@
       <a href="https://maps.app.goo.gl/NzjgemTgAFJaaZcv6" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
         <span>Av. de Méjico, 3 · Jerez de la Frontera, Cádiz 📍</span>
       </a>
+      <div class="foot-legal-links">
+        <button type="button" class="foot-link-btn" id="foot-open-legal">Aviso Legal</button>
+        <span class="sep">·</span>
+        <button type="button" class="foot-link-btn" id="foot-open-privacy">Privacidad</button>
+        <span class="sep">·</span>
+        <button type="button" class="foot-link-btn" id="foot-open-cookies">Cookies</button>
+      </div>
       <a href="admin.html" class="foot-admin-link">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Panel de Administración
@@ -769,6 +855,107 @@
         Entendido, cerrar
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ================= MODAL POLÍTICA DE PRIVACIDAD (RGPD) ================= -->
+<div class="modal-overlay" id="privacy-modal" role="dialog" aria-modal="true" aria-labelledby="privacy-modal-title">
+  <div class="modal-card" style="max-width: 640px;">
+    <button class="modal-close" id="privacy-modal-close" aria-label="Cerrar ventana">×</button>
+    <div style="margin-bottom: 16px;">
+      <h3 id="privacy-modal-title" style="font-size: 1.6rem; margin-bottom: 6px;">Política de Privacidad</h3>
+      <p style="color: var(--mut); font-size: 0.9rem;">Información sobre el tratamiento de datos personales (RGPD & LOPDGDD).</p>
+    </div>
+    <div class="legal-content-box">
+      <h4>1. Responsable del Tratamiento</h4>
+      <p><strong>Identidad:</strong> Tetería Bodhi.</p>
+      <p><strong>Dirección:</strong> Av. de Méjico, 3, 11405 Jerez de la Frontera, Cádiz, España.</p>
+      <p><strong>Contacto:</strong> Presencialmente en nuestro local o a través de nuestros canales y teléfono de contacto.</p>
+
+      <h4>2. Finalidad del Tratamiento</h4>
+      <p>Tratamos la información que nos facilita con el fin de:</p>
+      <ul>
+        <li>Gestionar, confirmar y atender su solicitud de reserva de mesa en Tetería Bodhi.</li>
+        <li>Enviar avisos relacionados con su reserva (vía WhatsApp o llamada para coordinar mesa o preferencias).</li>
+        <li>Atender dudas y observaciones sobre alérgenos, celebraciones o peticiones para grupos.</li>
+      </ul>
+      <p>No utilizaremos sus datos para el envío de comunicaciones comerciales no solicitadas ni publicidad sin su previo consentimiento.</p>
+
+      <h4>3. Legitimación</h4>
+      <p>La base legal para el tratamiento de sus datos es el <strong>consentimiento expreso</strong> del interesado (Art. 6.1.a del RGPD) al marcar la casilla de aceptación y solicitar la reserva.</p>
+
+      <h4>4. Conservación de los Datos</h4>
+      <p>Los datos de reserva se conservarán durante el tiempo estrictamente necesario para la prestación del servicio y atención a la reserva.</p>
+
+      <h4>5. Destinatarios</h4>
+      <p>No se ceden datos a terceros ajenos salvo obligación legal expresa.</p>
+
+      <h4>6. Derechos del Usuario</h4>
+      <p>Puede ejercer en cualquier momento sus derechos de acceso, rectificación, supresión y limitación del tratamiento solicitándolo en nuestro establecimiento o vía contacto directo.</p>
+    </div>
+    <div style="margin-top: 20px;">
+      <button type="button" class="btn line" id="privacy-modal-accept" style="width: 100%;">Cerrar y volver</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL AVISO LEGAL ================= -->
+<div class="modal-overlay" id="legal-modal" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
+  <div class="modal-card" style="max-width: 640px;">
+    <button class="modal-close" id="legal-modal-close" aria-label="Cerrar ventana">×</button>
+    <div style="margin-bottom: 16px;">
+      <h3 id="legal-modal-title" style="font-size: 1.6rem; margin-bottom: 6px;">Aviso Legal</h3>
+      <p style="color: var(--mut); font-size: 0.9rem;">Términos generales de uso de la web oficial de Tetería Bodhi.</p>
+    </div>
+    <div class="legal-content-box">
+      <h4>1. Información General (LSSI-CE)</h4>
+      <p>En cumplimiento con el artículo 10 de la Ley 34/2002 (LSSI-CE), se informa que este sitio web pertenece a Tetería Bodhi, establecimiento de hostelería ubicado en Av. de Méjico, 3, 11405 Jerez de la Frontera (Cádiz).</p>
+
+      <h4>2. Propiedad Intelectual e Industrial</h4>
+      <p>El diseño, logotipos, textos, combinaciones de colores e imágenes de este sitio web están protegidos por la legislación de propiedad intelectual.</p>
+
+      <h4>3. Disponibilidad y Carta</h4>
+      <p>Tetería Bodhi actualiza de manera continua la disponibilidad y precios de su carta digital, reservándose el derecho a modificar ofertas y horarios de temporada.</p>
+    </div>
+    <div style="margin-top: 20px;">
+      <button type="button" class="btn line" id="legal-modal-accept" style="width: 100%;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL POLÍTICA DE COOKIES ================= -->
+<div class="modal-overlay" id="cookies-modal" role="dialog" aria-modal="true" aria-labelledby="cookies-modal-title">
+  <div class="modal-card" style="max-width: 640px;">
+    <button class="modal-close" id="cookies-modal-close" aria-label="Cerrar ventana">×</button>
+    <div style="margin-bottom: 16px;">
+      <h3 id="cookies-modal-title" style="font-size: 1.6rem; margin-bottom: 6px;">Política de Cookies</h3>
+      <p style="color: var(--mut); font-size: 0.9rem;">Transparencia y cumplimiento de la normativa AEPD.</p>
+    </div>
+    <div class="legal-content-box">
+      <h4>1. Uso de Cookies Técnicas</h4>
+      <p>Este sitio web utiliza únicamente cookies técnicas y almacenamiento local imprescindibles para:</p>
+      <ul>
+        <li>Recordar su preferencia de tema (modo claro / modo oscuro).</li>
+        <li>Gestionar el proceso de reserva online.</li>
+        <li>Registrar la aceptación del aviso informativo de cookies.</li>
+      </ul>
+      <h4>2. Sin Cookies Publicitarias</h4>
+      <p>No utilizamos cookies de seguimiento publicitario ni comercialización de datos. Si se utilizan servicios externos (como Google Maps para visualizar la ubicación), dichos servicios pueden emitir cookies técnicas sujetas a sus propias políticas de privacidad.</p>
+    </div>
+    <div style="margin-top: 20px;">
+      <button type="button" class="btn line" id="cookies-modal-accept" style="width: 100%;">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= BANNER INFORMATIVO DE COOKIES ================= -->
+<div class="cookie-banner hidden" id="cookie-banner" role="region" aria-label="Aviso de cookies">
+  <p>
+    🍪 <strong>Tu privacidad es importante:</strong> En Tetería Bodhi utilizamos cookies técnicas estrictamente necesarias para el correcto funcionamiento del sistema de reservas y para recordar tu preferencia de tema (claro/oscuro). No usamos cookies de seguimiento publicitario. Consulta nuestra <button type="button" class="text-link-btn" id="cookie-open-policy">política de cookies</button>.
+  </p>
+  <div class="cookie-banner-actions">
+    <button type="button" class="cookie-btn reject" id="cookie-btn-reject">Solo necesarias</button>
+    <button type="button" class="cookie-btn accept" id="cookie-btn-accept">Aceptar todas</button>
   </div>
 </div>
 

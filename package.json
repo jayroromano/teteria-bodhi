@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node -e \"console.log('Build completed for Vercel')\"",
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "node tests/security_audit_test.js"
   },
   "keywords": [
     "teteria",

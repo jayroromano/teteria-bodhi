@@ -207,11 +207,13 @@
         updateCloudDbPill(data.isCloudDb);
         loadDashboard();
       } else {
+        authToken = '';
+        localStorage.removeItem('bodhi_admin_token');
         showLogin();
       }
     } catch (e) {
-      hideLogin();
-      loadDashboard();
+      showLogin();
+      if (loginError) loginError.textContent = 'Error de conexión verificando credenciales.';
     }
   }
 
@@ -230,14 +232,14 @@
       const password = loginPass.value.trim();
 
       if (isFileProtocol) {
-        if (password === 'bodhi2026') {
-          authToken = 'bodhi_token_local';
+        if (password) {
+          authToken = 'bdh_mock_local_dev';
           localStorage.setItem('bodhi_admin_token', authToken);
           hideLogin();
           updateCloudDbPill(false);
           loadDashboard();
         } else {
-          loginError.textContent = 'Contraseña incorrecta (por defecto: bodhi2026)';
+          loginError.textContent = 'Por favor introduce la contraseña de administrador.';
         }
         return;
       }
@@ -279,7 +281,9 @@
       return;
     }
     try {
-      const res = await fetch('/api/reservas?health=true');
+      const res = await fetch('/api/reservas?health=true', {
+        headers: { 'Authorization': 'Bearer ' + authToken }
+      });
       const data = await res.json();
 
       const pill = $('#db-status-pill');
@@ -363,7 +367,7 @@
             : '<span style="color:#C62828; font-weight:700;">🔴 Desconectado o con error de credenciales</span>';
       }
       if (dbDiagVar) {
-        dbDiagVar.textContent = 'SUPABASE_URL (https://vgvijpknawgrjctywywq.supabase.co)';
+        dbDiagVar.textContent = 'SUPABASE_URL (Configurado en el servidor)';
       }
       if (dbDiagError) {
         dbDiagError.textContent = (data.pgConnected && data.tableReady)

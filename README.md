@@ -24,7 +24,7 @@ Diseñado y optimizado para desplegarse con **cero configuración en Vercel** co
 - **Modo Oscuro / Claro**: Interruptor de tema con memoria persistente en el navegador.
 
 ### 🛡️ Panel de Administración (`/admin`)
-- **Acceso Protegido**: Autenticación por contraseña (por defecto: `bodhi2026`, configurable con `ADMIN_PASSWORD`).
+- **Acceso Protegido**: Autenticación criptográfica con HMAC-SHA256 y contraseña configurada mediante `ADMIN_PASSWORD` y `ADMIN_SESSION_SECRET`.
 - **Dashboard con KPIs en Tiempo Real**:
   - Reservas esperadas para HOY.
   - Número total de comensales de la noche.
@@ -86,7 +86,7 @@ npm run dev
 
 Abre en tu navegador:
 - **Web principal:** [http://localhost:3000](http://localhost:3000)
-- **Panel de control:** [http://localhost:3000/admin](http://localhost:3000/admin) (Contraseña: `bodhi2026`)
+- **Panel de control:** [http://localhost:3000/admin](http://localhost:3000/admin) (Contraseña configurada en `ADMIN_PASSWORD`)
 
 ---
 
@@ -119,11 +119,16 @@ teteria-bodhi/
 
 ---
 
-## 🔑 Credenciales por Defecto
+## 🔑 Configuración de Seguridad en Vercel
 
-- **Panel de administración:** `/admin`
-- **Contraseña:** `bodhi2026`
-- **Para cambiarla en producción:** Define la variable de entorno `ADMIN_PASSWORD=TuNuevaClave` en Vercel.
+Configura las siguientes variables de entorno en el panel de Vercel:
+
+- `ADMIN_PASSWORD`: Contraseña secreta para acceder al panel de administración.
+- `ADMIN_SESSION_SECRET`: Secreto aleatorio de al menos 32 caracteres para firmar los tokens de sesión.
+- `SUPABASE_URL`: URL del proyecto de Supabase.
+- `SUPABASE_ANON_KEY`: Clave pública anónima de Supabase.
+- `SUPABASE_SERVICE_ROLE_KEY`: Clave de servicio para operaciones seguras de servidor.
+- `ALLOWED_ORIGINS`: Dominios autorizados para peticiones (ej: `https://teteria-bodhi.vercel.app`).
 
 ---
 
