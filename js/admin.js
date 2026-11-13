@@ -1194,22 +1194,6 @@
     });
   }
 
-  const btnCopySql = $('#btn-copy-supabase-sql');
-  if (btnCopySql) {
-    btnCopySql.addEventListener('click', () => {
-      const sqlCode = $('#supabase-sql-code')?.textContent || '';
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(sqlCode).then(() => {
-          showAdminToast('¡Script SQL copiado! Pégalo en Supabase y pulsa RUN.', 'success');
-        }).catch(() => {
-          showAdminToast('Selecciona el texto SQL abajo para copiarlo.', 'info');
-        });
-      } else {
-        showAdminToast('Selecciona el texto SQL abajo para copiarlo.', 'info');
-      }
-    });
-  }
-
   // ==========================================
   // TOAST NOTIFICATIONS ADMIN
   // ==========================================
