@@ -39,6 +39,7 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const { LOGIN_MAX_ATTEMPTS } = require('../lib/limits');
 
 // 4. INTERCEPTOR DE RED: IMPEDIR LLAMADAS EXTERNAS NO AUTORIZADAS
 const externalCallsAttempted = [];
@@ -348,7 +349,7 @@ async function runTestSuite() {
     // 2.4 Bloqueo 429 por límite superado
     const testIp = '198.51.100.' + Math.floor(Math.random() * 200 + 1);
     let blocked429 = false;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < LOGIN_MAX_ATTEMPTS + 1; i++) {
       const res = await mockHttp({
         method: 'POST',
         url: '/api/admin-login',

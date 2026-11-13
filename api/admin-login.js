@@ -1,6 +1,7 @@
 const db = require('../lib/db');
 const { verifyAdminPassword, generateToken, verifyToken, checkRateLimit, hashRateLimitKey, isProduction, getSessionSecret } = require('../lib/auth');
 const { setCors } = require('../lib/cors');
+const { LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS } = require('../lib/limits');
 
 function getClientIp(req) {
   const xForwardedFor = req.headers['x-forwarded-for'];
@@ -61,9 +62,9 @@ module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
     const clientIp = getClientIp(req);
 
-    // Protección distribuida contra fuerza bruta: 5 intentos cada 5 minutos con IP anonimizada (RGPD)
+    // Protección distribuida contra fuerza bruta con IP anonimizada (RGPD)
     const rateKey = hashRateLimitKey('login', clientIp);
-    const rateResult = await checkRateLimit(rateKey, 5, 5 * 60 * 1000);
+    const rateResult = await checkRateLimit(rateKey, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS);
     if (!rateResult.allowed) {
       if (rateResult.status === 503 || rateResult.unavailable) {
         return res.status(503).json({
@@ -71,7 +72,7 @@ module.exports = async function handler(req, res) {
         });
       }
       return res.status(429).json({
-        error: 'Demasiados intentos fallidos. Por seguridad, espera 5 minutos antes de volver a intentar.'
+        error: 'Demasiados intentos fallidos. Espera un minuto y vuelve a intentarlo.'
       });
     }
 
