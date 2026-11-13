@@ -1,6 +1,7 @@
 const db = require('../lib/db');
 const { verifyToken, checkRateLimit, hashRateLimitKey } = require('../lib/auth');
 const { setCors } = require('../lib/cors');
+const { RESERVATION_MAX_ATTEMPTS, RESERVATION_WINDOW_MS } = require('../lib/limits');
 const https = require('https');
 
 function getClientIp(req) {
@@ -272,7 +273,7 @@ module.exports = async function handler(req, res) {
       // 1. Protección Anti-Spam: Rate Limiting distribuido con IP anonimizada (RGPD)
       if (!isReqAdmin) {
         const rateKey = hashRateLimitKey('res', clientIp);
-        const rateResult = await checkRateLimit(rateKey, 6, 10 * 60 * 1000);
+        const rateResult = await checkRateLimit(rateKey, RESERVATION_MAX_ATTEMPTS, RESERVATION_WINDOW_MS);
         if (!rateResult.allowed) {
           if (rateResult.status === 503 || rateResult.unavailable) {
             return res.status(503).json({
