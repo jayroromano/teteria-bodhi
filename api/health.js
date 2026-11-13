@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
     config: {
       adminPassword: Boolean((process.env.ADMIN_PASSWORD || '').trim()),
       adminSessionSecret: sessionSecret.length >= 16,
-      supabaseUrl: Boolean((process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim()),
+      supabaseUrl: Boolean((process.env.SUPABASE_URL || '').trim()),
       supabaseServiceKey: Boolean((process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '').trim())
     }
   });

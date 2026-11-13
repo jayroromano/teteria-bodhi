@@ -298,7 +298,7 @@
         <div class="table-card" style="padding: 28px;">
           <h2 style="font-family: var(--font-title); font-size: 1.8rem; margin-bottom: 8px;">Diagnóstico de Base de Datos PostgreSQL</h2>
           <p style="color: var(--mut); font-size: 0.96rem; line-height: 1.5; margin-bottom: 24px;">
-            Comprueba en tiempo real el estado de conexión entre Vercel y tu base de datos cloud (Neon / Supabase / Vercel Postgres).
+            Comprueba en tiempo real el estado de conexión entre Vercel y tu base de datos en Supabase.
           </p>
 
           <!-- CONSOLA DE DIAGNÓSTICO EN VIVO -->
@@ -338,33 +338,6 @@
             </div>
           </div>
 
-
-          <div style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 30px;">
-            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 20px;">
-              <h3 style="font-size: 1.15rem; margin-bottom: 8px; color: var(--primary);">🟢 1. Conexión en Vercel (PostgreSQL Cloud)</h3>
-              <p style="font-size: 0.9rem; color: var(--mut); margin-bottom: 12px;">
-                Para persistencia permanente en Vercel, utiliza un servicio gratuito como <strong>Neon.tech</strong>, <strong>Supabase</strong> o <strong>Vercel Postgres</strong>.
-              </p>
-              <ol style="font-size: 0.88rem; color: var(--ink); padding-left: 20px; line-height: 1.6;">
-                <li>Crea una base de datos gratis en <a href="https://neon.tech" target="_blank" style="color:var(--tost);text-decoration:underline;">Neon.tech</a> o <a href="https://supabase.com" target="_blank" style="color:var(--tost);text-decoration:underline;">Supabase.com</a>.</li>
-                <li>Copia tu cadena de conexión (URI) que empieza por <code>postgres://...</code></li>
-                <li>En tu proyecto de Vercel ve a <strong>Settings → Environment Variables</strong>.</li>
-                <li>Añade la variable <code>DATABASE_URL</code> con tu enlace.</li>
-                <li>¡Listo! Las tablas de reservas y carta se inicializan automáticamente.</li>
-              </ol>
-            </div>
-
-            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 20px;">
-              <h3 style="font-size: 1.15rem; margin-bottom: 8px; color: var(--primary);">🟡 2. Modo Local / Respaldo</h3>
-              <p style="font-size: 0.9rem; color: var(--mut); margin-bottom: 12px;">
-                Si no se configura <code>DATABASE_URL</code>, la aplicación guarda las reservas en archivos locales en <code>data/reservas.json</code>.
-              </p>
-              <div style="background: var(--surface); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 0.85rem; border: 1px solid var(--line);">
-                npm run dev<br>
-                # Servidor en http://localhost:3000
-              </div>
-            </div>
-          </div>
 
           <h3 style="font-size: 1.2rem; margin-bottom: 10px;">Esquema SQL de Reservas</h3>
           <pre style="background: #2C1810; color: #FAF2E6; padding: 18px; border-radius: 10px; font-size: 0.85rem; overflow-x: auto; font-family: monospace; line-height: 1.5;">
