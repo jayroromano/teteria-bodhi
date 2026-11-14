@@ -82,6 +82,7 @@ const reservasHandler = require('./api/reservas');
 const adminLoginHandler = require('./api/admin-login');
 const cartaHandler = require('./api/carta');
 const businessConfigHandler = require('./api/business-config');
+const closedDatesHandler = require('./api/closed-dates');
 
 const adaptVercelHandler = (handler) => (req, res) => {
   req.query = req.query || {};
@@ -93,6 +94,7 @@ app.all('/api/admin-login', adaptVercelHandler(adminLoginHandler));
 app.all('/api/admin/login', adaptVercelHandler(adminLoginHandler));
 app.all('/api/carta', adaptVercelHandler(cartaHandler));
 app.all('/api/business-config', adaptVercelHandler(businessConfigHandler));
+app.all('/api/closed-dates', adaptVercelHandler(closedDatesHandler));
 
 // 4. Manejador 404 final
 app.use((req, res) => {

@@ -2242,3 +2242,30 @@ footer {
 .legal-content-box li {
   margin-bottom: 6px;
 }
+
+/* Avisos de días cerrados */
+.closed-dates-banner {
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  padding: 12px max(20px, calc((100vw - 1180px) / 2));
+  color: #432516;
+  background: #f7e8c8;
+  border-bottom: 1px solid #dec99e;
+  box-shadow: 0 3px 12px rgba(44, 24, 16, 0.12);
+  font-size: 0.92rem;
+}
+
+.closed-dates-banner strong { display: block; margin-bottom: 3px; }
+.closed-dates-banner ul { display: flex; flex-wrap: wrap; gap: 4px 22px; list-style: none; }
+.closed-dates-banner li { margin: 0; }
+.closed-date-form-notice {
+  padding: 12px 14px;
+  margin: -8px 0 20px;
+  color: #7c241f;
+  background: #ffebee;
+  border: 1px solid #efb9b9;
+  border-radius: 10px;
+  font-weight: 650;
+}
+.closed-dates-banner[hidden], .closed-date-form-notice[hidden] { display: none; }

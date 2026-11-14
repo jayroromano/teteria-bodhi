@@ -349,6 +349,12 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: dateCheck.error });
       }
 
+      const closedDate = await db.getClosedDate(dateCheck.cleanDate);
+      if (closedDate) {
+        const reason = closedDate.reason ? ` Motivo: ${closedDate.reason}` : '';
+        return res.status(400).json({ error: `No se aceptan reservas para esta fecha porque el local permanecerá cerrado.${reason}` });
+      }
+
       // 7. Validación de horario según día de apertura de Bodhi
       const timeCheck = validateReservationTime(time, dateCheck.calendarDate);
       if (!timeCheck.valid) {

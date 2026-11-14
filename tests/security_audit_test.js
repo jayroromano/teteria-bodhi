@@ -72,6 +72,7 @@ const adminLoginHandler = require('../api/admin-login');
 const reservasHandler = require('../api/reservas');
 const cartaHandler = require('../api/carta');
 const businessConfigHandler = require('../api/business-config');
+const closedDatesHandler = require('../api/closed-dates');
 const localApp = require('../server');
 
 let passedCount = 0;
@@ -1101,13 +1102,14 @@ async function runTestSuite() {
 
       // 7.6 Archivos internos inaccesibles en servidor Express
       const sqlStatus = (await requestHttp({ method: 'GET', path: '/supabase_security_patch.sql' })).status;
+      const closedSqlStatus = (await requestHttp({ method: 'GET', path: '/closed_dates.sql' })).status;
       const authStatus = (await requestHttp({ method: 'GET', path: '/lib/auth.js' })).status;
       const pkgStatus = (await requestHttp({ method: 'GET', path: '/package.json' })).status;
       const cssStatus = (await requestHttp({ method: 'GET', path: '/css/style.css' })).status;
       const configStatus = (await requestHttp({ method: 'GET', path: '/businesses/bodhi/config.json' })).status;
 
       assert(
-        sqlStatus === 404 && authStatus === 404 && pkgStatus === 404,
+        sqlStatus === 404 && closedSqlStatus === 404 && authStatus === 404 && pkgStatus === 404,
         'INTEGRATION',
         '7.6 Archivos SQL, código fuente (/lib) y configuraciones devuelven 404 en el servidor HTTP'
       );
@@ -1116,6 +1118,15 @@ async function runTestSuite() {
         cssStatus === 200 && configStatus === 200,
         'INTEGRATION',
         '7.7 Recursos públicos necesarios (/css, /businesses) continúan sirviéndose con código 200'
+      );
+
+      const closedDatesApiRes = await requestHttp({ method: 'GET', path: '/api/closed-dates' });
+      let closedDatesApiBody = null;
+      try { closedDatesApiBody = JSON.parse(closedDatesApiRes.body); } catch (e) {}
+      assert(
+        closedDatesApiRes.status === 200 && Array.isArray(closedDatesApiBody?.closedDates),
+        'INTEGRATION',
+        '7.8 Endpoint /api/closed-dates está conectado y devuelve las fechas próximas'
       );
     } finally {
       serverInstance.close();
@@ -1150,6 +1161,46 @@ async function runTestSuite() {
       'STATIC',
       '8.3 .vercelignore NO excluye lib/, api/ ni businesses/, preservando la operatividad serverless'
     );
+
+    // ========================================================
+    // BLOQUE 9: DÍAS CERRADOS Y BLOQUEO DE RESERVAS
+    // ========================================================
+    console.log('\n--- BLOQUE 9: DÍAS CERRADOS ---');
+    const closedDateFixture = getFutureDate(2);
+    const publicClosedDates = await mockHttp({ method: 'GET', url: '/api/closed-dates' }).run(closedDatesHandler);
+    assert(publicClosedDates.status === 200 && Array.isArray(publicClosedDates.body.closedDates), 'SIMULATION', '9.1 Consulta pública de próximos días cerrados funciona');
+
+    const deniedCreateClosedDate = await mockHttp({
+      method: 'POST', url: '/api/closed-dates', body: { date: closedDateFixture, reason: 'Prueba' }
+    }).run(closedDatesHandler);
+    assert(deniedCreateClosedDate.status === 401, 'UNIT', '9.2 Crear días cerrados requiere sesión de administrador');
+
+    const createClosedDate = await mockHttp({
+      method: 'POST', url: '/api/closed-dates', headers: { authorization: `Bearer ${validToken}` },
+      body: { date: closedDateFixture, reason: 'Descanso del equipo' }
+    }).run(closedDatesHandler);
+    assert(createClosedDate.status === 201 && createClosedDate.body.closedDate?.date === closedDateFixture, 'SIMULATION', '9.3 Administrador puede registrar una fecha cerrada y su motivo');
+
+    const blockedClosedReservation = await mockHttp({
+      method: 'POST', url: '/api/reservas', headers: { authorization: `Bearer ${validToken}` },
+      body: { name: 'Prueba Bodhi', phone: '600123456', date: closedDateFixture, time: '20:00', guests: 2, zone: 'indiferente' }
+    }).run(reservasHandler);
+    assert(blockedClosedReservation.status === 400 && blockedClosedReservation.body.error.includes('cerrado'), 'SIMULATION', '9.4 El servidor rechaza una reserva en día cerrado');
+
+    const duplicateClosedDate = await mockHttp({
+      method: 'POST', url: '/api/closed-dates', headers: { authorization: `Bearer ${validToken}` },
+      body: { date: closedDateFixture, reason: 'Otro motivo' }
+    }).run(closedDatesHandler);
+    assert(duplicateClosedDate.status === 409, 'SIMULATION', '9.5 No permite duplicar una fecha cerrada');
+
+    const deleteClosedDate = await mockHttp({
+      method: 'DELETE', url: `/api/closed-dates?date=${closedDateFixture}`,
+      headers: { authorization: `Bearer ${validToken}` }
+    }).run(closedDatesHandler);
+    assert(deleteClosedDate.status === 200 && deleteClosedDate.body.success, 'SIMULATION', '9.6 Administrador puede quitar un día cerrado');
+
+    const sqlClosedDates = fs.readFileSync(path.join(process.cwd(), 'closed_dates.sql'), 'utf8');
+    assert(sqlClosedDates.includes('ENABLE ROW LEVEL SECURITY') && sqlClosedDates.includes('TO service_role') && sqlClosedDates.includes('REVOKE ALL ON public.closed_dates FROM PUBLIC, anon, authenticated;'), 'STATIC', '9.7 SQL protege la tabla con RLS y acceso exclusivo de service_role');
 
     // ========================================================
     // RESUMEN FINAL

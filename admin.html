@@ -62,6 +62,12 @@
         </button>
       </li>
       <li class="nav-item">
+        <button type="button" data-tab="closed-dates">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="10" y2="16"/><line x1="10" y1="16" x2="15" y2="12"/></svg>
+          Días cerrados
+        </button>
+      </li>
+      <li class="nav-item">
         <button type="button" data-tab="db">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
           Base de Datos & Vercel
@@ -290,6 +296,26 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA: DÍAS CERRADOS -->
+      <div class="tab-section" id="tab-closed-dates" style="display: none;">
+        <div class="table-card closed-dates-manager">
+          <h2>Días cerrados</h2>
+          <p class="closed-dates-intro">Añade los días que la tetería permanecerá cerrada. La web mostrará el aviso y no aceptará reservas para esas fechas.</p>
+          <div id="closed-dates-setup-notice" class="closed-dates-setup" hidden>
+            Falta crear la tabla en Supabase. Tras desplegar esta función, ejecuta el archivo <strong>closed_dates.sql</strong> en el SQL Editor de Supabase.
+          </div>
+          <form id="closed-date-form" class="closed-date-form">
+            <label for="closed-date-input">Fecha</label>
+            <input id="closed-date-input" name="date" type="date" required>
+            <label for="closed-date-reason">Motivo del cierre</label>
+            <input id="closed-date-reason" name="reason" type="text" maxlength="160" required placeholder="Ej.: Cerrado por descanso">
+            <button type="submit" class="btn-primary">Añadir día cerrado</button>
+          </form>
+          <h3>Próximos cierres</h3>
+          <div id="closed-dates-list" class="closed-dates-list" aria-live="polite">Cargando días cerrados…</div>
         </div>
       </div>
 
@@ -558,6 +584,10 @@ CREATE TABLE reservations (
   <button type="button" class="mob-nav-btn" data-tab="carta">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
     <span>Carta</span>
+  </button>
+  <button type="button" class="mob-nav-btn" data-tab="closed-dates">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>Cierres</span>
   </button>
   <button type="button" class="mob-nav-btn" data-tab="db">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>

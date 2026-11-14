@@ -720,6 +720,48 @@
   const hintBox = $('#hint');
   const form = $('#form');
   const submitBtn = $('#submit-btn');
+  const closedDatesBanner = $('#closed-dates-banner');
+  const closedDateFormNotice = $('#closed-date-form-notice');
+  const closedDatesByDate = new Map();
+
+  function updateClosedDateNotice() {
+    const selected = dateInput ? closedDatesByDate.get(dateInput.value) : null;
+    if (closedDateFormNotice) {
+      closedDateFormNotice.hidden = !selected;
+      closedDateFormNotice.textContent = selected
+        ? `El local permanecerá cerrado el ${formatDate(selected.date)}. ${selected.reason} Elige otra fecha para reservar.`
+        : '';
+    }
+    if (submitBtn) submitBtn.disabled = Boolean(selected);
+    return selected;
+  }
+
+  async function loadClosedDates() {
+    try {
+      const response = await fetch('/api/closed-dates');
+      if (!response.ok) return;
+      const data = await response.json();
+      const items = Array.isArray(data.closedDates) ? data.closedDates : [];
+      closedDatesByDate.clear();
+      items.forEach(item => closedDatesByDate.set(item.date, item));
+
+      if (closedDatesBanner) {
+        if (items.length) {
+          closedDatesBanner.innerHTML = `<strong>Próximos días cerrados</strong><ul>${items.map(item =>
+            `<li><time datetime="${escapeHtml(String(item.date))}">${formatDate(item.date)}</time>: ${escapeHtml(String(item.reason || 'Cerrado'))}</li>`
+          ).join('')}</ul>`;
+          closedDatesBanner.hidden = false;
+        } else {
+          closedDatesBanner.hidden = true;
+          closedDatesBanner.textContent = '';
+        }
+      }
+      updateClosedDateNotice();
+    } catch (error) {
+      // La reserva se vuelve a validar en el servidor aunque esta consulta no esté disponible.
+      console.warn('No se pudieron cargar los días cerrados:', error.message);
+    }
+  }
 
   function updateGuestsHint() {
     if (!hintBox || !guestsSelect) return;
@@ -762,16 +804,25 @@
     dateInput.addEventListener('change', () => {
       validateDateSelection();
       populateTimeSlots();
+      updateClosedDateNotice();
+      loadClosedDates();
     });
 
     validateDateSelection();
     populateTimeSlots();
+    loadClosedDates();
   }
 
   function validateDateSelection() {
     if (!dateInput) return true;
     const val = dateInput.value;
     if (!val) return false;
+    const closedDate = closedDatesByDate.get(val);
+    if (closedDate) {
+      updateClosedDateNotice();
+      showToast(`El local permanecerá cerrado el ${formatDate(val)}. ${closedDate.reason}`, 'error');
+      return false;
+    }
     dateInput.setCustomValidity('');
     return true;
   }
@@ -879,7 +930,7 @@
         updateGuestsHint();
         showToast('¡Reserva registrada! (Modo vista local)', 'success');
         if (submitBtn) {
-          submitBtn.disabled = false;
+          submitBtn.disabled = Boolean(dateInput && closedDatesByDate.has(dateInput.value));
           submitBtn.innerHTML = 'Solicitar reserva de mesa';
         }
         return;
@@ -902,6 +953,7 @@
           updateGuestsHint();
           showToast('¡Reserva registrada con éxito!', 'success');
         } else {
+          if (String(data.error || '').toLowerCase().includes('cerrado')) await loadClosedDates();
           showToast(data.error || 'No se pudo registrar la reserva.', 'error');
         }
       } catch (err) {
@@ -909,7 +961,7 @@
         showToast('Hubo un problema de conexión con el servidor.', 'error');
       } finally {
         if (submitBtn) {
-          submitBtn.disabled = false;
+          submitBtn.disabled = Boolean(dateInput && closedDatesByDate.has(dateInput.value));
           submitBtn.innerHTML = 'Solicitar reserva de mesa';
         }
       }

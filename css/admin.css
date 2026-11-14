@@ -702,6 +702,37 @@ table.admin-table tr:hover td {
   background: rgba(166, 106, 59, 0.12);
 }
 
+.closed-dates-manager { padding: 28px; }
+.closed-dates-manager h2 { font: 1.8rem var(--font-title); margin-bottom: 6px; }
+.closed-dates-manager h3 { font-size: 1.05rem; margin: 26px 0 10px; }
+.closed-dates-intro { color: var(--mut); margin-bottom: 20px; }
+.closed-dates-setup { padding: 12px 14px; margin-bottom: 18px; border-radius: 9px; color: #7c4b00; background: #fff3e0; }
+.closed-dates-setup[hidden] { display: none; }
+.closed-date-form { display: grid; grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.3fr) auto; align-items: end; gap: 10px 14px; }
+.closed-date-form label { font-size: 0.84rem; font-weight: 700; }
+.closed-date-form input { min-width: 0; min-height: 42px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
+.closed-date-form input:first-of-type { grid-column: 1; }
+.closed-date-form label:first-child { grid-column: 1; grid-row: 1; }
+.closed-date-form label:nth-of-type(2) { grid-column: 2; grid-row: 1; }
+.closed-date-form input:nth-of-type(2) { grid-column: 2; grid-row: 2; }
+.closed-date-form button { grid-column: 3; grid-row: 2; min-height: 42px; white-space: nowrap; }
+.closed-dates-list { display: grid; gap: 8px; color: var(--mut); }
+.closed-date-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); }
+.closed-date-row div { display: grid; gap: 2px; }
+.closed-date-row strong { color: var(--ink); }
+.closed-date-row span { font-size: 0.9rem; }
+.closed-date-row button { flex: 0 0 auto; padding: 8px 12px; }
+
+@media (max-width: 680px) {
+  .closed-dates-manager { padding: 20px; }
+  .closed-date-form { grid-template-columns: 1fr; }
+  .closed-date-form label:first-child,
+  .closed-date-form label:nth-of-type(2),
+  .closed-date-form input:first-of-type,
+  .closed-date-form input:nth-of-type(2),
+  .closed-date-form button { grid-column: 1; grid-row: auto; }
+}
+
 /* ================= RESPONSIVE MÓVIL Y TABLET ================= */
 @media (max-width: 860px) {
   .admin-burger {
