@@ -601,7 +601,7 @@ async function runTestSuite() {
     }).run(reservasHandler);
     assert(pastRes.status === 400 && pastRes.body.error.includes('fechas pasadas'), 'SIMULATION', '4.5 Fechas anteriores a hoy son rechazadas con 400');
 
-    // 4.6 Lunes cerrado por descanso
+    // 4.6 Lunes abierto (horario 2026: Lunes a Jueves de 17:30 a 02:00)
     const mondayDate = getFutureDate(1);
     const mondayRes = await mockHttp({
       method: 'POST',
@@ -615,7 +615,7 @@ async function runTestSuite() {
         privacy: true
       }
     }).run(reservasHandler);
-    assert(mondayRes.status === 400 && mondayRes.body.error.includes('lunes la tetería permanece cerrada'), 'SIMULATION', '4.6 Reservas en lunes son rechazadas por descanso semanal de Bodhi');
+    assert(mondayRes.status === 201, 'SIMULATION', '4.6 Reservas en lunes son aceptadas (Lunes a Jueves de 17:30 a 02:00)');
 
     // 4.7 Formato de hora inválido
     const invalidTimes = ['25:00', '12:60', '8:30', 'ocho', '18:00:00'];
@@ -640,7 +640,7 @@ async function runTestSuite() {
     }
     assert(allTimesRejected === true, 'SIMULATION', '4.7 Horas con formato inválido son rechazadas con 400');
 
-    // 4.8 Horas diurnas previas a la apertura (Bodhi abre a las 18:00)
+    // 4.8 Horas diurnas previas a la apertura (Bodhi abre a las 17:30)
     const daytimeRes = await mockHttp({
       method: 'POST',
       url: '/api/reservas',
@@ -670,7 +670,7 @@ async function runTestSuite() {
     }).run(reservasHandler);
     assert(weekdayCloseRes.status === 400 && weekdayCloseRes.body.error.includes('horario'), 'SIMULATION', '4.9 Horas posteriores al cierre de diario (02:30 en martes) son rechazadas con 400');
 
-    // 4.10 Madrugada de fin de semana (sábado cierra a las 03:00, 02:30 es válida)
+    // 4.10 Fin de semana: última reserva a las 01:00 (sábado cierra a las 03:00)
     const saturdayDate = getFutureDate(6);
     const weekendAllowedRes = await mockHttp({
       method: 'POST',
@@ -679,14 +679,26 @@ async function runTestSuite() {
         name: 'Cliente Sábado Noche',
         phone: '+34 600 11 22 33',
         date: saturdayDate,
+        time: '01:00',
+        guests: 2,
+        privacy: true
+      }
+    }).run(reservasHandler);
+    const weekendTooLateRes = await mockHttp({
+      method: 'POST',
+      url: '/api/reservas',
+      body: {
+        name: 'Cliente Sábado Tarde',
+        phone: '+34 600 11 22 33',
+        date: saturdayDate,
         time: '02:30',
         guests: 2,
         privacy: true
       }
     }).run(reservasHandler);
-    assert(weekendAllowedRes.status === 201, 'SIMULATION', '4.10 Madrugada de fin de semana (02:30 en sábado) permitida por cierre a las 03:00 h');
+    assert(weekendAllowedRes.status === 201 && weekendTooLateRes.status === 400, 'SIMULATION', '4.10 Sábado: 01:00 permitida y 02:30 rechazada (última reserva 01:00)');
 
-    // 4.11 Domingo noche: apertura 18:00 a 02:00 (probar 01:30 en domingo)
+    // 4.11 Domingo noche: apertura 17:00 a 02:00 (00:00 válida, 00:30 rechazada)
     const sundayDate = getFutureDate(0); // Domingo
     const sundayAllowedRes = await mockHttp({
       method: 'POST',
@@ -695,12 +707,24 @@ async function runTestSuite() {
         name: 'Cliente Domingo Noche',
         phone: '+34 600 11 22 33',
         date: sundayDate,
-        time: '01:30',
+        time: '00:00',
         guests: 2,
         privacy: true
       }
     }).run(reservasHandler);
-    assert(sundayAllowedRes.status === 201, 'SIMULATION', '4.11 Domingo de madrugada (01:30) permitido por cierre a las 02:00 h según config oficial');
+    const sundayTooLateRes = await mockHttp({
+      method: 'POST',
+      url: '/api/reservas',
+      body: {
+        name: 'Cliente Domingo Tarde',
+        phone: '+34 600 11 22 33',
+        date: sundayDate,
+        time: '00:30',
+        guests: 2,
+        privacy: true
+      }
+    }).run(reservasHandler);
+    assert(sundayAllowedRes.status === 201 && sundayTooLateRes.status === 400, 'SIMULATION', '4.11 Domingo: 00:00 permitida y 00:30 rechazada (última reserva 00:00)');
 
     // 4.12 Inyección de campos administrativos por cliente ignorada en POST
     const injectAdminRes = await mockHttp({
@@ -763,14 +787,14 @@ async function runTestSuite() {
     }).run(reservasHandler);
     assert(patchPastDate.status === 400 && patchPastDate.body.error.includes('fechas pasadas'), 'SIMULATION', '4.16 PATCH con fecha en el pasado devuelve 400');
 
-    // 4.17 PATCH con fecha en lunes (cerrado) rechazada con 400
+    // 4.17 PATCH con fecha en lunes (abierto desde 2026) se acepta con 200
     const patchMonday = await mockHttp({
       method: 'PATCH',
       url: '/api/reservas',
       headers: { 'authorization': `Bearer ${validToken}` },
       body: { id: createdReservationCode, date: mondayDate }
     }).run(reservasHandler);
-    assert(patchMonday.status === 400 && patchMonday.body.error.includes('lunes'), 'SIMULATION', '4.17 PATCH con fecha en lunes rechazada por descanso semanal');
+    assert(patchMonday.status === 200, 'SIMULATION', '4.17 PATCH con fecha en lunes se acepta (Lunes a Jueves de 17:30 a 02:00)');
 
     // 4.18 PATCH con hora fuera del horario comercial (15:00) rechazada con 400
     const patchBadHour = await mockHttp({

@@ -487,28 +487,37 @@
     const statusText = $('#status-text');
     if (!statusDot || !statusText) return;
 
-    const now = new Date();
-    const day = now.getDay(); // 0: Dom, 1: Lun, 2: Mar, ...
-    const hour = now.getHours();
-    const min = now.getMinutes();
+    // Hora oficial de Jerez (Europe/Madrid), sea cual sea la zona del visitante.
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Madrid',
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).formatToParts(new Date());
+    const part = (type) => (parts.find(p => p.type === type) || {}).value;
+    const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const day = weekdayMap[part('weekday')]; // 0: Dom, 1: Lun, ...
+    const hour = Number(part('hour')) % 24;
+    const min = Number(part('minute'));
     const timeVal = hour + min / 60;
+
+    // Horario de Bodhi: abre 17:00 (dom/sáb) o 17:30; cierra 03:00 vie/sáb o 02:00 el resto.
+    const isWeekendNight = day === 5 || day === 6;
+    const openHour = (day === 0 || day === 6) ? 17 : 17.5;
+    const closeHour = isWeekendNight ? 3 : 2;
+    const openLabel = openHour === 17 ? '17:00' : '17:30';
+    const closeLabel = closeHour === 3 ? '03:00' : '02:00';
 
     let isOpen = false;
     let text = 'Cerrado ahora';
 
-    if (day === 1) {
-      text = 'Cerrado los lunes · Abrimos mañana 18:00';
+    // Abierto por la tarde-noche o de madrugada (la madrugada cuenta como la noche anterior).
+    if (timeVal >= openHour || timeVal < closeHour) {
+      isOpen = true;
+      text = `Abierto ahora · Cierra a las ${closeLabel}`;
     } else {
-      const isWeekend = day === 5 || day === 6; // Vie o Sáb
-      const maxLate = isWeekend ? 3 : 2;
-
-      // Abierto tarde noche (18:00 a 23:59) o madrugada (00:00 a maxLate)
-      if (timeVal >= 18 || timeVal < maxLate) {
-        isOpen = true;
-        text = `Abierto ahora · Cierra a las 0${maxLate}:00`;
-      } else {
-        text = 'Cerrado ahora · Abrimos hoy a las 18:00';
-      }
+      text = `Cerrado ahora · Abrimos hoy a las ${openLabel}`;
     }
 
     if (isOpen) {
@@ -521,7 +530,7 @@
 
     // Resaltar día actual en la tabla de contacto
     const rows = $$('.schedule-table tr');
-    const dayMap = [3, 0, 1, 1, 1, 2, 2];
+    const dayMap = [3, 0, 0, 0, 0, 1, 2];
     const targetRowIndex = dayMap[day];
     if (rows && rows[targetRowIndex]) {
       rows[targetRowIndex].classList.add('today');
@@ -763,15 +772,8 @@
     if (!dateInput) return true;
     const val = dateInput.value;
     if (!val) return false;
-    const d = new Date(val + 'T12:00:00');
-    if (d.getDay() === 1) { // Lunes cerrado
-      showToast('Los lunes estamos cerrados por descanso. Por favor elige de martes a domingo.', 'error');
-      dateInput.setCustomValidity('Los lunes la tetería permanece cerrada.');
-      return false;
-    } else {
-      dateInput.setCustomValidity('');
-      return true;
-    }
+    dateInput.setCustomValidity('');
+    return true;
   }
 
   function populateTimeSlots() {
@@ -793,33 +795,33 @@
     }
 
     const val = dateInput ? dateInput.value : '';
-    const day = val ? new Date(val + 'T12:00:00').getDay() : 2;
-    const isWeekend = day === 5 || day === 6;
+    const day = val ? new Date(val + 'T12:00:00').getDay() : new Date().getDay();
+    const isWeekendNight = day === 5 || day === 6; // Viernes y sábado
 
-    // Franjas de 18:00 a 23:30
-    for (let h = 18; h <= 23; h++) {
-      ['00', '30'].forEach(m => {
-        const slot = `${String(h).padStart(2, '0')}:${m}`;
-        const opt = document.createElement('option');
-        opt.value = slot;
-        opt.textContent = `${slot} h`;
-        timeSelect.appendChild(opt);
-      });
-    }
+    // Horario de Bodhi:
+    // - Apertura: 17:00 domingo y sábado · 17:30 el resto
+    // - Última reserva: 00:00 de domingo a jueves · 01:00 viernes y sábado
+    const openMinutes = (day === 0 || day === 6) ? 17 * 60 : 17 * 60 + 30;
+    const lastBookingMinutes = isWeekendNight ? 60 : 0;
 
-    // Franjas de madrugada (00:00 a 02:00 / 03:00)
-    const maxHour = isWeekend ? 2 : 1;
-    for (let h = 0; h <= maxHour; h++) {
-      ['00', '30'].forEach(m => {
-        const slot = `${String(h).padStart(2, '0')}:${m}`;
-        const opt = document.createElement('option');
-        opt.value = slot;
-        opt.textContent = `${slot} h (noche)`;
-        timeSelect.appendChild(opt);
-      });
-    }
+    const slots = [];
+    for (let m = openMinutes; m < 24 * 60; m += 30) slots.push(m);
+    for (let m = 0; m <= lastBookingMinutes; m += 30) slots.push(m);
 
-    timeSelect.value = currentVal || '20:30';
+    slots.forEach(totalMinutes => {
+      const hh = String(Math.floor(totalMinutes / 60) % 24).padStart(2, '0');
+      const mm = String(totalMinutes % 60).padStart(2, '0');
+      const slot = `${hh}:${mm}`;
+      const opt = document.createElement('option');
+      opt.value = slot;
+      opt.textContent = totalMinutes < openMinutes ? `${slot} h (noche)` : `${slot} h`;
+      timeSelect.appendChild(opt);
+    });
+
+    // Mantener la hora elegida si sigue siendo válida; si no, 20:30.
+    const stillValid = Array.from(timeSelect.options).some(o => o.value === currentVal);
+    timeSelect.value = stillValid ? currentVal : '20:30';
+    if (!timeSelect.value) timeSelect.value = timeSelect.options[0].value;
   }
 
   window.populateTimeSlots = populateTimeSlots;

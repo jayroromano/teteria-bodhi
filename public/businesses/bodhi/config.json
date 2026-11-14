@@ -161,23 +161,7 @@
     ],
     "defaultGuests": 2,
     "hintSmall": "✓ Para mesas de hasta 4 personas la confirmación suele ser automática.",
-    "hintLarge": "⏳ Para grupos de más de 4 personas revisamos el aforo antes de confirmar tu mesa.",
-    "timeSlots": [
-      "18:00",
-      "18:30",
-      "19:00",
-      "19:30",
-      "20:00",
-      "20:30",
-      "21:00",
-      "21:30",
-      "22:00",
-      "22:30",
-      "23:00",
-      "23:30",
-      "00:00",
-      "00:30"
-    ]
+    "hintLarge": "⏳ Para grupos de más de 4 personas revisamos el aforo antes de confirmar tu mesa."
   },
   "contact": {
     "address": "Av. de Méjico, 3, Local 1, 11405 Jerez de la Frontera, Cádiz",
@@ -189,36 +173,36 @@
     "mapsEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3199.176!2d-6.130892!3d36.692342!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd0dc6c103ff59fd%3A0xfbbe188e1fadbe7e!2sTeter%C3%ADa%20Bodhi!5e0!3m2!1ses!2ses!4v1710000000000!5m2!1ses!2ses"
   },
   "schedule": {
-    "openHour": 18,
-    "closeHour": 2,
+    "openHour": 17,
+    "closeHour": 3,
     "days": [
       {
-        "day": "Lunes",
-        "hours": "Cerrado (Descanso)",
+        "day": "Lunes a Jueves",
+        "hours": "17:30 a 02:00",
         "dayIndices": [
-          1
-        ]
-      },
-      {
-        "day": "Martes, Miércoles y Jueves",
-        "hours": "18:00 a 02:00",
-        "dayIndices": [
+          1,
           2,
           3,
           4
         ]
       },
       {
-        "day": "Viernes y Sábado",
-        "hours": "18:00 a 03:00",
+        "day": "Viernes",
+        "hours": "17:30 a 03:00",
         "dayIndices": [
-          5,
+          5
+        ]
+      },
+      {
+        "day": "Sábados y vísperas de festivo",
+        "hours": "17:00 a 03:00",
+        "dayIndices": [
           6
         ]
       },
       {
-        "day": "Domingo",
-        "hours": "18:00 a 02:00",
+        "day": "Domingos",
+        "hours": "17:00 a 02:00",
         "dayIndices": [
           0
         ]

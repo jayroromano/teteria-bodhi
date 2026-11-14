@@ -158,15 +158,28 @@ function validateReservationDate(dateStr) {
     return { valid: false, error: 'No se pueden realizar reservas para fechas pasadas.' };
   }
 
-  // Lunes (1) cerrado por descanso
-  if (calendarDate.getUTCDay() === 1) {
-    return {
-      valid: false,
-      error: 'Los lunes la tetería permanece cerrada por descanso del personal. Por favor selecciona una fecha de martes a domingo.'
-    };
-  }
-
+  // Abrimos todos los días de la semana (horario actualizado 2026):
+  // Lunes a Jueves 17:30-02:00 · Viernes 17:30-03:00 · Sábado 17:00-03:00 · Domingo 17:00-02:00
   return { valid: true, cleanDate, calendarDate };
+}
+
+// Horario oficial de Bodhi (businesses/bodhi/config.json):
+// - Lunes a Jueves: 17:30 a 02:00
+// - Viernes:        17:30 a 03:00
+// - Sábado:         17:00 a 03:00 (mismo horario en vísperas de festivo)
+// - Domingo:        17:00 a 02:00
+// La última reserva se acepta 2 horas antes del cierre:
+// 00:00 de domingo a jueves y 01:00 viernes y sábado.
+function getScheduleForDay(dayOfWeek) {
+  if (dayOfWeek === 6) return { open: '17:00', close: '03:00', lastBooking: '01:00' };
+  if (dayOfWeek === 0) return { open: '17:00', close: '02:00', lastBooking: '00:00' };
+  if (dayOfWeek === 5) return { open: '17:30', close: '03:00', lastBooking: '01:00' };
+  return { open: '17:30', close: '02:00', lastBooking: '00:00' };
+}
+
+function timeToMinutes(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
 }
 
 function validateReservationTime(timeStr, calendarDate) {
@@ -181,19 +194,17 @@ function validateReservationTime(timeStr, calendarDate) {
   const [h, min] = cleanTime.split(':').map(Number);
   const minutesSinceMidnight = h * 60 + min;
 
-  // Horario según configuración oficial de Bodhi (businesses/bodhi/config.json):
-  // - Apertura: 18:00 (1080 min)
-  // - Cierre: Domingo a Jueves a las 02:00 (120 min); Viernes y Sábado a las 03:00 (180 min)
-  const dayOfWeek = calendarDate.getUTCDay(); // 0 = Domingo, 2 = Martes, ..., 6 = Sábado
-  const isWeekend = (dayOfWeek === 5 || dayOfWeek === 6);
-  const closeMinutes = isWeekend ? 3 * 60 : 2 * 60;
+  const schedule = getScheduleForDay(calendarDate.getUTCDay());
+  const openMinutes = timeToMinutes(schedule.open);
+  const lastBookingMinutes = timeToMinutes(schedule.lastBooking);
 
-  const isOpen = (minutesSinceMidnight >= 18 * 60) || (minutesSinceMidnight <= closeMinutes);
+  // Las horas de madrugada (00:00 en adelante) pertenecen a la noche de esa fecha,
+  // así que se comparan con la última hora reservable en lugar de con la apertura.
+  const isOpen = minutesSinceMidnight >= openMinutes || minutesSinceMidnight <= lastBookingMinutes;
   if (!isOpen) {
-    const cierreStr = isWeekend ? '03:00 h' : '02:00 h';
     return {
       valid: false,
-      error: `Nuestro horario para este día es de 18:00 a ${cierreStr}. Por favor elija una hora dentro del horario de apertura.`
+      error: `Nuestro horario ese día es de ${schedule.open} a ${schedule.close} h. La última reserva se acepta a las ${schedule.lastBooking} h.`
     };
   }
 

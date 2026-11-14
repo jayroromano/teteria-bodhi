@@ -53,15 +53,27 @@
     "openingHoursSpecification": [
       {
         "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Sunday"],
-        "opens": "18:00",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        "opens": "17:30",
         "closes": "02:00"
       },
       {
         "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Friday", "Saturday"],
-        "opens": "18:00",
+        "dayOfWeek": ["Friday"],
+        "opens": "17:30",
         "closes": "03:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Saturday"],
+        "opens": "17:00",
+        "closes": "03:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Sunday"],
+        "opens": "17:00",
+        "closes": "02:00"
       }
     ],
     "hasMap": "https://maps.app.goo.gl/NzjgemTgAFJaaZcv6",
@@ -123,7 +135,7 @@
           </a>
         </div>
         <div class="drawer-schedule-box">
-          <span>🕒 Martes a Domingo · Desde las 18:00 h</span>
+          <span>🕒 Todos los días · Desde las 17:00 h</span>
         </div>
       </div>
     </nav>
@@ -131,7 +143,7 @@
     <div class="header-right">
       <div class="status-indicator">
         <span class="status-dot" id="status-dot"></span>
-        <span id="status-text">Abierto hoy · 18:00 a 02:00</span>
+        <span id="status-text">Abierto hoy · 17:30 a 02:00</span>
       </div>
 
       <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema de color">
@@ -457,6 +469,8 @@
           <div>
             <label for="h">Hora deseada *</label>
             <select id="h" name="time" required>
+              <option value="17:00">17:00 h</option>
+              <option value="17:30">17:30 h</option>
               <option value="18:00">18:00 h</option>
               <option value="18:30">18:30 h</option>
               <option value="19:00">19:00 h</option>
@@ -732,10 +746,10 @@
           <dt>🕒 Horario de Apertura</dt>
           <dd>
             <table class="schedule-table">
-              <tr><td>Lunes</td><td>Cerrado (Descanso)</td></tr>
-              <tr><td>Martes, Miércoles y Jueves</td><td>18:00 a 02:00</td></tr>
-              <tr><td>Viernes y Sábado</td><td>18:00 a 03:00</td></tr>
-              <tr><td>Domingo</td><td>18:00 a 02:00</td></tr>
+              <tr><td>Lunes a Jueves</td><td>17:30 a 02:00</td></tr>
+              <tr><td>Viernes</td><td>17:30 a 03:00</td></tr>
+              <tr><td>Sábados y vísperas de festivo</td><td>17:00 a 03:00</td></tr>
+              <tr><td>Domingos</td><td>17:00 a 02:00</td></tr>
             </table>
           </dd>
         </dl>

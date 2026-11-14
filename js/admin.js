@@ -1153,7 +1153,6 @@
       try {
         const dummyDate = new Date();
         dummyDate.setDate(dummyDate.getDate() + 1);
-        if (dummyDate.getDay() === 1) dummyDate.setDate(dummyDate.getDate() + 1); // evitar lunes
         const dateStr = dummyDate.toISOString().split('T')[0];
 
         const payload = {

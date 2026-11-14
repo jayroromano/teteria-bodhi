@@ -293,9 +293,9 @@ window.BusinessEngine = (function () {
           });
         }
 
-        // Franjas horarias si están configuradas
-        if (Array.isArray(config.booking.timeSlots) && typeof window.populateTimeSlots === 'function') {
-          window.customTimeSlots = config.booking.timeSlots;
+        // Franjas horarias si están configuradas; si no, se generan según el día.
+        if (typeof window.populateTimeSlots === 'function') {
+          window.customTimeSlots = Array.isArray(config.booking.timeSlots) ? config.booking.timeSlots : null;
           window.populateTimeSlots();
         }
       }

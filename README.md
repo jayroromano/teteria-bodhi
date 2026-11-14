@@ -10,11 +10,11 @@ Diseñado y optimizado para desplegarse con **cero configuración en Vercel** co
 
 ### 🌐 Web Pública para Clientes
 - **Diseño Artesanal & Profesional**: Inspirado en la arquitectura andalusí y marroquí, con paleta cálida de tonos terracota, arena y dorado, y tipografía elegante (`Abril Fatface` + `Figtree`).
-- **Horario Dinámico en Vivo**: Indicador en tiempo real de apertura ("Abierto ahora · Cierra a las 02:00" o "Cerrado ahora · Abrimos a las 18:00").
+- **Horario Dinámico en Vivo**: Indicador en tiempo real de apertura ("Abierto ahora · Cierra a las 02:00" o "Cerrado ahora · Abrimos hoy a las 17:30").
 - **Carta Digital Interactiva**: Filtros por categoría (Tés, Cachimbas, Cócteles, Repostería, Tapas) y buscador en tiempo real por ingrediente.
 - **Asistente de Reservas Online**:
-  - Restricción automática de días cerrados (lunes).
-  - Selector dinámico de horas según horario (18:00 a 02:00 / 03:00 en fines de semana).
+  - Horario actualizado: Lunes a Jueves 17:30-02:00 · Viernes 17:30-03:00 · Sábado 17:00-03:00 · Domingo 17:00-02:00.
+  - Selector dinámico de horas según el día (última reserva: 00:00 entre semana y 01:00 viernes y sábado).
   - Recomendación personalizada según número de comensales.
   - Selección de zona: *Salón Lounge Interior*, *Terraza Andalusí* o *Indiferente*.
   - Generación de código único de reserva (ej: `BDH-8392`).
