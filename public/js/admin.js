@@ -12,6 +12,7 @@
   let authToken = localStorage.getItem('bodhi_admin_token') || '';
   let knownCodes = new Set();
   let isInitialLoad = true;
+  let cachedClosedDates = [];
 
   let allReservations = [
     {
@@ -677,6 +678,22 @@
       } catch (e) {
         showAdminToast('Error al conectar con el servidor.', 'danger');
       }
+    },
+
+    async deleteClosedDate(date) {
+      if (!confirm(`¿Quitar el cierre del ${formatDate(date)}?`)) return;
+      try {
+        const res = await fetch(`/api/closed-dates?date=${encodeURIComponent(date)}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo quitar el cierre.');
+        showAdminToast('Día cerrado eliminado.', 'success');
+        await loadClosedDates();
+      } catch (error) {
+        showAdminToast(error.message || 'Error eliminando el día cerrado.', 'danger');
+      }
     }
   };
 
@@ -869,6 +886,68 @@
       console.warn('Error cargando gestión de carta:', e);
       if (countInfo) countInfo.textContent = 'Error cargando carta';
     }
+  }
+
+  async function loadClosedDates() {
+    const list = $('#closed-dates-list');
+    if (!list) return;
+    list.textContent = 'Cargando días cerrados…';
+    try {
+      const res = await fetch('/api/closed-dates', { headers: { 'Authorization': `Bearer ${authToken}` } });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudieron cargar los días cerrados.');
+      cachedClosedDates = Array.isArray(data.closedDates) ? data.closedDates : [];
+      const setupNotice = $('#closed-dates-setup-notice');
+      if (setupNotice) setupNotice.hidden = !data.setupRequired;
+      renderClosedDates();
+    } catch (error) {
+      list.textContent = error.message || 'Error cargando días cerrados.';
+    }
+  }
+
+  function renderClosedDates() {
+    const list = $('#closed-dates-list');
+    if (!list) return;
+    if (!cachedClosedDates.length) {
+      list.textContent = 'No hay días cerrados próximos.';
+      return;
+    }
+    list.innerHTML = cachedClosedDates.map(item => `
+      <article class="closed-date-row">
+        <div><strong>${escapeHtml(formatDate(item.date))}</strong><span>${escapeHtml(item.reason)}</span></div>
+        <button type="button" class="btn-secondary" onclick="window.adminApp.deleteClosedDate('${escapeAttr(item.date)}')">Quitar</button>
+      </article>
+    `).join('');
+  }
+
+  const closedDateForm = $('#closed-date-form');
+  if (closedDateForm) {
+    const dateField = $('#closed-date-input');
+    if (dateField) dateField.min = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+    closedDateForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const date = dateField?.value || '';
+      const reason = $('#closed-date-reason')?.value.trim() || '';
+      const submit = closedDateForm.querySelector('button[type="submit"]');
+      if (submit) submit.disabled = true;
+      try {
+        const res = await fetch('/api/closed-dates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ date, reason })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'No se pudo añadir el día cerrado.');
+        closedDateForm.reset();
+        if (dateField) dateField.min = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+        showAdminToast('Día cerrado añadido.', 'success');
+        await loadClosedDates();
+      } catch (error) {
+        showAdminToast(error.message || 'Error guardando el día cerrado.', 'danger');
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    });
   }
 
   function renderCartaTable() {
@@ -1082,6 +1161,7 @@
     const titleMap = {
       'reservas': 'Reservas',
       'carta': 'Gestión de Carta',
+      'closed-dates': 'Días cerrados',
       'db': 'Base de Datos & Vercel'
     };
     const titleEl = $('#page-title');
@@ -1090,6 +1170,7 @@
     }
 
     if (target === 'carta') loadCartaManager();
+    if (target === 'closed-dates') loadClosedDates();
     if (target === 'db') checkDbHealth();
 
     closeSidebar();
@@ -1153,7 +1234,6 @@
       try {
         const dummyDate = new Date();
         dummyDate.setDate(dummyDate.getDate() + 1);
-        if (dummyDate.getDay() === 1) dummyDate.setDate(dummyDate.getDate() + 1); // evitar lunes
         const dateStr = dummyDate.toISOString().split('T')[0];
 
         const payload = {
@@ -1190,22 +1270,6 @@
       } finally {
         btnDiagTestRes.disabled = false;
         btnDiagTestRes.textContent = '🧪 Insertar Reserva de Prueba';
-      }
-    });
-  }
-
-  const btnCopySql = $('#btn-copy-supabase-sql');
-  if (btnCopySql) {
-    btnCopySql.addEventListener('click', () => {
-      const sqlCode = $('#supabase-sql-code')?.textContent || '';
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(sqlCode).then(() => {
-          showAdminToast('¡Script SQL copiado! Pégalo en Supabase y pulsa RUN.', 'success');
-        }).catch(() => {
-          showAdminToast('Selecciona el texto SQL abajo para copiarlo.', 'info');
-        });
-      } else {
-        showAdminToast('Selecciona el texto SQL abajo para copiarlo.', 'info');
       }
     });
   }

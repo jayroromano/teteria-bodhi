@@ -487,28 +487,37 @@
     const statusText = $('#status-text');
     if (!statusDot || !statusText) return;
 
-    const now = new Date();
-    const day = now.getDay(); // 0: Dom, 1: Lun, 2: Mar, ...
-    const hour = now.getHours();
-    const min = now.getMinutes();
+    // Hora oficial de Jerez (Europe/Madrid), sea cual sea la zona del visitante.
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Madrid',
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).formatToParts(new Date());
+    const part = (type) => (parts.find(p => p.type === type) || {}).value;
+    const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const day = weekdayMap[part('weekday')]; // 0: Dom, 1: Lun, ...
+    const hour = Number(part('hour')) % 24;
+    const min = Number(part('minute'));
     const timeVal = hour + min / 60;
+
+    // Horario de Bodhi: abre 17:00 (dom/sáb) o 17:30; cierra 03:00 vie/sáb o 02:00 el resto.
+    const isWeekendNight = day === 5 || day === 6;
+    const openHour = (day === 0 || day === 6) ? 17 : 17.5;
+    const closeHour = isWeekendNight ? 3 : 2;
+    const openLabel = openHour === 17 ? '17:00' : '17:30';
+    const closeLabel = closeHour === 3 ? '03:00' : '02:00';
 
     let isOpen = false;
     let text = 'Cerrado ahora';
 
-    if (day === 1) {
-      text = 'Cerrado los lunes · Abrimos mañana 18:00';
+    // Abierto por la tarde-noche o de madrugada (la madrugada cuenta como la noche anterior).
+    if (timeVal >= openHour || timeVal < closeHour) {
+      isOpen = true;
+      text = `Abierto ahora · Cierra a las ${closeLabel}`;
     } else {
-      const isWeekend = day === 5 || day === 6; // Vie o Sáb
-      const maxLate = isWeekend ? 3 : 2;
-
-      // Abierto tarde noche (18:00 a 23:59) o madrugada (00:00 a maxLate)
-      if (timeVal >= 18 || timeVal < maxLate) {
-        isOpen = true;
-        text = `Abierto ahora · Cierra a las 0${maxLate}:00`;
-      } else {
-        text = 'Cerrado ahora · Abrimos hoy a las 18:00';
-      }
+      text = `Cerrado ahora · Abrimos hoy a las ${openLabel}`;
     }
 
     if (isOpen) {
@@ -521,7 +530,7 @@
 
     // Resaltar día actual en la tabla de contacto
     const rows = $$('.schedule-table tr');
-    const dayMap = [3, 0, 1, 1, 1, 2, 2];
+    const dayMap = [3, 0, 0, 0, 0, 1, 2];
     const targetRowIndex = dayMap[day];
     if (rows && rows[targetRowIndex]) {
       rows[targetRowIndex].classList.add('today');
@@ -711,6 +720,48 @@
   const hintBox = $('#hint');
   const form = $('#form');
   const submitBtn = $('#submit-btn');
+  const closedDatesBanner = $('#closed-dates-banner');
+  const closedDateFormNotice = $('#closed-date-form-notice');
+  const closedDatesByDate = new Map();
+
+  function updateClosedDateNotice() {
+    const selected = dateInput ? closedDatesByDate.get(dateInput.value) : null;
+    if (closedDateFormNotice) {
+      closedDateFormNotice.hidden = !selected;
+      closedDateFormNotice.textContent = selected
+        ? `El local permanecerá cerrado el ${formatDate(selected.date)}. ${selected.reason} Elige otra fecha para reservar.`
+        : '';
+    }
+    if (submitBtn) submitBtn.disabled = Boolean(selected);
+    return selected;
+  }
+
+  async function loadClosedDates() {
+    try {
+      const response = await fetch('/api/closed-dates');
+      if (!response.ok) return;
+      const data = await response.json();
+      const items = Array.isArray(data.closedDates) ? data.closedDates : [];
+      closedDatesByDate.clear();
+      items.forEach(item => closedDatesByDate.set(item.date, item));
+
+      if (closedDatesBanner) {
+        if (items.length) {
+          closedDatesBanner.innerHTML = `<strong>Próximos días cerrados</strong><ul>${items.map(item =>
+            `<li><time datetime="${escapeHtml(String(item.date))}">${formatDate(item.date)}</time>: ${escapeHtml(String(item.reason || 'Cerrado'))}</li>`
+          ).join('')}</ul>`;
+          closedDatesBanner.hidden = false;
+        } else {
+          closedDatesBanner.hidden = true;
+          closedDatesBanner.textContent = '';
+        }
+      }
+      updateClosedDateNotice();
+    } catch (error) {
+      // La reserva se vuelve a validar en el servidor aunque esta consulta no esté disponible.
+      console.warn('No se pudieron cargar los días cerrados:', error.message);
+    }
+  }
 
   function updateGuestsHint() {
     if (!hintBox || !guestsSelect) return;
@@ -753,25 +804,27 @@
     dateInput.addEventListener('change', () => {
       validateDateSelection();
       populateTimeSlots();
+      updateClosedDateNotice();
+      loadClosedDates();
     });
 
     validateDateSelection();
     populateTimeSlots();
+    loadClosedDates();
   }
 
   function validateDateSelection() {
     if (!dateInput) return true;
     const val = dateInput.value;
     if (!val) return false;
-    const d = new Date(val + 'T12:00:00');
-    if (d.getDay() === 1) { // Lunes cerrado
-      showToast('Los lunes estamos cerrados por descanso. Por favor elige de martes a domingo.', 'error');
-      dateInput.setCustomValidity('Los lunes la tetería permanece cerrada.');
+    const closedDate = closedDatesByDate.get(val);
+    if (closedDate) {
+      updateClosedDateNotice();
+      showToast(`El local permanecerá cerrado el ${formatDate(val)}. ${closedDate.reason}`, 'error');
       return false;
-    } else {
-      dateInput.setCustomValidity('');
-      return true;
     }
+    dateInput.setCustomValidity('');
+    return true;
   }
 
   function populateTimeSlots() {
@@ -793,33 +846,33 @@
     }
 
     const val = dateInput ? dateInput.value : '';
-    const day = val ? new Date(val + 'T12:00:00').getDay() : 2;
-    const isWeekend = day === 5 || day === 6;
+    const day = val ? new Date(val + 'T12:00:00').getDay() : new Date().getDay();
+    const isWeekendNight = day === 5 || day === 6; // Viernes y sábado
 
-    // Franjas de 18:00 a 23:30
-    for (let h = 18; h <= 23; h++) {
-      ['00', '30'].forEach(m => {
-        const slot = `${String(h).padStart(2, '0')}:${m}`;
-        const opt = document.createElement('option');
-        opt.value = slot;
-        opt.textContent = `${slot} h`;
-        timeSelect.appendChild(opt);
-      });
-    }
+    // Horario de Bodhi:
+    // - Apertura: 17:00 domingo y sábado · 17:30 el resto
+    // - Última reserva: 00:00 de domingo a jueves · 01:00 viernes y sábado
+    const openMinutes = (day === 0 || day === 6) ? 17 * 60 : 17 * 60 + 30;
+    const lastBookingMinutes = isWeekendNight ? 60 : 0;
 
-    // Franjas de madrugada (00:00 a 02:00 / 03:00)
-    const maxHour = isWeekend ? 2 : 1;
-    for (let h = 0; h <= maxHour; h++) {
-      ['00', '30'].forEach(m => {
-        const slot = `${String(h).padStart(2, '0')}:${m}`;
-        const opt = document.createElement('option');
-        opt.value = slot;
-        opt.textContent = `${slot} h (noche)`;
-        timeSelect.appendChild(opt);
-      });
-    }
+    const slots = [];
+    for (let m = openMinutes; m < 24 * 60; m += 30) slots.push(m);
+    for (let m = 0; m <= lastBookingMinutes; m += 30) slots.push(m);
 
-    timeSelect.value = currentVal || '20:30';
+    slots.forEach(totalMinutes => {
+      const hh = String(Math.floor(totalMinutes / 60) % 24).padStart(2, '0');
+      const mm = String(totalMinutes % 60).padStart(2, '0');
+      const slot = `${hh}:${mm}`;
+      const opt = document.createElement('option');
+      opt.value = slot;
+      opt.textContent = totalMinutes < openMinutes ? `${slot} h (noche)` : `${slot} h`;
+      timeSelect.appendChild(opt);
+    });
+
+    // Mantener la hora elegida si sigue siendo válida; si no, 20:30.
+    const stillValid = Array.from(timeSelect.options).some(o => o.value === currentVal);
+    timeSelect.value = stillValid ? currentVal : '20:30';
+    if (!timeSelect.value) timeSelect.value = timeSelect.options[0].value;
   }
 
   window.populateTimeSlots = populateTimeSlots;
@@ -877,7 +930,7 @@
         updateGuestsHint();
         showToast('¡Reserva registrada! (Modo vista local)', 'success');
         if (submitBtn) {
-          submitBtn.disabled = false;
+          submitBtn.disabled = Boolean(dateInput && closedDatesByDate.has(dateInput.value));
           submitBtn.innerHTML = 'Solicitar reserva de mesa';
         }
         return;
@@ -900,6 +953,7 @@
           updateGuestsHint();
           showToast('¡Reserva registrada con éxito!', 'success');
         } else {
+          if (String(data.error || '').toLowerCase().includes('cerrado')) await loadClosedDates();
           showToast(data.error || 'No se pudo registrar la reserva.', 'error');
         }
       } catch (err) {
@@ -907,7 +961,7 @@
         showToast('Hubo un problema de conexión con el servidor.', 'error');
       } finally {
         if (submitBtn) {
-          submitBtn.disabled = false;
+          submitBtn.disabled = Boolean(dateInput && closedDatesByDate.has(dateInput.value));
           submitBtn.innerHTML = 'Solicitar reserva de mesa';
         }
       }

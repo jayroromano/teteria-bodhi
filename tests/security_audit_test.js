@@ -1202,6 +1202,12 @@ async function runTestSuite() {
     const sqlClosedDates = fs.readFileSync(path.join(process.cwd(), 'closed_dates.sql'), 'utf8');
     assert(sqlClosedDates.includes('ENABLE ROW LEVEL SECURITY') && sqlClosedDates.includes('TO service_role') && sqlClosedDates.includes('REVOKE ALL ON public.closed_dates FROM PUBLIC, anon, authenticated;'), 'STATIC', '9.7 SQL protege la tabla con RLS y acceso exclusivo de service_role');
 
+    const mirroredStaticFiles = ['index.html', 'admin.html', 'js/main.js', 'js/admin.js', 'css/style.css', 'css/admin.css'];
+    const publicCopiesMatchRoot = mirroredStaticFiles.every(file =>
+      fs.readFileSync(path.join(process.cwd(), file), 'utf8') === fs.readFileSync(path.join(process.cwd(), 'public', file), 'utf8')
+    );
+    assert(publicCopiesMatchRoot, 'STATIC', '9.8 Copias públicas de Vercel coinciden con el HTML, CSS y JS activos');
+
     // ========================================================
     // RESUMEN FINAL
     // ========================================================
