@@ -1163,50 +1163,63 @@ async function runTestSuite() {
     );
 
     // ========================================================
-    // BLOQUE 9: DÍAS CERRADOS Y BLOQUEO DE RESERVAS
+    // BLOQUE 9: DÍAS SIN RESERVAS ONLINE Y BLOQUEO DE RESERVAS
     // ========================================================
-    console.log('\n--- BLOQUE 9: DÍAS CERRADOS ---');
+    console.log('\n--- BLOQUE 9: DÍAS SIN RESERVAS ONLINE ---');
     const closedDateFixture = getFutureDate(2);
     const publicClosedDates = await mockHttp({ method: 'GET', url: '/api/closed-dates' }).run(closedDatesHandler);
-    assert(publicClosedDates.status === 200 && Array.isArray(publicClosedDates.body.closedDates), 'SIMULATION', '9.1 Consulta pública de próximos días cerrados funciona');
+    assert(publicClosedDates.status === 200 && Array.isArray(publicClosedDates.body.closedDates), 'SIMULATION', '9.1 Consulta pública de próximos días sin reservas funciona');
 
     const deniedCreateClosedDate = await mockHttp({
       method: 'POST', url: '/api/closed-dates', body: { date: closedDateFixture, reason: 'Prueba' }
     }).run(closedDatesHandler);
-    assert(deniedCreateClosedDate.status === 401, 'UNIT', '9.2 Crear días cerrados requiere sesión de administrador');
+    assert(deniedCreateClosedDate.status === 401, 'UNIT', '9.2 Crear días sin reservas requiere sesión de administrador');
 
     const createClosedDate = await mockHttp({
       method: 'POST', url: '/api/closed-dates', headers: { authorization: `Bearer ${validToken}` },
       body: { date: closedDateFixture, reason: 'Descanso del equipo' }
     }).run(closedDatesHandler);
-    assert(createClosedDate.status === 201 && createClosedDate.body.closedDate?.date === closedDateFixture, 'SIMULATION', '9.3 Administrador puede registrar una fecha cerrada y su motivo');
+    assert(createClosedDate.status === 201 && createClosedDate.body.closedDate?.date === closedDateFixture, 'SIMULATION', '9.3 Administrador puede registrar una fecha sin reservas y su motivo interno');
 
     const blockedClosedReservation = await mockHttp({
-      method: 'POST', url: '/api/reservas', headers: { authorization: `Bearer ${validToken}` },
-      body: { name: 'Prueba Bodhi', phone: '600123456', date: closedDateFixture, time: '20:00', guests: 2, zone: 'indiferente' }
+      method: 'POST', url: '/api/reservas',
+      body: { name: 'Prueba Bodhi', phone: '600123456', date: closedDateFixture, time: '20:00', guests: 2, zone: 'indiferente', privacy: true }
     }).run(reservasHandler);
-    assert(blockedClosedReservation.status === 400 && blockedClosedReservation.body.error.includes('cerrado'), 'SIMULATION', '9.4 El servidor rechaza una reserva en día cerrado');
+    assert(
+      blockedClosedReservation.status === 400 &&
+      blockedClosedReservation.body.error.includes('no se admiten reservas online') &&
+      blockedClosedReservation.body.error.includes('abre con normalidad') &&
+      !blockedClosedReservation.body.error.includes('Descanso del equipo'),
+      'SIMULATION',
+      '9.4 El servidor rechaza la reserva pública sin exponer el motivo interno y aclara que la tetería abre'
+    );
+
+    const adminClosedReservation = await mockHttp({
+      method: 'POST', url: '/api/reservas', headers: { authorization: `Bearer ${validToken}` },
+      body: { name: 'Reserva Manual Bodhi', phone: '600123456', date: closedDateFixture, time: '20:00', guests: 2, zone: 'indiferente' }
+    }).run(reservasHandler);
+    assert(adminClosedReservation.status === 201 && adminClosedReservation.body.success, 'SIMULATION', '9.5 El administrador sí puede crear reservas manuales en un día sin reservas online');
 
     const duplicateClosedDate = await mockHttp({
       method: 'POST', url: '/api/closed-dates', headers: { authorization: `Bearer ${validToken}` },
       body: { date: closedDateFixture, reason: 'Otro motivo' }
     }).run(closedDatesHandler);
-    assert(duplicateClosedDate.status === 409, 'SIMULATION', '9.5 No permite duplicar una fecha cerrada');
+    assert(duplicateClosedDate.status === 409, 'SIMULATION', '9.6 No permite duplicar una fecha sin reservas');
 
     const deleteClosedDate = await mockHttp({
       method: 'DELETE', url: `/api/closed-dates?date=${closedDateFixture}`,
       headers: { authorization: `Bearer ${validToken}` }
     }).run(closedDatesHandler);
-    assert(deleteClosedDate.status === 200 && deleteClosedDate.body.success, 'SIMULATION', '9.6 Administrador puede quitar un día cerrado');
+    assert(deleteClosedDate.status === 200 && deleteClosedDate.body.success, 'SIMULATION', '9.7 Administrador puede quitar un día sin reservas');
 
     const sqlClosedDates = fs.readFileSync(path.join(process.cwd(), 'closed_dates.sql'), 'utf8');
-    assert(sqlClosedDates.includes('ENABLE ROW LEVEL SECURITY') && sqlClosedDates.includes('TO service_role') && sqlClosedDates.includes('REVOKE ALL ON public.closed_dates FROM PUBLIC, anon, authenticated;'), 'STATIC', '9.7 SQL protege la tabla con RLS y acceso exclusivo de service_role');
+    assert(sqlClosedDates.includes('ENABLE ROW LEVEL SECURITY') && sqlClosedDates.includes('TO service_role') && sqlClosedDates.includes('REVOKE ALL ON public.closed_dates FROM PUBLIC, anon, authenticated;'), 'STATIC', '9.8 SQL protege la tabla con RLS y acceso exclusivo de service_role');
 
     const mirroredStaticFiles = ['index.html', 'admin.html', 'js/main.js', 'js/admin.js', 'css/style.css', 'css/admin.css'];
     const publicCopiesMatchRoot = mirroredStaticFiles.every(file =>
       fs.readFileSync(path.join(process.cwd(), file), 'utf8') === fs.readFileSync(path.join(process.cwd(), 'public', file), 'utf8')
     );
-    assert(publicCopiesMatchRoot, 'STATIC', '9.8 Copias públicas de Vercel coinciden con el HTML, CSS y JS activos');
+    assert(publicCopiesMatchRoot, 'STATIC', '9.9 Copias públicas de Vercel coinciden con el HTML, CSS y JS activos');
 
     // ========================================================
     // RESUMEN FINAL

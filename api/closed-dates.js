@@ -60,15 +60,15 @@ module.exports = async function handler(req, res) {
     }
 
     const deleted = await db.deleteClosedDate(date);
-    if (!deleted) return res.status(404).json({ error: 'No se encontró ese día cerrado.' });
+    if (!deleted) return res.status(404).json({ error: 'No se encontró ese día sin reservas.' });
     return res.status(200).json({ success: true });
   } catch (error) {
-    if (error.message === 'CLOSED_DATE_EXISTS') return res.status(409).json({ error: 'Ya existe un día cerrado para esa fecha.' });
+    if (error.message === 'CLOSED_DATE_EXISTS') return res.status(409).json({ error: 'Ya existe un día sin reservas para esa fecha.' });
     if (error.message === 'CLOSED_DATES_TABLE_MISSING') {
-      return res.status(503).json({ error: 'Falta crear la tabla de días cerrados en Supabase. Ejecuta el SQL de configuración.' });
+      return res.status(503).json({ error: 'Falta crear la tabla de días sin reservas en Supabase. Ejecuta el SQL de configuración.' });
     }
     console.error('[API Closed-Dates Error]:', error.message);
-    return res.status(500).json({ error: 'No se pudieron consultar o guardar los días cerrados.' });
+    return res.status(500).json({ error: 'No se pudieron consultar o guardar los días sin reservas.' });
   }
 };
 

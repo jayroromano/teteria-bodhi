@@ -720,17 +720,45 @@
   const hintBox = $('#hint');
   const form = $('#form');
   const submitBtn = $('#submit-btn');
-  const closedDatesBanner = $('#closed-dates-banner');
-  const closedDateFormNotice = $('#closed-date-form-notice');
   const closedDatesByDate = new Map();
+  const CLOSED_NOTE = 'Tetería abre con normalidad. Se trabaja por orden de llegada.';
+  const CLOSED_MODAL_SESSION_KEY = 'bodhi-closed-modal-date';
 
-  function updateClosedDateNotice() {
+  function getTodaySpain() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+  }
+
+  function buildClosedTitle(date) {
+    return `Lo sentimos, el ${formatDate(date)} no admitimos reservas`;
+  }
+
+  function buildClosedMessage(date) {
+    return `El ${formatDate(date)} no se admiten reservas online.`;
+  }
+
+  function showClosedModal(date) {
+    const modal = $('#closed-modal');
+    if (!modal) return;
+    const title = $('#closed-modal-title');
+    const text = $('#closed-modal-text');
+    const note = $('#closed-modal-note');
+    if (title) title.textContent = buildClosedTitle(date);
+    if (text) text.textContent = buildClosedMessage(date);
+    if (note) note.textContent = CLOSED_NOTE;
+    modal.classList.add('active');
+  }
+
+  function updateClosedNotice() {
+    const notice = $('#closed-notice');
+    if (!notice) return;
     const selected = dateInput ? closedDatesByDate.get(dateInput.value) : null;
-    if (closedDateFormNotice) {
-      closedDateFormNotice.hidden = !selected;
-      closedDateFormNotice.textContent = selected
-        ? `El local permanecerá cerrado el ${formatDate(selected.date)}. ${selected.reason} Elige otra fecha para reservar.`
-        : '';
+    const text = $('#closed-notice-text');
+    if (selected) {
+      if (text) text.textContent = `${buildClosedMessage(selected.date)} ${CLOSED_NOTE}`;
+      notice.hidden = false;
+    } else {
+      notice.hidden = true;
+      if (text) text.textContent = '';
     }
     if (submitBtn) submitBtn.disabled = Boolean(selected);
     return selected;
@@ -744,22 +772,28 @@
       const items = Array.isArray(data.closedDates) ? data.closedDates : [];
       closedDatesByDate.clear();
       items.forEach(item => closedDatesByDate.set(item.date, item));
+      updateClosedNotice();
 
-      if (closedDatesBanner) {
-        if (items.length) {
-          closedDatesBanner.innerHTML = `<strong>Próximos días cerrados</strong><ul>${items.map(item =>
-            `<li><time datetime="${escapeHtml(String(item.date))}">${formatDate(item.date)}</time>: ${escapeHtml(String(item.reason || 'Cerrado'))}</li>`
-          ).join('')}</ul>`;
-          closedDatesBanner.hidden = false;
-        } else {
-          closedDatesBanner.hidden = true;
-          closedDatesBanner.textContent = '';
+      const todayClosed = closedDatesByDate.get(getTodaySpain());
+      if (todayClosed) {
+        let alreadyShown = false;
+        try {
+          alreadyShown = sessionStorage.getItem(CLOSED_MODAL_SESSION_KEY) === todayClosed.date;
+        } catch (e) {
+          // Si el navegador bloquea sessionStorage, el aviso se muestra igualmente.
+        }
+        if (!alreadyShown) {
+          showClosedModal(todayClosed.date);
+          try {
+            sessionStorage.setItem(CLOSED_MODAL_SESSION_KEY, todayClosed.date);
+          } catch (e) {
+            // Sin sessionStorage no se puede recordar, pero no impide el aviso.
+          }
         }
       }
-      updateClosedDateNotice();
     } catch (error) {
       // La reserva se vuelve a validar en el servidor aunque esta consulta no esté disponible.
-      console.warn('No se pudieron cargar los días cerrados:', error.message);
+      console.warn('No se pudieron cargar los días sin reservas online:', error.message);
     }
   }
 
@@ -804,8 +838,7 @@
     dateInput.addEventListener('change', () => {
       validateDateSelection();
       populateTimeSlots();
-      updateClosedDateNotice();
-      loadClosedDates();
+      updateClosedNotice();
     });
 
     validateDateSelection();
@@ -819,8 +852,8 @@
     if (!val) return false;
     const closedDate = closedDatesByDate.get(val);
     if (closedDate) {
-      updateClosedDateNotice();
-      showToast(`El local permanecerá cerrado el ${formatDate(val)}. ${closedDate.reason}`, 'error');
+      updateClosedNotice();
+      showClosedModal(closedDate.date);
       return false;
     }
     dateInput.setCustomValidity('');
@@ -928,9 +961,9 @@
         form.reset();
         populateTimeSlots();
         updateGuestsHint();
+        updateClosedNotice();
         showToast('¡Reserva registrada! (Modo vista local)', 'success');
         if (submitBtn) {
-          submitBtn.disabled = Boolean(dateInput && closedDatesByDate.has(dateInput.value));
           submitBtn.innerHTML = 'Solicitar reserva de mesa';
         }
         return;
@@ -951,9 +984,10 @@
           form.reset();
           populateTimeSlots();
           updateGuestsHint();
+          updateClosedNotice();
           showToast('¡Reserva registrada con éxito!', 'success');
         } else {
-          if (String(data.error || '').toLowerCase().includes('cerrado')) await loadClosedDates();
+          if (String(data.error || '').toLowerCase().includes('reservas online')) await loadClosedDates();
           showToast(data.error || 'No se pudo registrar la reserva.', 'error');
         }
       } catch (err) {
@@ -961,7 +995,7 @@
         showToast('Hubo un problema de conexión con el servidor.', 'error');
       } finally {
         if (submitBtn) {
-          submitBtn.disabled = Boolean(dateInput && closedDatesByDate.has(dateInput.value));
+          updateClosedNotice();
           submitBtn.innerHTML = 'Solicitar reserva de mesa';
         }
       }
@@ -1007,6 +1041,15 @@
     modalClose.addEventListener('click', () => modalOverlay.classList.remove('active'));
     modalOverlay.addEventListener('click', (e) => {
       if (e.target === modalOverlay) modalOverlay.classList.remove('active');
+    });
+  }
+
+  const closedModal = $('#closed-modal');
+  const closedModalClose = $('#closed-modal-close');
+  if (closedModal) {
+    if (closedModalClose) closedModalClose.addEventListener('click', () => closedModal.classList.remove('active'));
+    closedModal.addEventListener('click', (e) => {
+      if (e.target === closedModal) closedModal.classList.remove('active');
     });
   }
 

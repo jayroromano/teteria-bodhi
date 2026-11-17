@@ -64,7 +64,7 @@
       <li class="nav-item">
         <button type="button" data-tab="closed-dates">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="10" y2="16"/><line x1="10" y1="16" x2="15" y2="12"/></svg>
-          Días cerrados
+          Días sin reservas online
         </button>
       </li>
       <li class="nav-item">
@@ -299,23 +299,23 @@
         </div>
       </div>
 
-      <!-- PESTAÑA: DÍAS CERRADOS -->
+      <!-- PESTAÑA: DÍAS SIN RESERVAS ONLINE -->
       <div class="tab-section" id="tab-closed-dates" style="display: none;">
         <div class="table-card closed-dates-manager">
-          <h2>Días cerrados</h2>
-          <p class="closed-dates-intro">Añade los días que la tetería permanecerá cerrada. La web mostrará el aviso y no aceptará reservas para esas fechas.</p>
+          <h2>Días sin reservas online</h2>
+          <p class="closed-dates-intro">Añade las fechas en las que no se admitirán reservas online (partidos, eventos privados, descanso puntual). La web mostrará un aviso emergente y no aceptará reservas online esos días, pero la tetería abre con normalidad y se trabaja por orden de llegada. Tú sí puedes crear reservas manuales desde el panel.</p>
           <div id="closed-dates-setup-notice" class="closed-dates-setup" hidden>
             Falta crear la tabla en Supabase. Tras desplegar esta función, ejecuta el archivo <strong>closed_dates.sql</strong> en el SQL Editor de Supabase.
           </div>
           <form id="closed-date-form" class="closed-date-form">
             <label for="closed-date-input">Fecha</label>
             <input id="closed-date-input" name="date" type="date" required>
-            <label for="closed-date-reason">Motivo del cierre</label>
-            <input id="closed-date-reason" name="reason" type="text" maxlength="160" required placeholder="Ej.: Cerrado por descanso">
-            <button type="submit" class="btn-primary">Añadir día cerrado</button>
+            <label for="closed-date-reason">Motivo interno (no se muestra en la web)</label>
+            <input id="closed-date-reason" name="reason" type="text" maxlength="160" required placeholder="Ej.: Partido del Jerez">
+            <button type="submit" class="btn-primary">Añadir día sin reservas</button>
           </form>
-          <h3>Próximos cierres</h3>
-          <div id="closed-dates-list" class="closed-dates-list" aria-live="polite">Cargando días cerrados…</div>
+          <h3>Próximas fechas sin reservas online</h3>
+          <div id="closed-dates-list" class="closed-dates-list" aria-live="polite">Cargando días sin reservas…</div>
         </div>
       </div>
 

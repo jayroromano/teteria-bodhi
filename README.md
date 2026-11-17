@@ -19,6 +19,7 @@ Diseñado y optimizado para desplegarse con **cero configuración en Vercel** co
   - Selección de zona: *Salón Lounge Interior*, *Terraza Andalusí* o *Indiferente*.
   - Generación de código único de reserva (ej: `BDH-8392`).
   - Modal con enlace directo para enviar confirmación a WhatsApp con 1 clic.
+- **Días sin reservas online**: si el negocio bloquea una fecha, la web muestra un aviso emergente y no admite reservas online ese día. El aviso aclara que la tetería abre con normalidad y que se trabaja por orden de llegada; el motivo interno no se muestra al cliente.
 - **Galería de Momentos**: Fotografía de alta definición de cachimbas, teteras tradicionales, cócteles y dulces árabes.
 - **Ubicación & Contacto**: Mapa interactivo integrado de Jerez de la Frontera (Calle Tornería), enlaces directos de llamada y WhatsApp flotante.
 - **Modo Oscuro / Claro**: Interruptor de tema con memoria persistente en el navegador.
@@ -41,6 +42,12 @@ Diseñado y optimizado para desplegarse con **cero configuración en Vercel** co
   - **Exportación a CSV / Excel** e impresión de lista de servicio.
 - **Control de la Carta**:
   - Botón para marcar productos como "Disponible" o "Agotado hoy" en tiempo real sin reiniciar el servidor.
+- **Gestión de Días sin Reservas Online**:
+  - Bloquea fechas concretas (partidos, eventos privados, descanso puntual) con un motivo interno para tu control.
+  - La web muestra un aviso emergente al entrar y al elegir esa fecha, y bloquea las reservas online ese día.
+  - El mensaje aclara que la tetería abre con normalidad y que ese día se trabaja por orden de llegada.
+  - El administrador sí puede crear reservas manuales en esas fechas.
+  - El bloqueo desaparece solo al pasar la fecha; se puede quitar antes desde el panel.
 
 ---
 

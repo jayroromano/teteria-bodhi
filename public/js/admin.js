@@ -681,18 +681,18 @@
     },
 
     async deleteClosedDate(date) {
-      if (!confirm(`¿Quitar el cierre del ${formatDate(date)}?`)) return;
+      if (!confirm(`¿Quitar el día sin reservas del ${formatDate(date)}?`)) return;
       try {
         const res = await fetch(`/api/closed-dates?date=${encodeURIComponent(date)}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
         const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo quitar el cierre.');
-        showAdminToast('Día cerrado eliminado.', 'success');
+        if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo quitar el día sin reservas.');
+        showAdminToast('Día sin reservas eliminado.', 'success');
         await loadClosedDates();
       } catch (error) {
-        showAdminToast(error.message || 'Error eliminando el día cerrado.', 'danger');
+        showAdminToast(error.message || 'Error eliminando el día sin reservas.', 'danger');
       }
     }
   };
@@ -891,17 +891,17 @@
   async function loadClosedDates() {
     const list = $('#closed-dates-list');
     if (!list) return;
-    list.textContent = 'Cargando días cerrados…';
+    list.textContent = 'Cargando días sin reservas…';
     try {
       const res = await fetch('/api/closed-dates', { headers: { 'Authorization': `Bearer ${authToken}` } });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'No se pudieron cargar los días cerrados.');
+      if (!res.ok) throw new Error(data.error || 'No se pudieron cargar los días sin reservas.');
       cachedClosedDates = Array.isArray(data.closedDates) ? data.closedDates : [];
       const setupNotice = $('#closed-dates-setup-notice');
       if (setupNotice) setupNotice.hidden = !data.setupRequired;
       renderClosedDates();
     } catch (error) {
-      list.textContent = error.message || 'Error cargando días cerrados.';
+      list.textContent = error.message || 'Error cargando días sin reservas.';
     }
   }
 
@@ -909,7 +909,7 @@
     const list = $('#closed-dates-list');
     if (!list) return;
     if (!cachedClosedDates.length) {
-      list.textContent = 'No hay días cerrados próximos.';
+      list.textContent = 'No hay días sin reservas próximos.';
       return;
     }
     list.innerHTML = cachedClosedDates.map(item => `
@@ -937,13 +937,13 @@
           body: JSON.stringify({ date, reason })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'No se pudo añadir el día cerrado.');
+        if (!res.ok) throw new Error(data.error || 'No se pudo añadir el día sin reservas.');
         closedDateForm.reset();
         if (dateField) dateField.min = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
-        showAdminToast('Día cerrado añadido.', 'success');
+        showAdminToast('Día sin reservas añadido.', 'success');
         await loadClosedDates();
       } catch (error) {
-        showAdminToast(error.message || 'Error guardando el día cerrado.', 'danger');
+        showAdminToast(error.message || 'Error guardando el día sin reservas.', 'danger');
       } finally {
         if (submit) submit.disabled = false;
       }
@@ -1161,7 +1161,7 @@
     const titleMap = {
       'reservas': 'Reservas',
       'carta': 'Gestión de Carta',
-      'closed-dates': 'Días cerrados',
+      'closed-dates': 'Días sin reservas online',
       'db': 'Base de Datos & Vercel'
     };
     const titleEl = $('#page-title');

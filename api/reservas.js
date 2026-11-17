@@ -349,10 +349,13 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: dateCheck.error });
       }
 
-      const closedDate = await db.getClosedDate(dateCheck.cleanDate);
-      if (closedDate) {
-        const reason = closedDate.reason ? ` Motivo: ${closedDate.reason}` : '';
-        return res.status(400).json({ error: `No se aceptan reservas para esta fecha porque el local permanecerá cerrado.${reason}` });
+      if (!isReqAdmin) {
+        const closedDate = await db.getClosedDate(dateCheck.cleanDate);
+        if (closedDate) {
+          return res.status(400).json({
+            error: 'Ese día no se admiten reservas online. Tetería abre con normalidad; se trabaja por orden de llegada.'
+          });
+        }
       }
 
       // 7. Validación de horario según día de apertura de Bodhi

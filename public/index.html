@@ -99,8 +99,6 @@
 </head>
 <body>
 
-<div id="closed-dates-banner" class="closed-dates-banner" role="status" aria-live="polite" hidden></div>
-
 <!-- ================= CABECERA ================= -->
 <header>
   <div class="header-inner">
@@ -451,7 +449,10 @@
           <span class="title">Reserva</span>
           <span class="step-badge">Paso único · Online</span>
         </div>
-        <div id="closed-date-form-notice" class="closed-date-form-notice" role="status" aria-live="polite" hidden></div>
+        <div id="closed-notice" class="closed-notice" role="status" aria-live="polite" hidden>
+          <span aria-hidden="true">🗓️</span>
+          <span id="closed-notice-text"></span>
+        </div>
 
         <div class="fields">
           <div>
@@ -827,6 +828,24 @@
     </div>
   </div>
 </footer>
+
+<!-- ================= MODAL DE DÍA SIN RESERVAS ONLINE ================= -->
+<div class="modal-overlay" id="closed-modal" role="dialog" aria-modal="true" aria-labelledby="closed-modal-title">
+  <div class="modal-card" style="max-width: 520px; text-align: center;">
+    <button class="modal-close" id="closed-modal-close" aria-label="Cerrar ventana">×</button>
+    <div style="width: 58px; height: 58px; background: #FFF3E0; color: #B45309; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 14px; font-size: 1.7rem;">
+      🗓️
+    </div>
+    <h3 id="closed-modal-title" style="font-size: 1.5rem; margin-bottom: 10px;">Lo sentimos, no admitimos reservas</h3>
+    <p id="closed-modal-text" style="color: var(--mut); font-size: 0.98rem; line-height: 1.6; margin-bottom: 14px;"></p>
+    <div id="closed-modal-note" style="background: #FFF8E7; border: 1.5px solid #E9CFA0; border-radius: 12px; padding: 14px 16px; margin-bottom: 22px; color: #6B4A12; font-size: 0.95rem; line-height: 1.5;">
+      Tetería abre con normalidad. Se trabaja por orden de llegada.
+    </div>
+    <button type="button" class="btn" id="closed-modal-accept" style="width: 100%;" onclick="document.getElementById('closed-modal').classList.remove('active')">
+      Entendido
+    </button>
+  </div>
+</div>
 
 <!-- ================= MODAL DE CONFIRMACIÓN DE RESERVA ================= -->
 <div class="modal-overlay" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
