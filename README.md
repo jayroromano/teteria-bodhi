@@ -17,6 +17,7 @@ Diseñado y optimizado para desplegarse con **cero configuración en Vercel** co
   - Selector dinámico de horas según el día (última reserva: 00:00 entre semana y 01:00 viernes y sábado).
   - Recomendación personalizada según número de comensales.
   - Selección de zona: *Salón Lounge Interior*, *Terraza Andalusí* o *Indiferente*.
+  - **Días sin reservas online (partidos y eventos)**: el panel permite bloquear fechas concretas; la web muestra un aviso emergente y bloquea las reservas online ese día, aclarando que la tetería abre con normalidad.
   - Generación de código único de reserva (ej: `BDH-8392`).
   - Modal con enlace directo para enviar confirmación a WhatsApp con 1 clic.
 - **Galería de Momentos**: Fotografía de alta definición de cachimbas, teteras tradicionales, cócteles y dulces árabes.
@@ -41,6 +42,11 @@ Diseñado y optimizado para desplegarse con **cero configuración en Vercel** co
   - **Exportación a CSV / Excel** e impresión de lista de servicio.
 - **Control de la Carta**:
   - Botón para marcar productos como "Disponible" o "Agotado hoy" en tiempo real sin reiniciar el servidor.
+- **Gestión de Días sin Reservas Online**:
+  - Bloquea fechas concretas (partidos, eventos privados, descanso puntual) con un motivo visible para el cliente.
+  - La web muestra un aviso emergente al entrar y al elegir esa fecha, y bloquea las reservas online ese día.
+  - El mensaje aclara que la tetería abre con normalidad y que se puede venir sin reserva.
+  - El bloqueo desaparece solo al pasar la fecha; se puede quitar antes desde el panel.
 
 ---
 

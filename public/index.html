@@ -53,15 +53,27 @@
     "openingHoursSpecification": [
       {
         "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Sunday"],
-        "opens": "18:00",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday"],
+        "opens": "17:30",
         "closes": "02:00"
       },
       {
         "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Friday", "Saturday"],
-        "opens": "18:00",
+        "dayOfWeek": ["Friday"],
+        "opens": "17:30",
         "closes": "03:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Saturday"],
+        "opens": "17:00",
+        "closes": "03:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Sunday"],
+        "opens": "17:00",
+        "closes": "02:00"
       }
     ],
     "hasMap": "https://maps.app.goo.gl/NzjgemTgAFJaaZcv6",
@@ -123,7 +135,7 @@
           </a>
         </div>
         <div class="drawer-schedule-box">
-          <span>🕒 Martes a Domingo · Desde las 18:00 h</span>
+          <span>🕒 Todos los días · Desde las 17:00 h</span>
         </div>
       </div>
     </nav>
@@ -131,7 +143,7 @@
     <div class="header-right">
       <div class="status-indicator">
         <span class="status-dot" id="status-dot"></span>
-        <span id="status-text">Abierto hoy · 18:00 a 02:00</span>
+        <span id="status-text">Abierto hoy · 17:30 a 02:00</span>
       </div>
 
       <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema de color">
@@ -433,6 +445,12 @@
       </div>
 
       <form class="ticket" id="form" novalidate>
+        <!-- Aviso de día sin reservas online encima del formulario -->
+        <div id="closed-notice" class="closed-notice" role="alert" style="display: none;">
+          <span aria-hidden="true">🗓️</span>
+          <span id="closed-notice-text"></span>
+        </div>
+
         <div class="ticket-header">
           <span class="title">Reserva</span>
           <span class="step-badge">Paso único · Online</span>
@@ -457,6 +475,8 @@
           <div>
             <label for="h">Hora deseada *</label>
             <select id="h" name="time" required>
+              <option value="17:00">17:00 h</option>
+              <option value="17:30">17:30 h</option>
               <option value="18:00">18:00 h</option>
               <option value="18:30">18:30 h</option>
               <option value="19:00">19:00 h</option>
@@ -732,10 +752,10 @@
           <dt>🕒 Horario de Apertura</dt>
           <dd>
             <table class="schedule-table">
-              <tr><td>Lunes</td><td>Cerrado (Descanso)</td></tr>
-              <tr><td>Martes, Miércoles y Jueves</td><td>18:00 a 02:00</td></tr>
-              <tr><td>Viernes y Sábado</td><td>18:00 a 03:00</td></tr>
-              <tr><td>Domingo</td><td>18:00 a 02:00</td></tr>
+              <tr><td>Lunes a Jueves</td><td>17:30 a 02:00</td></tr>
+              <tr><td>Viernes</td><td>17:30 a 03:00</td></tr>
+              <tr><td>Sábados y vísperas de festivo</td><td>17:00 a 03:00</td></tr>
+              <tr><td>Domingos</td><td>17:00 a 02:00</td></tr>
             </table>
           </dd>
         </dl>
@@ -855,6 +875,22 @@
         Entendido, cerrar
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ================= MODAL DE DÍA SIN RESERVAS ONLINE ================= -->
+<div class="modal-overlay" id="closed-modal" role="dialog" aria-modal="true" aria-labelledby="closed-modal-title">
+  <div class="modal-card" style="max-width: 520px; text-align: center;">
+    <button class="modal-close" id="closed-modal-close" aria-label="Cerrar ventana">×</button>
+    <div style="width: 58px; height: 58px; background: #FFF3E0; color: #B45309; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 14px; font-size: 1.7rem;">
+      🗓️
+    </div>
+    <h3 id="closed-modal-title" style="font-size: 1.5rem; margin-bottom: 10px;">Ese día no hay reservas online</h3>
+    <p id="closed-modal-text" style="color: var(--mut); font-size: 0.98rem; line-height: 1.6; margin-bottom: 14px;"></p>
+    <div style="background: #FFF8E7; border: 1.5px solid #E9CFA0; border-radius: 12px; padding: 14px 16px; margin-bottom: 22px; color: #6B4A12; font-size: 0.95rem; line-height: 1.5;">
+      <strong>La tetería abre con normalidad.</strong> Puedes venir sin reserva; solo ese día no se admiten reservas online.
+    </div>
+    <button type="button" class="btn" id="closed-modal-ok" style="width: 100%;">Entendido</button>
   </div>
 </div>
 

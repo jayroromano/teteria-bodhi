@@ -355,11 +355,23 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: timeCheck.error });
       }
 
-      // 8. Validación de zona
+      // 8. Día cerrado (partido, evento privado...): el público no puede reservar.
+      // El administrador sí puede, por ejemplo para una reserva tomada por teléfono.
+      if (!isReqAdmin) {
+        const closedDate = await db.getClosedDate(dateCheck.cleanDate);
+        if (closedDate) {
+          const motivo = closedDate.reason ? `: ${closedDate.reason}` : '';
+          return res.status(400).json({
+            error: `Ese día no se admiten reservas online${motivo}. La tetería abre con normalidad.`
+          });
+        }
+      }
+
+      // 9. Validación de zona
       const rawZone = String(zone || 'indiferente').trim();
       const cleanZone = ALLOWED_ZONES.includes(rawZone) ? rawZone : 'indiferente';
 
-      // 9. Los clientes públicos no pueden forzar estados arbitrarios ni notas internas
+      // 10. Los clientes públicos no pueden forzar estados arbitrarios ni notas internas
       const reservationData = {
         name: cleanName,
         phone: cleanPhone,

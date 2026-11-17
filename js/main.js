@@ -10,6 +10,9 @@
   const $$ = (selector) => document.querySelectorAll(selector);
   const isFileProtocol = window.location.protocol === 'file:';
 
+  // Días sin reservas online (partidos, eventos...). Se cargan desde /api/closed-dates.
+  let closedDates = [];
+
   // Datos completos de la carta precargados para visualización instantánea (incluso sin servidor)
   let cartaData = [
   {
@@ -760,20 +763,115 @@
     });
 
     dateInput.addEventListener('change', () => {
-      validateDateSelection();
+      validateDateSelection(true);
       populateTimeSlots();
     });
 
     validateDateSelection();
     populateTimeSlots();
+    loadClosedDates();
   }
 
-  function validateDateSelection() {
+  function getTodaySpain() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+  }
+
+  function getClosedForDate(date) {
+    if (!date) return null;
+    return closedDates.find(d => d.date === date) || null;
+  }
+
+  function buildClosedMessage(date, reason) {
+    const motivo = reason || 'evento especial';
+    const when = date === getTodaySpain() ? 'Hoy' : `El ${formatDate(date)}`;
+    return `${when} no se admiten reservas online: ${motivo}.`;
+  }
+
+  function showClosedModal(date, reason) {
+    const modal = $('#closed-modal');
+    if (!modal) return;
+    const text = $('#closed-modal-text');
+    if (text) text.textContent = buildClosedMessage(date, reason);
+    modal.classList.add('active');
+  }
+
+  function updateClosedNotice() {
+    const notice = $('#closed-notice');
+    if (!notice) return;
+    const closed = getClosedForDate(dateInput ? dateInput.value : '');
+    if (closed) {
+      const text = $('#closed-notice-text');
+      if (text) text.textContent = `${buildClosedMessage(closed.date, closed.reason)} La tetería abre con normalidad.`;
+      notice.style.display = 'flex';
+    } else {
+      notice.style.display = 'none';
+    }
+  }
+
+  function handleClosedDatesLoaded() {
+    updateClosedNotice();
+
+    const todayClosed = getClosedForDate(getTodaySpain());
+    if (!todayClosed) return;
+
+    // El popup se muestra una sola vez por sesión y por fecha bloqueada.
+    const key = `bodhi_closed_modal_${todayClosed.date}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch (e) {
+      // Si el navegador bloquea sessionStorage, se muestra igualmente una vez.
+    }
+    showClosedModal(todayClosed.date, todayClosed.reason);
+  }
+
+  async function loadClosedDates() {
+    if (isFileProtocol) return;
+    try {
+      const res = await fetch('/api/closed-dates', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      closedDates = Array.isArray(data.closedDates) ? data.closedDates : [];
+      handleClosedDatesLoaded();
+      validateDateSelection();
+    } catch (e) {
+      // Si falla la consulta, la web sigue funcionando con normalidad.
+    }
+  }
+
+  function validateDateSelection(notify = false) {
     if (!dateInput) return true;
     const val = dateInput.value;
-    if (!val) return false;
+    if (!val) {
+      dateInput.setCustomValidity('');
+      updateClosedNotice();
+      return false;
+    }
+
+    const closed = getClosedForDate(val);
+    if (closed) {
+      const message = `${buildClosedMessage(val, closed.reason)} La tetería abre con normalidad.`;
+      dateInput.setCustomValidity(message);
+      updateClosedNotice();
+      if (notify) showClosedModal(val, closed.reason);
+      return false;
+    }
+
     dateInput.setCustomValidity('');
+    updateClosedNotice();
     return true;
+  }
+
+  const closedModal = $('#closed-modal');
+  if (closedModal) {
+    const closeClosedModal = () => closedModal.classList.remove('active');
+    const closedModalClose = $('#closed-modal-close');
+    const closedModalOk = $('#closed-modal-ok');
+    if (closedModalClose) closedModalClose.addEventListener('click', closeClosedModal);
+    if (closedModalOk) closedModalOk.addEventListener('click', closeClosedModal);
+    closedModal.addEventListener('click', (e) => {
+      if (e.target === closedModal) closeClosedModal();
+    });
   }
 
   function populateTimeSlots() {
@@ -831,7 +929,7 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      if (!validateDateSelection()) return;
+      if (!validateDateSelection(true)) return;
 
       const name = $('#n').value.trim();
       const phone = $('#t').value.trim();
@@ -877,6 +975,7 @@
         form.reset();
         populateTimeSlots();
         updateGuestsHint();
+        updateClosedNotice();
         showToast('¡Reserva registrada! (Modo vista local)', 'success');
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -900,6 +999,7 @@
           form.reset();
           populateTimeSlots();
           updateGuestsHint();
+          updateClosedNotice();
           showToast('¡Reserva registrada con éxito!', 'success');
         } else {
           showToast(data.error || 'No se pudo registrar la reserva.', 'error');

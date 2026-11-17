@@ -2242,3 +2242,34 @@ footer {
 .legal-content-box li {
   margin-bottom: 6px;
 }
+
+/* =========================================================
+   AVISO DE DÍA SIN RESERVAS ONLINE (PARTIDOS Y EVENTOS)
+   ========================================================= */
+.closed-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  background: #FFF8E7;
+  border: 1.5px solid #E9CFA0;
+  border-left: 5px solid var(--gold);
+  border-radius: 10px;
+  color: #6B4A12;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.closed-notice span[aria-hidden="true"] {
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+
+[data-theme="dark"] .closed-notice {
+  background: #33260F;
+  border-color: #5C4718;
+  border-left-color: var(--gold);
+  color: #F5E3B8;
+}

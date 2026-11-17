@@ -1064,6 +1064,145 @@
   if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', closeSidebar);
   if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
 
+  // ==========================================
+  // DÍAS CERRADOS (PARTIDOS Y EVENTOS)
+  // ==========================================
+  function todayInSpain() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+  }
+
+  function renderClosedDates(list) {
+    const tbody = $('#closed-dates-tbody');
+    if (!tbody) return;
+
+    if (!Array.isArray(list) || list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--mut);padding:24px;">No hay días bloqueados. La web admite reservas online con normalidad.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map(d => `
+      <tr>
+        <td>
+          <strong>${formatDate(d.date)}</strong>
+          <div style="font-size:0.78rem;color:var(--mut);">${escapeHtml(d.date)}</div>
+        </td>
+        <td>${escapeHtml(d.reason || 'Evento especial')}</td>
+        <td>
+          <button type="button" class="btn-secondary" data-remove-closed="${escapeAttr(d.id)}" style="font-size:0.82rem;padding:7px 12px;cursor:pointer;">Quitar</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadClosedDates() {
+    const tbody = $('#closed-dates-tbody');
+    if (!tbody) return;
+
+    const dateEl = $('#closed-date');
+    if (dateEl && !dateEl.min) dateEl.min = todayInSpain();
+
+    if (isFileProtocol) {
+      renderClosedDates([]);
+      return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--mut);padding:24px;">Cargando días sin reservas...</td></tr>';
+    try {
+      const res = await fetch('/api/closed-dates', { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudieron cargar los días sin reservas.');
+      renderClosedDates(data.closedDates || []);
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:#C62828;padding:24px;">${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  const closedDateForm = $('#closed-date-form');
+  if (closedDateForm) {
+    closedDateForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const dateEl = $('#closed-date');
+      const reasonEl = $('#closed-reason');
+      const submitBtn = $('#btn-add-closed-date');
+      const date = dateEl ? dateEl.value : '';
+      const reason = reasonEl ? reasonEl.value.trim() : '';
+
+      if (!date) {
+        showAdminToast('Elige una fecha para cerrar.', 'danger');
+        return;
+      }
+      if (reason.length < 3) {
+        showAdminToast('El motivo debe tener al menos 3 caracteres.', 'danger');
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Guardando...';
+      }
+
+      try {
+        const res = await fetch('/api/closed-dates', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ date, reason })
+        });
+        const data = await res.json();
+
+        if (res.status === 409) {
+          showAdminToast('Ese día ya está bloqueado para reservas online.', 'danger');
+          return;
+        }
+        if (!res.ok) throw new Error(data.error || 'No se pudo guardar el día sin reservas.');
+
+        showAdminToast('Día bloqueado. La web no admitirá reservas online ese día; la tetería abre con normalidad.', 'success');
+        closedDateForm.reset();
+        if (dateEl) dateEl.min = todayInSpain();
+        loadClosedDates();
+      } catch (err) {
+        showAdminToast(err.message, 'danger');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '+ Añadir día sin reservas';
+        }
+      }
+    });
+  }
+
+  const closedTbody = $('#closed-dates-tbody');
+  if (closedTbody) {
+    closedTbody.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-remove-closed]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-remove-closed');
+      if (!id) return;
+
+      const confirmed = window.confirm('¿Quitar este día? La web volverá a admitir reservas online ese día.');
+      if (!confirmed) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Quitando...';
+      try {
+        const res = await fetch(`/api/closed-dates?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'No se pudo quitar el día bloqueado.');
+        showAdminToast('Día desbloqueado. La web vuelve a admitir reservas online.', 'success');
+        loadClosedDates();
+      } catch (err) {
+        showAdminToast(err.message, 'danger');
+        btn.disabled = false;
+        btn.textContent = 'Quitar';
+      }
+    });
+  }
+
   function switchAdminTab(target) {
     $$('.nav-item').forEach(li => li.classList.remove('active'));
     const matchingNavBtn = $(`aside.admin-sidebar button[data-tab="${target}"]`);
@@ -1081,6 +1220,7 @@
 
     const titleMap = {
       'reservas': 'Reservas',
+      'cerrados': 'Días sin reservas',
       'carta': 'Gestión de Carta',
       'db': 'Base de Datos & Vercel'
     };
@@ -1089,6 +1229,7 @@
       titleEl.textContent = titleMap[target];
     }
 
+    if (target === 'cerrados') loadClosedDates();
     if (target === 'carta') loadCartaManager();
     if (target === 'db') checkDbHealth();
 

@@ -71,6 +71,7 @@ const cors = require('../lib/cors');
 const adminLoginHandler = require('../api/admin-login');
 const reservasHandler = require('../api/reservas');
 const cartaHandler = require('../api/carta');
+const closedDatesHandler = require('../api/closed-dates');
 const businessConfigHandler = require('../api/business-config');
 const localApp = require('../server');
 
@@ -1149,6 +1150,136 @@ async function runTestSuite() {
       !excludesLib && !excludesApi && !excludesBusinesses,
       'STATIC',
       '8.3 .vercelignore NO excluye lib/, api/ ni businesses/, preservando la operatividad serverless'
+    );
+
+    // ========================================================
+    // BLOQUE 9: DÍAS SIN RESERVAS ONLINE (PARTIDOS Y EVENTOS)
+    // ========================================================
+    console.log('\n--- BLOQUE 9: DÍAS SIN RESERVAS ONLINE Y BLOQUEO DE RESERVAS ---');
+
+    const closedDateTarget = new Date();
+    closedDateTarget.setDate(closedDateTarget.getDate() + 30);
+    const closedTestDate = closedDateTarget.toISOString().split('T')[0];
+
+    // 9.1 Consulta pública inicial (lista vacía)
+    const closedInitial = await mockHttp({ method: 'GET', url: '/api/closed-dates' }).run(closedDatesHandler);
+    assert(
+      closedInitial.status === 200 && Array.isArray(closedInitial.body.closedDates),
+      'SIMULATION',
+      '9.1 GET /api/closed-dates devuelve 200 con una lista de días sin reservas online'
+    );
+
+    // 9.2 Bloquear reservas online sin autorización
+    const closedNoAuth = await mockHttp({
+      method: 'POST',
+      url: '/api/closed-dates',
+      body: { date: closedTestDate, reason: 'Partido de prueba' }
+    }).run(closedDatesHandler);
+    assert(closedNoAuth.status === 401, 'SIMULATION', '9.2 POST /api/closed-dates sin token devuelve 401');
+
+    // 9.3 Bloquear reservas online como administrador
+    const closedCreated = await mockHttp({
+      method: 'POST',
+      url: '/api/closed-dates',
+      headers: { 'authorization': `Bearer ${validToken}` },
+      body: { date: closedTestDate, reason: 'Partido de prueba' }
+    }).run(closedDatesHandler);
+    assert(
+      closedCreated.status === 201 &&
+      closedCreated.body.closedDate?.date === closedTestDate &&
+      closedCreated.body.closedDate?.reason === 'Partido de prueba',
+      'SIMULATION',
+      '9.3 POST /api/closed-dates con token admin crea el día sin reservas online (201)'
+    );
+    const closedTestId = closedCreated.body?.closedDate?.id;
+
+    // 9.4 Fecha duplicada
+    const closedDuplicate = await mockHttp({
+      method: 'POST',
+      url: '/api/closed-dates',
+      headers: { 'authorization': `Bearer ${validToken}` },
+      body: { date: closedTestDate, reason: 'Otro motivo' }
+    }).run(closedDatesHandler);
+    assert(closedDuplicate.status === 409, 'SIMULATION', '9.4 POST /api/closed-dates con fecha duplicada devuelve 409');
+
+    // 9.5 Fecha pasada
+    const closedPast = await mockHttp({
+      method: 'POST',
+      url: '/api/closed-dates',
+      headers: { 'authorization': `Bearer ${validToken}` },
+      body: { date: '2020-01-01', reason: 'Fecha pasada' }
+    }).run(closedDatesHandler);
+    assert(closedPast.status === 400 && closedPast.body.error.includes('pasada'), 'SIMULATION', '9.5 POST /api/closed-dates con fecha pasada devuelve 400');
+
+    // 9.6 Motivo demasiado corto
+    const closedShortReason = await mockHttp({
+      method: 'POST',
+      url: '/api/closed-dates',
+      headers: { 'authorization': `Bearer ${validToken}` },
+      body: { date: closedTestDate, reason: 'ab' }
+    }).run(closedDatesHandler);
+    assert(closedShortReason.status === 400 && closedShortReason.body.error.includes('3 y 120'), 'SIMULATION', '9.6 POST /api/closed-dates con motivo de menos de 3 caracteres devuelve 400');
+
+    // 9.7 Reserva pública en día bloqueado
+    const closedReservation = await mockHttp({
+      method: 'POST',
+      url: '/api/reservas',
+      body: {
+        name: 'Cliente Día Cerrado',
+        phone: '+34 600 11 22 33',
+        date: closedTestDate,
+        time: '20:30',
+        guests: 2,
+        privacy: true
+      }
+    }).run(reservasHandler);
+    assert(
+      closedReservation.status === 400 &&
+      closedReservation.body.error.includes('no se admiten reservas online') &&
+      closedReservation.body.error.includes('Partido de prueba') &&
+      closedReservation.body.error.includes('abre con normalidad'),
+      'SIMULATION',
+      '9.7 Reserva pública en día bloqueado devuelve 400, incluye el motivo y aclara que la tetería abre'
+    );
+
+    // 9.8 El administrador sí puede crear una reserva manual en día bloqueado
+    const closedAdminReservation = await mockHttp({
+      method: 'POST',
+      url: '/api/reservas',
+      headers: { 'authorization': `Bearer ${validToken}` },
+      body: {
+        name: 'Reserva Telefónica Admin',
+        phone: '+34 600 11 22 33',
+        date: closedTestDate,
+        time: '20:30',
+        guests: 2,
+        privacy: true
+      }
+    }).run(reservasHandler);
+    assert(closedAdminReservation.status === 201, 'SIMULATION', '9.8 El administrador puede crear una reserva manual en un día sin reservas online (201)');
+
+    // 9.9 Volver a permitir reservas sin autorización
+    const closedDeleteNoAuth = await mockHttp({
+      method: 'DELETE',
+      url: `/api/closed-dates?id=${closedTestId}`
+    }).run(closedDatesHandler);
+    assert(closedDeleteNoAuth.status === 401, 'SIMULATION', '9.9 DELETE /api/closed-dates sin token devuelve 401');
+
+    // 9.10 Volver a permitir reservas como administrador
+    const closedDeleted = await mockHttp({
+      method: 'DELETE',
+      url: `/api/closed-dates?id=${closedTestId}`,
+      headers: { 'authorization': `Bearer ${validToken}` }
+    }).run(closedDatesHandler);
+    assert(closedDeleted.status === 200, 'SIMULATION', '9.10 DELETE /api/closed-dates con token admin vuelve a permitir reservas (200)');
+
+    // 9.11 La lista ya no contiene el día reabierto
+    const closedAfterDelete = await mockHttp({ method: 'GET', url: '/api/closed-dates' }).run(closedDatesHandler);
+    assert(
+      closedAfterDelete.status === 200 &&
+      !closedAfterDelete.body.closedDates.some(d => d.date === closedTestDate),
+      'SIMULATION',
+      '9.11 Tras borrarlo, GET /api/closed-dates ya no devuelve ese día'
     );
 
     // ========================================================
