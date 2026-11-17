@@ -45,7 +45,7 @@ Diseñado y optimizado para desplegarse con **cero configuración en Vercel** co
 - **Gestión de Días sin Reservas Online**:
   - Bloquea fechas concretas (partidos, eventos privados, descanso puntual) con un motivo visible para el cliente.
   - La web muestra un aviso emergente al entrar y al elegir esa fecha, y bloquea las reservas online ese día.
-  - El mensaje aclara que la tetería abre con normalidad y que se puede venir sin reserva.
+  - El mensaje aclara que la tetería abre con normalidad y que ese día se trabaja por orden de llegada.
   - El bloqueo desaparece solo al pasar la fecha; se puede quitar antes desde el panel.
 
 ---

@@ -781,17 +781,26 @@
     return closedDates.find(d => d.date === date) || null;
   }
 
+  const CLOSED_NOTE = 'Tetería abre con normalidad. Se trabaja por orden de llegada.';
+
+  function buildClosedTitle(date) {
+    return `Lo sentimos, el ${formatDate(date)} no admitimos reservas`;
+  }
+
   function buildClosedMessage(date, reason) {
-    const motivo = reason || 'evento especial';
-    const when = date === getTodaySpain() ? 'Hoy' : `El ${formatDate(date)}`;
-    return `${when} no se admiten reservas online: ${motivo}.`;
+    const suffix = reason ? `: ${reason}.` : '.';
+    return `El ${formatDate(date)} no se admiten reservas online${suffix}`;
   }
 
   function showClosedModal(date, reason) {
     const modal = $('#closed-modal');
     if (!modal) return;
+    const title = $('#closed-modal-title');
     const text = $('#closed-modal-text');
+    const note = $('#closed-modal-note');
+    if (title) title.textContent = buildClosedTitle(date);
     if (text) text.textContent = buildClosedMessage(date, reason);
+    if (note) note.textContent = CLOSED_NOTE;
     modal.classList.add('active');
   }
 
@@ -801,7 +810,7 @@
     const closed = getClosedForDate(dateInput ? dateInput.value : '');
     if (closed) {
       const text = $('#closed-notice-text');
-      if (text) text.textContent = `${buildClosedMessage(closed.date, closed.reason)} La tetería abre con normalidad.`;
+      if (text) text.textContent = `${buildClosedMessage(closed.date, closed.reason)} ${CLOSED_NOTE}`;
       notice.style.display = 'flex';
     } else {
       notice.style.display = 'none';
@@ -850,7 +859,7 @@
 
     const closed = getClosedForDate(val);
     if (closed) {
-      const message = `${buildClosedMessage(val, closed.reason)} La tetería abre con normalidad.`;
+      const message = `${buildClosedMessage(val, closed.reason)} ${CLOSED_NOTE}`;
       dateInput.setCustomValidity(message);
       updateClosedNotice();
       if (notify) showClosedModal(val, closed.reason);

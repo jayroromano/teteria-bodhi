@@ -362,7 +362,7 @@ module.exports = async function handler(req, res) {
         if (closedDate) {
           const motivo = closedDate.reason ? `: ${closedDate.reason}` : '';
           return res.status(400).json({
-            error: `Ese día no se admiten reservas online${motivo}. La tetería abre con normalidad.`
+            error: `Ese día no se admiten reservas online${motivo}. Tetería abre con normalidad; se trabaja por orden de llegada.`
           });
         }
       }
