@@ -409,6 +409,188 @@ async function runTestSuite() {
       '2.6 R√°faga concurrente simult√°nea respeta exactamente el l√≠mite m√°ximo sin condiciones de carrera'
     );
 
+    // 2.7 cleanIp normaliza IPs v·lidas (IPv4, IPv6, mapped) y descarta puertos y caracteres no v·lidos
+    const validIpv4 = auth.cleanIp('198.51.100.25') === '198.51.100.25';
+    const mappedIpv4 = auth.cleanIp('::ffff:198.51.100.25') === '198.51.100.25';
+    const portIpv4 = auth.cleanIp('198.51.100.25:54321') === '198.51.100.25';
+    const validIpv6 = auth.cleanIp('2001:db8::1') === '2001:db8::1';
+    const bracketIpv6 = auth.cleanIp('[2001:db8::1]:8080') === '2001:db8::1';
+    const invalidIp1 = auth.cleanIp('invalid_ip') === null;
+    const invalidIp2 = auth.cleanIp('1.2.3.4.5') === null;
+    const invalidIp3 = auth.cleanIp('<script>') === null;
+    const nullIp = auth.cleanIp(null) === null;
+
+    assert(
+      validIpv4 && mappedIpv4 && portIpv4 && validIpv6 && bracketIpv6 && invalidIp1 && invalidIp2 && invalidIp3 && nullIp,
+      'UNIT',
+      '2.7 cleanIp normaliza IPs v·lidas (IPv4, IPv6, mapped) y descarta puertos y caracteres no v·lidos'
+    );
+
+    // 2.8 En Vercel, getClientIp prioriza x-vercel-forwarded-for y x-real-ip sobre x-forwarded-for manipulado
+    const prevVercelEnv = process.env.VERCEL;
+    process.env.VERCEL = '1';
+
+    const reqVercelSpoofed = {
+      headers: {
+        'x-vercel-forwarded-for': '203.0.113.195',
+        'x-real-ip': '203.0.113.195',
+        'x-forwarded-for': '1.1.1.1, 2.2.2.2'
+      },
+      socket: { remoteAddress: '10.0.0.1' }
+    };
+    const vercelIp = auth.getClientIp(reqVercelSpoofed);
+
+    assert(
+      vercelIp === '203.0.113.195',
+      'UNIT',
+      '2.8 En Vercel, getClientIp prioriza cabeceras verificadas por el Edge sobre x-forwarded-for manipulado'
+    );
+
+    // 2.9 En Vercel, fallback a x-real-ip cuando x-vercel-forwarded-for est· ausente
+    const reqVercelRealIp = {
+      headers: {
+        'x-real-ip': '198.51.100.77',
+        'x-forwarded-for': '8.8.8.8'
+      },
+      socket: { remoteAddress: '10.0.0.1' }
+    };
+    const realIpResult = auth.getClientIp(reqVercelRealIp);
+    assert(
+      realIpResult === '198.51.100.77',
+      'UNIT',
+      '2.9 En Vercel, getClientIp utiliza x-real-ip como IP verificada de Edge'
+    );
+
+    if (prevVercelEnv !== undefined) {
+      process.env.VERCEL = prevVercelEnv;
+    } else {
+      delete process.env.VERCEL;
+    }
+
+    // 2.10 En entorno local/servidor directo (sin proxy de confianza), getClientIp ignora cabeceras manipuladas y usa socket
+    const prevNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+    const reqLocalSpoofed = {
+      headers: {
+        'x-forwarded-for': '1.2.3.4',
+        'x-real-ip': '5.6.7.8'
+      },
+      socket: { remoteAddress: '127.0.0.1' }
+    };
+    const localIp = auth.getClientIp(reqLocalSpoofed);
+    assert(
+      localIp === '127.0.0.1',
+      'UNIT',
+      '2.10 En servidor local sin proxy de confianza, getClientIp ignora X-Forwarded-For manipulado y usa el socket TCP'
+    );
+    process.env.NODE_ENV = prevNodeEnv;
+
+    // 2.11 getClientIp con cabeceras ausentes, vacÌas o malformadas recurre de forma segura al socket o unknown_client
+    const reqMalformedHeaders = {
+      headers: { 'x-forwarded-for': 'malformed_string, <svg>; drop table' },
+      socket: { remoteAddress: '192.168.1.55' }
+    };
+    const reqNoSocket = {
+      headers: { 'x-forwarded-for': 'invalid_ip' },
+      socket: null
+    };
+    const reqEmpty = {};
+
+    assert(
+      auth.getClientIp(reqMalformedHeaders) === '192.168.1.55' &&
+      auth.getClientIp(reqNoSocket) === 'unknown_client' &&
+      auth.getClientIp(reqEmpty) === 'unknown_client',
+      'UNIT',
+      '2.11 getClientIp con cabeceras ausentes o malformadas recurre de forma segura al socket o unknown_client'
+    );
+
+    // 2.12 Intento de evasiÛn de rate limiting en login manipulando X-Forwarded-For en cada intento es bloqueado (HTTP 429)
+    const attackerRealSocketIp = '198.51.100.99';
+    let spoofBlocked429 = false;
+    for (let i = 0; i < LOGIN_MAX_ATTEMPTS + 1; i++) {
+      const spoofedIp = `10.200.${i}.${Math.floor(Math.random() * 200 + 1)}`;
+      const res = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'x-forwarded-for': spoofedIp,
+          'x-real-ip': attackerRealSocketIp
+        },
+        ip: attackerRealSocketIp,
+        body: { password: 'wrong_password_attempt' }
+      }).run(adminLoginHandler);
+
+      if (res.status === 429) {
+        spoofBlocked429 = true;
+        break;
+      }
+    }
+    assert(
+      spoofBlocked429 === true,
+      'SIMULATION',
+      '2.12 Intento de evasiÛn de rate limiting en login rotando X-Forwarded-For es neutralizado y bloqueado con 429'
+    );
+
+    // 2.13 Compatibilidad con reservas: POST /api/reservas bloquea abusos de spam con cabeceras rotatorias
+    const attackerResIp = '198.51.100.105';
+    let resSpoofBlocked = false;
+    const { RESERVATION_MAX_ATTEMPTS: resMax } = require('../lib/limits');
+    for (let i = 0; i < resMax + 1; i++) {
+      const spoofedFakeIp = `172.16.${i}.1`;
+      const res = await mockHttp({
+        method: 'POST',
+        url: '/api/reservas',
+        headers: {
+          'x-forwarded-for': spoofedFakeIp,
+          'x-real-ip': attackerResIp
+        },
+        ip: attackerResIp,
+        body: {
+          name: 'Spam Bot',
+          phone: '+34 600 00 00 00',
+          date: getFutureDate(2),
+          time: '20:00',
+          guests: 2,
+          privacy: true
+        }
+      }).run(reservasHandler);
+
+      if (res.status === 429) {
+        resSpoofBlocked = true;
+        break;
+      }
+    }
+    assert(
+      resSpoofBlocked === true,
+      'SIMULATION',
+      '2.13 POST /api/reservas neutraliza evasiones por cabeceras rotatorias y aplica el lÌmite 429 correctamente'
+    );
+
+    // 2.14 Compatibilidad con clientes legÌtimos bajo IPv6 en reservas
+    const validIpv6Client = '2001:db8:85a3::8a2e:370:7334';
+    const legitimateIpv6Res = await mockHttp({
+      method: 'POST',
+      url: '/api/reservas',
+      headers: {
+        'x-real-ip': validIpv6Client
+      },
+      ip: validIpv6Client,
+      body: {
+        name: 'Cliente IPv6 LegÌtimo',
+        phone: '+34 611 22 33 44',
+        date: getFutureDate(3),
+        time: '20:30',
+        guests: 2,
+        privacy: true
+      }
+    }).run(reservasHandler);
+
+    assert(
+      legitimateIpv6Res.status === 201 && legitimateIpv6Res.body?.success === true,
+      'SIMULATION',
+      '2.14 Clientes legÌtimos con IPv6 tramitan reservas satisfactoriamente (HTTP 201)'
+    );
+
     // ========================================================
     // BLOQUE 3: AN√ÅLISIS EST√ÅTICO DE SEGURIDAD Y PERMISOS SQL
     // ========================================================

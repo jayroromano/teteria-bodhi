@@ -1,13 +1,8 @@
 const db = require('../lib/db');
-const { verifyAdminPassword, generateToken, verifyToken, checkRateLimit, hashRateLimitKey, isProduction, getSessionSecret } = require('../lib/auth');
+const { verifyAdminPassword, generateToken, verifyToken, checkRateLimit, hashRateLimitKey, isProduction, getSessionSecret, getClientIp } = require('../lib/auth');
 const { setCors } = require('../lib/cors');
 const { LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS } = require('../lib/limits');
 
-function getClientIp(req) {
-  const xForwardedFor = req.headers['x-forwarded-for'];
-  if (xForwardedFor) return xForwardedFor.split(',')[0].trim();
-  return req.socket?.remoteAddress || 'unknown_client';
-}
 
 function parseBody(req) {
   if (req.body && typeof req.body === 'object') return Promise.resolve(req.body);
@@ -109,3 +104,5 @@ module.exports = async function handler(req, res) {
 
   return res.status(405).json({ error: 'Método no permitido.' });
 };
+
+module.exports.getClientIp = getClientIp;

@@ -1,14 +1,8 @@
 const db = require('../lib/db');
-const { verifyToken, checkRateLimit, hashRateLimitKey } = require('../lib/auth');
+const { verifyToken, checkRateLimit, hashRateLimitKey, getClientIp } = require('../lib/auth');
 const { setCors } = require('../lib/cors');
 const { RESERVATION_MAX_ATTEMPTS, RESERVATION_WINDOW_MS } = require('../lib/limits');
 const https = require('https');
-
-function getClientIp(req) {
-  const xForwardedFor = req.headers['x-forwarded-for'];
-  if (xForwardedFor) return xForwardedFor.split(',')[0].trim();
-  return req.socket?.remoteAddress || 'unknown_client';
-}
 
 /**
  * Escapado seguro de cadenas para evitar inyecciones HTML en correos electrónicos
@@ -541,3 +535,4 @@ module.exports.validateReservationDate = validateReservationDate;
 module.exports.validateReservationTime = validateReservationTime;
 module.exports.validateGuestsCount = validateGuestsCount;
 
+module.exports.getClientIp = getClientIp;
