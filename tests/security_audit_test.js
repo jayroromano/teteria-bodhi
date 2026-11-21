@@ -435,7 +435,6 @@ async function runTestSuite() {
 
     const reqVercelSpoofed = {
       headers: {
-        'x-vercel-id': 'cdg1::iad1::test_edge_trace_1',
         'x-vercel-forwarded-for': '203.0.113.195',
         'x-real-ip': '203.0.113.195',
         'x-forwarded-for': '1.1.1.1, 2.2.2.2'
@@ -453,7 +452,6 @@ async function runTestSuite() {
     // 2.9 En Vercel, getClientIp utiliza x-real-ip oficial como IP verificada de Edge si falta x-vercel-forwarded-for
     const reqVercelRealIp = {
       headers: {
-        'x-vercel-id': 'cdg1::iad1::test_edge_trace_2',
         'x-real-ip': '198.51.100.77',
         'x-forwarded-for': '8.8.8.8'
       },
@@ -495,7 +493,7 @@ async function runTestSuite() {
     );
     process.env.NODE_ENV = prevNodeEnv;
 
-    // 2.11 getClientIp con cabeceras ausentes o malformadas recurre de forma segura al socket o clave de partición anon_*
+    // 2.11 getClientIp con cabeceras ausentes o malformadas recurre de forma segura al socket o unattributed_client
     const reqMalformedHeaders = {
       headers: { 'x-forwarded-for': 'malformed_string, <svg>; drop table' },
       socket: { remoteAddress: '192.168.1.55' }
@@ -507,17 +505,15 @@ async function runTestSuite() {
     const reqEmpty = {};
 
     const ipFromSocket = auth.getClientIp(reqMalformedHeaders);
-    const anonFromNoSocket = auth.getClientIp(reqNoSocket);
-    const anonFromEmpty = auth.getClientIp(reqEmpty);
+    const unattrFromNoSocket = auth.getClientIp(reqNoSocket);
+    const unattrFromEmpty = auth.getClientIp(reqEmpty);
 
     assert(
       ipFromSocket === '192.168.1.55' &&
-      anonFromNoSocket.startsWith('anon_') &&
-      anonFromEmpty.startsWith('anon_') &&
-      anonFromNoSocket.length >= 10 &&
-      anonFromEmpty.length >= 10,
+      unattrFromNoSocket === 'unattributed_client' &&
+      unattrFromEmpty === 'unattributed_client',
       'UNIT',
-      '2.11 getClientIp con cabeceras ausentes o malformadas recurre de forma segura al socket o clave anon_*'
+      '2.11 getClientIp con cabeceras ausentes o malformadas recurre de forma segura al socket o unattributed_client'
     );
 
     // 2.12 Intento de evasión de rate limiting en login rotando X-Forwarded-For sin cabeceras fiables por defecto es neutralizado
@@ -588,7 +584,6 @@ async function runTestSuite() {
       method: 'POST',
       url: '/api/reservas',
       headers: {
-        'x-vercel-id': 'cdg1::iad1::ipv6_verified_trace',
         'x-vercel-forwarded-for': validIpv6Client
       },
       ip: validIpv6Client,
@@ -628,13 +623,12 @@ async function runTestSuite() {
     assert(
       spoofResultSocket === '10.0.0.88' &&
       spoofResultSocket !== '203.0.113.199' &&
-      spoofResultNoSocket.startsWith('anon_') &&
-      spoofResultNoSocket !== '203.0.113.199',
+      spoofResultNoSocket === 'unattributed_client',
       'UNIT',
       '2.15 Fallback a X-Forwarded-For NUNCA permite falsificar IP si faltan cabeceras de confianza'
     );
 
-    // 2.16 Detección de VERCEL=1 no confía en cabeceras en entorno no protegido (sin región Vercel ni firma Edge)
+    // 2.16 Detección de VERCEL=1 no confía en cabeceras en entorno no protegido (sin región Vercel ni VERCEL_ENV)
     const prevV = process.env.VERCEL;
     const prevVR = process.env.VERCEL_REGION;
     const prevVE = process.env.VERCEL_ENV;
@@ -657,7 +651,7 @@ async function runTestSuite() {
     assert(
       unprotResult === '127.0.0.1' && unprotResult !== '198.51.100.222',
       'UNIT',
-      '2.16 Detección de VERCEL=1 no confía en cabeceras en un entorno no protegido sin región ni firma Edge'
+      '2.16 Detección de VERCEL=1 no confía en cabeceras en un entorno no protegido sin región Vercel'
     );
 
     if (prevV !== undefined) process.env.VERCEL = prevV; else delete process.env.VERCEL;
@@ -665,10 +659,9 @@ async function runTestSuite() {
     if (prevVE !== undefined) process.env.VERCEL_ENV = prevVE; else delete process.env.VERCEL_ENV;
     process.env.NODE_ENV = prevN;
 
-    // 2.17 Encabezados oficiales de Vercel operan estrictamente según especificación (x-vercel-forwarded-for, x-real-ip, x-vercel-id)
+    // 2.17 Encabezados oficiales de Vercel operan estrictamente según especificación (x-vercel-forwarded-for, x-real-ip)
     const reqOfficialVercel1 = {
       headers: {
-        'x-vercel-id': 'fra1::cdg1::trace_spec_1',
         'x-vercel-forwarded-for': '85.120.30.40',
         'x-real-ip': '85.120.30.40',
         'x-forwarded-for': '1.1.1.1'
@@ -677,7 +670,6 @@ async function runTestSuite() {
     };
     const reqOfficialVercelRealIpFallback = {
       headers: {
-        'x-vercel-id': 'fra1::cdg1::trace_spec_2',
         'x-real-ip': '85.120.30.41',
         'x-forwarded-for': '2.2.2.2'
       },
@@ -691,49 +683,22 @@ async function runTestSuite() {
       '2.17 Encabezados oficiales de Vercel (x-vercel-forwarded-for, x-real-ip) operan según especificación'
     );
 
-    // 2.18 Partición segura para clientes sin IP previene DoS por bucket compartido
-    const clientA_req = {
-      headers: {
-        'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148',
-        'accept-language': 'es-ES,es;q=0.9'
-      },
-      socket: null
-    };
-    const clientB_req = {
-      headers: {
-        'user-agent': 'Mozilla/5.0 (Linux; Android 14; SM-S918B) Chrome/120.0.0.0 Mobile',
-        'accept-language': 'es-ES,es;q=0.9'
-      },
-      socket: null
-    };
-
-    const keyClientA = auth.getClientIp(clientA_req, '+34 611 11 11 11');
-    const keyClientB = auth.getClientIp(clientB_req, '+34 622 22 22 22');
-
-    assert(
-      keyClientA.startsWith('anon_') &&
-      keyClientB.startsWith('anon_') &&
-      keyClientA !== keyClientB,
-      'UNIT',
-      '2.18 Clientes legítimos sin IP reciben claves independientes basadas en entropía y discriminador'
-    );
-
-    // 2.19 Simulación DoS neutralizado: saturación anónima no bloquea a clientes legítimos sin IP fiable
-    const attackerAnonPhone = '+34 600 00 00 99';
-    let attackerHit429 = false;
+    // 2.18 Imposibilidad de evadir rate limiting mutando teléfono o cabeceras HTTP (inmunidad a datos controlados por cliente)
+    const attackerMutatingIp = '198.51.100.177';
+    let mutatingHit429 = false;
     for (let i = 0; i < resMax + 1; i++) {
+      // El atacante cambia el teléfono, nombre y User-Agent en CADA intento intentando reiniciar el límite
       const res = await mockHttp({
         method: 'POST',
         url: '/api/reservas',
         headers: {
-          'user-agent': 'AttackerBot/1.0',
-          'accept-language': 'en-US'
+          'user-agent': `AttackBot-Variant-${i}`,
+          'accept-language': i % 2 === 0 ? 'es-ES' : 'en-US'
         },
-        ip: null,
-        socket: null,
+        ip: attackerMutatingIp,
         body: {
-          name: 'Spam Anonimo',
-          phone: attackerAnonPhone,
+          name: `Spammer ${i}`,
+          phone: `+34 600 00 00 0${i}`,
           date: getFutureDate(2),
           time: '20:00',
           guests: 2,
@@ -742,37 +707,69 @@ async function runTestSuite() {
       }).run(reservasHandler);
 
       if (res.status === 429) {
-        attackerHit429 = true;
+        mutatingHit429 = true;
         break;
       }
     }
+    assert(
+      mutatingHit429 === true,
+      'SIMULATION',
+      '2.18 Imposibilidad de evadir rate limit: mutar teléfono o cabeceras NO reinicia el límite de intentos (HTTP 429)'
+    );
 
-    // Cliente legítimo con diferente navegador y teléfono sin IP tramita su reserva sin verse bloqueado:
-    const legitimateClientRes = await mockHttp({
+    // 2.19 Peticiones sin IP fiable quedan sujetas a cuota estricta y no pueden evadir el límite mutando datos
+    let unattributedBlocked = false;
+    for (let i = 0; i < resMax + 1; i++) {
+      const res = await mockHttp({
+        method: 'POST',
+        url: '/api/reservas',
+        headers: {
+          'user-agent': `UnattributedBot-${i}`
+        },
+        ip: null,
+        socket: null,
+        body: {
+          name: `Unattributed ${i}`,
+          phone: `+34 655 00 00 0${i}`,
+          date: getFutureDate(2),
+          time: '20:00',
+          guests: 2,
+          privacy: true
+        }
+      }).run(reservasHandler);
+
+      if (res.status === 429) {
+        unattributedBlocked = true;
+        break;
+      }
+    }
+    assert(
+      unattributedBlocked === true,
+      'SIMULATION',
+      '2.19 Peticiones sin IP fiable no pueden evadir rate limiting mutando teléfono o User-Agent (HTTP 429)'
+    );
+
+    // 2.20 Fallo de base de datos / Supabase en producción no provoca pérdida silenciosa de reservas (HTTP 500)
+    const originalCreate = db.createReservation;
+    db.createReservation = async () => { throw new Error('PERSISTENCE_FAILED'); };
+    const failRes = await mockHttp({
       method: 'POST',
       url: '/api/reservas',
-      headers: {
-        'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X)',
-        'accept-language': 'es-ES,es;q=0.9'
-      },
-      ip: null,
-      socket: null,
       body: {
-        name: 'Cliente Legítimo',
-        phone: '+34 633 44 55 66',
-        date: getFutureDate(4),
-        time: '21:00',
+        name: 'Cliente Prueba Fallo DB',
+        phone: '+34 611 99 88 77',
+        date: getFutureDate(3),
+        time: '20:30',
         guests: 2,
         privacy: true
       }
     }).run(reservasHandler);
+    db.createReservation = originalCreate;
 
     assert(
-      attackerHit429 === true &&
-      legitimateClientRes.status === 201 &&
-      legitimateClientRes.body?.success === true,
+      failRes.status === 500 && failRes.body?.error && !failRes.body?.success,
       'SIMULATION',
-      '2.19 Ausencia de DoS compartido: saturación anónima no bloquea a clientes legítimos sin IP fiable'
+      '2.20 Fallo de base de datos produce HTTP 500 sin confirmar falsamente la reserva (no silent loss)'
     );
 
     // BLOQUE 3: ANÁLISIS ESTÁTICO DE SEGURIDAD Y PERMISOS SQL
