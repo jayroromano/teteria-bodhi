@@ -272,11 +272,13 @@ module.exports = async function handler(req, res) {
 
     // POST: Nueva reserva de cliente o creación desde panel admin
     if (method === 'POST') {
-      const clientIp = getClientIp(req);
       const isReqAdmin = isAdmin(req);
+      const body = await parseBody(req);
 
       // 1. Protección Anti-Spam: Rate Limiting distribuido con IP anonimizada (RGPD)
       if (!isReqAdmin) {
+        const phoneHint = typeof body?.phone === 'string' ? body.phone : '';
+        const clientIp = getClientIp(req, phoneHint);
         const rateKey = hashRateLimitKey('res', clientIp);
         const rateResult = await checkRateLimit(rateKey, RESERVATION_MAX_ATTEMPTS, RESERVATION_WINDOW_MS);
         if (!rateResult.allowed) {
@@ -290,8 +292,6 @@ module.exports = async function handler(req, res) {
           });
         }
       }
-
-      const body = await parseBody(req);
 
       // 2. Campo trampa Honeypot para detectar bots automatizados
       if (body.b_hp || body.website_url) {

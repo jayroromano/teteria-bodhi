@@ -94,14 +94,15 @@ function assert(condition, category, testName, details = '') {
 
 let mockIpCounter = 1;
 function mockHttp(options = {}) {
-  const clientIp = options.ip || ('10.0.0.' + (++mockIpCounter));
+  const clientIp = options.ip !== undefined ? options.ip : ('10.0.0.' + (++mockIpCounter));
+  const socket = options.socket !== undefined ? options.socket : (clientIp ? { remoteAddress: clientIp } : null);
   const req = {
     method: options.method || 'GET',
     url: options.url || '/',
     headers: options.headers || {},
     query: options.query || {},
     body: options.body || {},
-    socket: { remoteAddress: clientIp },
+    socket,
     on: (evt, cb) => {
       if (evt === 'end') cb();
     }
@@ -409,7 +410,7 @@ async function runTestSuite() {
       '2.6 Ráfaga concurrente simultánea respeta exactamente el límite máximo sin condiciones de carrera'
     );
 
-    // 2.7 cleanIp normaliza IPs v�lidas (IPv4, IPv6, mapped) y descarta puertos y caracteres no v�lidos
+    // 2.7 cleanIp normaliza IPs v�lidas (IPv4, IPv6, mapped) y descarta puertos y caracteres no v�lidos
     const validIpv4 = auth.cleanIp('198.51.100.25') === '198.51.100.25';
     const mappedIpv4 = auth.cleanIp('::ffff:198.51.100.25') === '198.51.100.25';
     const portIpv4 = auth.cleanIp('198.51.100.25:54321') === '198.51.100.25';
@@ -423,15 +424,18 @@ async function runTestSuite() {
     assert(
       validIpv4 && mappedIpv4 && portIpv4 && validIpv6 && bracketIpv6 && invalidIp1 && invalidIp2 && invalidIp3 && nullIp,
       'UNIT',
-      '2.7 cleanIp normaliza IPs v�lidas (IPv4, IPv6, mapped) y descarta puertos y caracteres no v�lidos'
+      '2.7 cleanIp normaliza IPs v�lidas (IPv4, IPv6, mapped) y descarta puertos y caracteres no v�lidos'
     );
 
-    // 2.8 En Vercel, getClientIp prioriza x-vercel-forwarded-for y x-real-ip sobre x-forwarded-for manipulado
+    // 2.8 En Vercel, getClientIp prioriza cabeceras verificadas por el Edge sobre x-forwarded-for manipulado
     const prevVercelEnv = process.env.VERCEL;
+    const prevVercelRegion = process.env.VERCEL_REGION;
     process.env.VERCEL = '1';
+    process.env.VERCEL_REGION = 'cdg1';
 
     const reqVercelSpoofed = {
       headers: {
+        'x-vercel-id': 'cdg1::iad1::test_edge_trace_1',
         'x-vercel-forwarded-for': '203.0.113.195',
         'x-real-ip': '203.0.113.195',
         'x-forwarded-for': '1.1.1.1, 2.2.2.2'
@@ -446,9 +450,10 @@ async function runTestSuite() {
       '2.8 En Vercel, getClientIp prioriza cabeceras verificadas por el Edge sobre x-forwarded-for manipulado'
     );
 
-    // 2.9 En Vercel, fallback a x-real-ip cuando x-vercel-forwarded-for est� ausente
+    // 2.9 En Vercel, getClientIp utiliza x-real-ip oficial como IP verificada de Edge si falta x-vercel-forwarded-for
     const reqVercelRealIp = {
       headers: {
+        'x-vercel-id': 'cdg1::iad1::test_edge_trace_2',
         'x-real-ip': '198.51.100.77',
         'x-forwarded-for': '8.8.8.8'
       },
@@ -466,8 +471,13 @@ async function runTestSuite() {
     } else {
       delete process.env.VERCEL;
     }
+    if (prevVercelRegion !== undefined) {
+      process.env.VERCEL_REGION = prevVercelRegion;
+    } else {
+      delete process.env.VERCEL_REGION;
+    }
 
-    // 2.10 En entorno local/servidor directo (sin proxy de confianza), getClientIp ignora cabeceras manipuladas y usa socket
+    // 2.10 En servidor local sin proxy de confianza, getClientIp ignora X-Forwarded-For manipulado y usa el socket TCP
     const prevNodeEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'development';
     const reqLocalSpoofed = {
@@ -485,7 +495,7 @@ async function runTestSuite() {
     );
     process.env.NODE_ENV = prevNodeEnv;
 
-    // 2.11 getClientIp con cabeceras ausentes, vac�as o malformadas recurre de forma segura al socket o unknown_client
+    // 2.11 getClientIp con cabeceras ausentes o malformadas recurre de forma segura al socket o clave de partición anon_*
     const reqMalformedHeaders = {
       headers: { 'x-forwarded-for': 'malformed_string, <svg>; drop table' },
       socket: { remoteAddress: '192.168.1.55' }
@@ -496,15 +506,21 @@ async function runTestSuite() {
     };
     const reqEmpty = {};
 
+    const ipFromSocket = auth.getClientIp(reqMalformedHeaders);
+    const anonFromNoSocket = auth.getClientIp(reqNoSocket);
+    const anonFromEmpty = auth.getClientIp(reqEmpty);
+
     assert(
-      auth.getClientIp(reqMalformedHeaders) === '192.168.1.55' &&
-      auth.getClientIp(reqNoSocket) === 'unknown_client' &&
-      auth.getClientIp(reqEmpty) === 'unknown_client',
+      ipFromSocket === '192.168.1.55' &&
+      anonFromNoSocket.startsWith('anon_') &&
+      anonFromEmpty.startsWith('anon_') &&
+      anonFromNoSocket.length >= 10 &&
+      anonFromEmpty.length >= 10,
       'UNIT',
-      '2.11 getClientIp con cabeceras ausentes o malformadas recurre de forma segura al socket o unknown_client'
+      '2.11 getClientIp con cabeceras ausentes o malformadas recurre de forma segura al socket o clave anon_*'
     );
 
-    // 2.12 Intento de evasi�n de rate limiting en login manipulando X-Forwarded-For en cada intento es bloqueado (HTTP 429)
+    // 2.12 Intento de evasión de rate limiting en login rotando X-Forwarded-For sin cabeceras fiables por defecto es neutralizado
     const attackerRealSocketIp = '198.51.100.99';
     let spoofBlocked429 = false;
     for (let i = 0; i < LOGIN_MAX_ATTEMPTS + 1; i++) {
@@ -513,8 +529,8 @@ async function runTestSuite() {
         method: 'POST',
         url: '/api/admin-login',
         headers: {
-          'x-forwarded-for': spoofedIp,
-          'x-real-ip': attackerRealSocketIp
+          'x-forwarded-for': spoofedIp
+          // OJO: Sin x-real-ip ni x-vercel-*; el atacante intenta evadir exclusivamente manipulando x-forwarded-for
         },
         ip: attackerRealSocketIp,
         body: { password: 'wrong_password_attempt' }
@@ -528,10 +544,10 @@ async function runTestSuite() {
     assert(
       spoofBlocked429 === true,
       'SIMULATION',
-      '2.12 Intento de evasi�n de rate limiting en login rotando X-Forwarded-For es neutralizado y bloqueado con 429'
+      '2.12 Intento de evasión de rate limiting en login rotando X-Forwarded-For es neutralizado y bloqueado con 429'
     );
 
-    // 2.13 Compatibilidad con reservas: POST /api/reservas bloquea abusos de spam con cabeceras rotatorias
+    // 2.13 Compatibilidad con reservas: POST /api/reservas bloquea abusos de spam con cabeceras rotatorias sin confiar en X-Forwarded-For
     const attackerResIp = '198.51.100.105';
     let resSpoofBlocked = false;
     const { RESERVATION_MAX_ATTEMPTS: resMax } = require('../lib/limits');
@@ -541,8 +557,8 @@ async function runTestSuite() {
         method: 'POST',
         url: '/api/reservas',
         headers: {
-          'x-forwarded-for': spoofedFakeIp,
-          'x-real-ip': attackerResIp
+          'x-forwarded-for': spoofedFakeIp
+          // OJO: Sin cabeceras de confianza simuladas; el bot rotativo no logra burlar la IP real
         },
         ip: attackerResIp,
         body: {
@@ -563,20 +579,21 @@ async function runTestSuite() {
     assert(
       resSpoofBlocked === true,
       'SIMULATION',
-      '2.13 POST /api/reservas neutraliza evasiones por cabeceras rotatorias y aplica el l�mite 429 correctamente'
+      '2.13 POST /api/reservas neutraliza evasiones por cabeceras rotatorias y aplica el límite 429 correctamente'
     );
 
-    // 2.14 Compatibilidad con clientes leg�timos bajo IPv6 en reservas
+    // 2.14 Compatibilidad con clientes legítimos bajo IPv6 en reservas
     const validIpv6Client = '2001:db8:85a3::8a2e:370:7334';
     const legitimateIpv6Res = await mockHttp({
       method: 'POST',
       url: '/api/reservas',
       headers: {
-        'x-real-ip': validIpv6Client
+        'x-vercel-id': 'cdg1::iad1::ipv6_verified_trace',
+        'x-vercel-forwarded-for': validIpv6Client
       },
       ip: validIpv6Client,
       body: {
-        name: 'Cliente IPv6 Leg�timo',
+        name: 'Cliente IPv6 Legítimo',
         phone: '+34 611 22 33 44',
         date: getFutureDate(3),
         time: '20:30',
@@ -588,10 +605,176 @@ async function runTestSuite() {
     assert(
       legitimateIpv6Res.status === 201 && legitimateIpv6Res.body?.success === true,
       'SIMULATION',
-      '2.14 Clientes leg�timos con IPv6 tramitan reservas satisfactoriamente (HTTP 201)'
+      '2.14 Clientes legítimos con IPv6 tramitan reservas satisfactoriamente (HTTP 201)'
     );
 
-    // ========================================================
+    // 2.15 Fallback a X-Forwarded-For NUNCA permite falsificar IP si faltan las cabeceras de confianza
+    const reqSpoofWithoutTrusted = {
+      headers: {
+        'x-forwarded-for': '203.0.113.199'
+      },
+      socket: { remoteAddress: '10.0.0.88' }
+    };
+    const spoofResultSocket = auth.getClientIp(reqSpoofWithoutTrusted);
+
+    const reqSpoofNoSocketAtAll = {
+      headers: {
+        'x-forwarded-for': '203.0.113.199'
+      },
+      socket: null
+    };
+    const spoofResultNoSocket = auth.getClientIp(reqSpoofNoSocketAtAll);
+
+    assert(
+      spoofResultSocket === '10.0.0.88' &&
+      spoofResultSocket !== '203.0.113.199' &&
+      spoofResultNoSocket.startsWith('anon_') &&
+      spoofResultNoSocket !== '203.0.113.199',
+      'UNIT',
+      '2.15 Fallback a X-Forwarded-For NUNCA permite falsificar IP si faltan cabeceras de confianza'
+    );
+
+    // 2.16 Detección de VERCEL=1 no confía en cabeceras en entorno no protegido (sin región Vercel ni firma Edge)
+    const prevV = process.env.VERCEL;
+    const prevVR = process.env.VERCEL_REGION;
+    const prevVE = process.env.VERCEL_ENV;
+    const prevN = process.env.NODE_ENV;
+
+    process.env.VERCEL = '1';
+    delete process.env.VERCEL_REGION;
+    delete process.env.VERCEL_ENV;
+    process.env.NODE_ENV = 'development'; // Simular Express local donde se inyectó accidentalmente VERCEL=1
+
+    const reqUnprotectedEnv = {
+      headers: {
+        'x-forwarded-for': '198.51.100.222',
+        'x-real-ip': '198.51.100.222'
+      },
+      socket: { remoteAddress: '127.0.0.1' }
+    };
+    const unprotResult = auth.getClientIp(reqUnprotectedEnv);
+
+    assert(
+      unprotResult === '127.0.0.1' && unprotResult !== '198.51.100.222',
+      'UNIT',
+      '2.16 Detección de VERCEL=1 no confía en cabeceras en un entorno no protegido sin región ni firma Edge'
+    );
+
+    if (prevV !== undefined) process.env.VERCEL = prevV; else delete process.env.VERCEL;
+    if (prevVR !== undefined) process.env.VERCEL_REGION = prevVR; else delete process.env.VERCEL_REGION;
+    if (prevVE !== undefined) process.env.VERCEL_ENV = prevVE; else delete process.env.VERCEL_ENV;
+    process.env.NODE_ENV = prevN;
+
+    // 2.17 Encabezados oficiales de Vercel operan estrictamente según especificación (x-vercel-forwarded-for, x-real-ip, x-vercel-id)
+    const reqOfficialVercel1 = {
+      headers: {
+        'x-vercel-id': 'fra1::cdg1::trace_spec_1',
+        'x-vercel-forwarded-for': '85.120.30.40',
+        'x-real-ip': '85.120.30.40',
+        'x-forwarded-for': '1.1.1.1'
+      },
+      socket: { remoteAddress: '10.0.0.1' }
+    };
+    const reqOfficialVercelRealIpFallback = {
+      headers: {
+        'x-vercel-id': 'fra1::cdg1::trace_spec_2',
+        'x-real-ip': '85.120.30.41',
+        'x-forwarded-for': '2.2.2.2'
+      },
+      socket: { remoteAddress: '10.0.0.1' }
+    };
+
+    assert(
+      auth.getClientIp(reqOfficialVercel1) === '85.120.30.40' &&
+      auth.getClientIp(reqOfficialVercelRealIpFallback) === '85.120.30.41',
+      'UNIT',
+      '2.17 Encabezados oficiales de Vercel (x-vercel-forwarded-for, x-real-ip) operan según especificación'
+    );
+
+    // 2.18 Partición segura para clientes sin IP previene DoS por bucket compartido
+    const clientA_req = {
+      headers: {
+        'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148',
+        'accept-language': 'es-ES,es;q=0.9'
+      },
+      socket: null
+    };
+    const clientB_req = {
+      headers: {
+        'user-agent': 'Mozilla/5.0 (Linux; Android 14; SM-S918B) Chrome/120.0.0.0 Mobile',
+        'accept-language': 'es-ES,es;q=0.9'
+      },
+      socket: null
+    };
+
+    const keyClientA = auth.getClientIp(clientA_req, '+34 611 11 11 11');
+    const keyClientB = auth.getClientIp(clientB_req, '+34 622 22 22 22');
+
+    assert(
+      keyClientA.startsWith('anon_') &&
+      keyClientB.startsWith('anon_') &&
+      keyClientA !== keyClientB,
+      'UNIT',
+      '2.18 Clientes legítimos sin IP reciben claves independientes basadas en entropía y discriminador'
+    );
+
+    // 2.19 Simulación DoS neutralizado: saturación anónima no bloquea a clientes legítimos sin IP fiable
+    const attackerAnonPhone = '+34 600 00 00 99';
+    let attackerHit429 = false;
+    for (let i = 0; i < resMax + 1; i++) {
+      const res = await mockHttp({
+        method: 'POST',
+        url: '/api/reservas',
+        headers: {
+          'user-agent': 'AttackerBot/1.0',
+          'accept-language': 'en-US'
+        },
+        ip: null,
+        socket: null,
+        body: {
+          name: 'Spam Anonimo',
+          phone: attackerAnonPhone,
+          date: getFutureDate(2),
+          time: '20:00',
+          guests: 2,
+          privacy: true
+        }
+      }).run(reservasHandler);
+
+      if (res.status === 429) {
+        attackerHit429 = true;
+        break;
+      }
+    }
+
+    // Cliente legítimo con diferente navegador y teléfono sin IP tramita su reserva sin verse bloqueado:
+    const legitimateClientRes = await mockHttp({
+      method: 'POST',
+      url: '/api/reservas',
+      headers: {
+        'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X)',
+        'accept-language': 'es-ES,es;q=0.9'
+      },
+      ip: null,
+      socket: null,
+      body: {
+        name: 'Cliente Legítimo',
+        phone: '+34 633 44 55 66',
+        date: getFutureDate(4),
+        time: '21:00',
+        guests: 2,
+        privacy: true
+      }
+    }).run(reservasHandler);
+
+    assert(
+      attackerHit429 === true &&
+      legitimateClientRes.status === 201 &&
+      legitimateClientRes.body?.success === true,
+      'SIMULATION',
+      '2.19 Ausencia de DoS compartido: saturación anónima no bloquea a clientes legítimos sin IP fiable'
+    );
+
     // BLOQUE 3: ANÁLISIS ESTÁTICO DE SEGURIDAD Y PERMISOS SQL
     // ========================================================
     console.log('\n--- BLOQUE 3: POLÍTICAS RLS Y PERMISOS DE SUPABASE (ESTÁTICO) ---');
