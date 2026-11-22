@@ -791,14 +791,13 @@ async function runTestSuite() {
         '1.29 En Vercel Preview, login con Origin de VERCEL_BRANCH_URL es autorizado satisfactoriamente con 200 y Set-Cookie'
       );
 
-      // 1.30 En Vercel Preview, acceso con host verificado del proyecto en x-forwarded-host es autorizado
+      // 1.30 En Vercel Preview, acceso con Origin de VERCEL_URL de la instancia es autorizado
       const previewHostLoginRes = await mockHttp({
         method: 'POST',
         url: '/api/admin-login',
         headers: {
           'Origin': 'https://teteria-bodhi-k8646b1n2-jayro4.vercel.app',
-          'Referer': 'https://teteria-bodhi-k8646b1n2-jayro4.vercel.app/admin.html',
-          'X-Forwarded-Host': 'teteria-bodhi-k8646b1n2-jayro4.vercel.app'
+          'Referer': 'https://teteria-bodhi-k8646b1n2-jayro4.vercel.app/admin.html'
         },
         body: { password: TEST_ADMIN_PASS }
       }).run(adminLoginHandler);
@@ -806,7 +805,7 @@ async function runTestSuite() {
       assert(
         previewHostLoginRes.status === 200 && previewHostLoginRes.body.success === true,
         'SIMULATION',
-        '1.30 En Vercel Preview, login desde host de despliegue verificado en X-Forwarded-Host es autorizado'
+        '1.30 En Vercel Preview, login con Origin de VERCEL_URL es autorizado satisfactoriamente'
       );
 
       // 1.31 En Vercel Preview, orígenes de otros proyectos Vercel o atacantes externos son rechazados con 403
@@ -932,6 +931,37 @@ async function runTestSuite() {
         auth.validateAdminOrigin(reqPreviewValid) === true && auth.validateAdminOrigin(reqPreviewInvalid) === false,
         'UNIT',
         '1.35 validateAdminOrigin con runtime completo de Vercel autoriza VERCEL_BRANCH_URL y bloquea atacantes'
+      );
+
+      // 1.36 Cabeceras Host o X-Forwarded-Host manipuladas no permiten autorizar nuevos orígenes arbitrarios
+      const spoofedHostRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-atacante-inventado.vercel.app',
+          'Referer': 'https://teteria-bodhi-atacante-inventado.vercel.app/admin.html',
+          'Host': 'teteria-bodhi-atacante-inventado.vercel.app',
+          'X-Forwarded-Host': 'teteria-bodhi-atacante-inventado.vercel.app'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      const fakeReqWithHeaders = {
+        method: 'POST',
+        headers: {
+          'origin': 'https://teteria-bodhi-subdominio-inyectado.vercel.app',
+          'host': 'teteria-bodhi-subdominio-inyectado.vercel.app',
+          'x-forwarded-host': 'teteria-bodhi-subdominio-inyectado.vercel.app'
+        }
+      };
+
+      assert(
+        spoofedHostRes.status === 403 &&
+        spoofedHostRes.body.error === 'Origen no autorizado.' &&
+        auth.validateAdminOrigin(fakeReqWithHeaders) === false &&
+        !cors.getAllowedOrigins(fakeReqWithHeaders).has('https://teteria-bodhi-subdominio-inyectado.vercel.app'),
+        'SIMULATION',
+        '1.36 Host o X-Forwarded-Host manipulados no inyectan ni autorizan nuevos orígenes en Preview'
       );
     } finally {
       restoreVercelSnap();
