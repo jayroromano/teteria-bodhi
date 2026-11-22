@@ -1,5 +1,5 @@
 const db = require('../lib/db');
-const { verifyAdminPassword, generateToken, verifyToken, checkRateLimit, hashRateLimitKey, isProduction, getSessionSecret, getClientIp } = require('../lib/auth');
+const { verifyAdminPassword, generateToken, verifyToken, checkRateLimit, resetRateLimit, hashRateLimitKey, isProduction, getSessionSecret, getClientIp } = require('../lib/auth');
 const { setCors } = require('../lib/cors');
 const { LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS } = require('../lib/limits');
 
@@ -67,7 +67,7 @@ module.exports = async function handler(req, res) {
         });
       }
       return res.status(429).json({
-        error: 'Demasiados intentos fallidos. Espera un minuto y vuelve a intentarlo.'
+        error: 'Demasiados intentos fallidos. Espera hasta 3 minutos y vuelve a intentarlo.'
       });
     }
 
@@ -79,6 +79,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (verifyAdminPassword(password)) {
+      await resetRateLimit(rateKey);
       const token = generateToken();
       if (!token) {
         return res.status(500).json({

@@ -348,22 +348,80 @@ async function runTestSuite() {
       '2.3 Ausencia de IP genera identificador consistente para clientes anónimos'
     );
 
-    // 2.4 Bloqueo 429 por límite superado
+    // 2.4 Límites del panel: 5 intentos fallidos en 180s, 429 con mensaje exacto, GET sin cuota, reset en éxito y desbloqueo
+    const { LOGIN_MAX_ATTEMPTS: maxLogin, LOGIN_WINDOW_MS: winLogin } = require('../lib/limits');
+    const limitsConfiguredCorrectly = maxLogin === 5 && winLogin === 180000;
+
     const testIp = '198.51.100.' + Math.floor(Math.random() * 200 + 1);
-    let blocked429 = false;
-    for (let i = 0; i < LOGIN_MAX_ATTEMPTS + 1; i++) {
+
+    // a) GET /api/admin-login no consume cuota de rate limit
+    let getConsumedQuota = false;
+    for (let i = 0; i < 6; i++) {
+      const getRes = await mockHttp({ method: 'GET', url: '/api/admin-login', ip: testIp }).run(adminLoginHandler);
+      if (getRes.status !== 200) getConsumedQuota = true;
+    }
+
+    // b) Primeros 5 intentos fallidos devuelven 401
+    let failedAttemptsReturn401 = true;
+    for (let i = 1; i <= 5; i++) {
       const res = await mockHttp({
         method: 'POST',
         url: '/api/admin-login',
         ip: testIp,
-        body: { password: 'wrong' }
+        body: { password: 'wrong_password_' + i }
       }).run(adminLoginHandler);
-      if (res.status === 429) {
-        blocked429 = true;
+      if (res.status !== 401) {
+        failedAttemptsReturn401 = false;
         break;
       }
     }
-    assert(blocked429 === true, 'SIMULATION', '2.4 Intentos reiterados devuelven código 429 (Límite superado)');
+
+    // c) El sexto intento supera el límite y es bloqueado con HTTP 429 y mensaje exacto
+    const sixthRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      ip: testIp,
+      body: { password: 'wrong_password_6' }
+    }).run(adminLoginHandler);
+    const blocked429 = sixthRes.status === 429 &&
+      sixthRes.body?.error === 'Demasiados intentos fallidos. Espera hasta 3 minutos y vuelve a intentarlo.';
+
+    // d) Desbloqueo automático tras finalizar la ventana de 180s
+    const rateKeyTest = auth.hashRateLimitKey('login', testIp);
+    const rateRecord = auth._inMemoryRateLimits.get(rateKeyTest);
+    let unblockedAfterWindow = false;
+    if (rateRecord) {
+      rateRecord.resetTime = Date.now() - 1000; // Simular transcurso de los 180s
+      const unblockRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        ip: testIp,
+        body: { password: 'wrong_password_post_window' }
+      }).run(adminLoginHandler);
+      unblockedAfterWindow = unblockRes.status === 401; // Vuelve a permitir intentos (401 en vez de 429)
+    }
+
+    // e) Autenticación exitosa restablece el contador de intentos fallidos
+    const resetIp = '198.51.100.188';
+    const resetKey = auth.hashRateLimitKey('login', resetIp);
+    // Realizar 4 intentos fallidos
+    for (let i = 0; i < 4; i++) {
+      await mockHttp({ method: 'POST', url: '/api/admin-login', ip: resetIp, body: { password: 'bad' } }).run(adminLoginHandler);
+    }
+    // Quinto intento con contraseña correcta
+    const successLoginRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      ip: resetIp,
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+    const successResetOk = successLoginRes.status === 200 && !auth._inMemoryRateLimits.has(resetKey);
+
+    assert(
+      limitsConfiguredCorrectly && !getConsumedQuota && failedAttemptsReturn401 && blocked429 && unblockedAfterWindow && successResetOk,
+      'SIMULATION',
+      '2.4 Panel permite 5 fallos en 180s, bloquea el 6º con 429, desahoga con GET, desbloquea al expirar y resetea en login exitoso'
+    );
 
     // 2.5 Simulación de fallo de servicio de rate limiting en producción (Fallo seguro 503)
     const prevEnvProd = process.env.NODE_ENV;
