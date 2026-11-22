@@ -477,6 +477,277 @@ async function runTestSuite() {
       '1.20 Script revoked_tokens.sql define la tabla con RLS forzado y acceso restringido a service_role'
     );
 
+    // ========================================================
+    // NUEVAS PRUEBAS: FAIL-CLOSED, CSRF, TOKENS ANTIGUOS Y PERSISTENCIA
+    // ========================================================
+
+    // Servidor mock HTTP local para simular estados de Supabase sin violar el aislamiento de red
+    let mockSbRevokedStatus = 404;
+    const mockSharedRevokedDb = new Set();
+
+    const mockSbServer = http.createServer((req, res) => {
+      if (req.url.startsWith('/rest/v1/revoked_tokens')) {
+        if (mockSbRevokedStatus === 404) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ message: 'relation public.revoked_tokens does not exist' }));
+          return;
+        }
+        if (mockSbRevokedStatus === 500) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ message: 'Database connection error' }));
+          return;
+        }
+        if (req.method === 'GET') {
+          const urlObj = new URL(req.url, 'http://127.0.0.1');
+          const tokenHashParam = urlObj.searchParams.get('token_hash');
+          const hash = tokenHashParam ? tokenHashParam.replace(/^eq\./, '') : null;
+          if (hash && mockSharedRevokedDb.has(hash)) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify([{ token_hash: hash }]));
+          } else {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify([]));
+          }
+          return;
+        }
+        if (req.method === 'POST') {
+          let b = '';
+          req.on('data', c => { b += c; });
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(b);
+              if (parsed.token_hash) mockSharedRevokedDb.add(parsed.token_hash);
+              res.writeHead(201, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({}));
+            } catch (e) {
+              res.writeHead(400).end();
+            }
+          });
+          return;
+        }
+      }
+
+      if (req.url.startsWith('/rest/v1/menu_items')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify([{ id: 'test_item', name: 'Té Verde Test', price: 3.5, available: true }]));
+        return;
+      }
+      if (req.url.startsWith('/rest/v1/closed_dates')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify([]));
+        return;
+      }
+      if (req.url.startsWith('/rest/v1/reservations')) {
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify([{ id: 'BDH-PUBTEST-1', name: 'Cliente Test' }]));
+        return;
+      }
+      res.writeHead(404).end();
+    });
+
+    await new Promise((resolve) => mockSbServer.listen(0, '127.0.0.1', resolve));
+    const mockSbPort = mockSbServer.address().port;
+
+    const prevSbUrlTest = process.env.SUPABASE_URL;
+    const prevSbKeyTest = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    process.env.SUPABASE_URL = `http://127.0.0.1:${mockSbPort}`;
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock_service_key_for_fail_closed_test';
+
+    const testActiveToken = auth.generateToken();
+
+    // 1.21 FAIL-CLOSED: Tabla revoked_tokens inexistente (404) deniega autenticación de sesión con 503
+    mockSbRevokedStatus = 404;
+    const failClosedLoginRes = await mockHttp({
+      method: 'GET',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(testActiveToken)}`
+      }
+    }).run(adminLoginHandler);
+
+    const failClosedReservasRes = await mockHttp({
+      method: 'GET',
+      url: '/api/reservas',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'X-Admin-Request': '1',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(testActiveToken)}`
+      }
+    }).run(reservasHandler);
+
+    assert(
+      failClosedLoginRes.status === 503 && failClosedLoginRes.body.valid === false && failClosedReservasRes.status === 401,
+      'SIMULATION',
+      '1.21 En Cloud DB, tabla revoked_tokens inexistente (404) deniega acceso administrativo con HTTP 503 / 401 (Fail-Closed)'
+    );
+
+    // 1.22 FAIL-CLOSED: Supabase caído (500 o caída de red) deniega sesión administrativa de forma segura
+    mockSbRevokedStatus = 500;
+    const supabaseDownLoginRes = await mockHttp({
+      method: 'GET',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(testActiveToken)}`
+      }
+    }).run(adminLoginHandler);
+    assert(
+      supabaseDownLoginRes.status === 503 && supabaseDownLoginRes.body.valid === false,
+      'SIMULATION',
+      '1.22 En Cloud DB, caída de Supabase deniega validación de sesión con HTTP 503 sin fallback inseguro (Fail-Closed)'
+    );
+
+    // 1.23 Error de escritura en revocación responde 503 y NO afirma falsamente éxito
+    mockSbRevokedStatus = 500;
+    const logoutWriteFailRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-logout',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'X-Admin-Request': '1',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(testActiveToken)}`
+      }
+    }).run(adminLogoutHandler);
+
+    assert(
+      logoutWriteFailRes.status === 503 &&
+      logoutWriteFailRes.body.success === false &&
+      (logoutWriteFailRes.headers['set-cookie'] || '').includes('Max-Age=0'),
+      'SIMULATION',
+      '1.23 Fallo al registrar revocación en base de datos devuelve HTTP 503 sin informar falsamente de éxito'
+    );
+
+    // 1.24 Revocación consistente entre instancias independientes sin memoria compartida
+    mockSbRevokedStatus = 200;
+    const crossInstanceToken = auth.generateToken();
+
+    // Instancia A: ejecuta logout y registra en persistencia compartida
+    const instanceALogoutRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-logout',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'X-Admin-Request': '1',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(crossInstanceToken)}`
+      }
+    }).run(adminLogoutHandler);
+
+    // Instancia B: valida el token consultando Supabase (sin usar memoria local)
+    const instanceBLoginRes = await mockHttp({
+      method: 'GET',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(crossInstanceToken)}`
+      }
+    }).run(adminLoginHandler);
+
+    assert(
+      instanceALogoutRes.status === 200 &&
+      instanceALogoutRes.body.success === true &&
+      instanceBLoginRes.body.valid === false,
+      'SIMULATION',
+      '1.24 Revocación entre instancias serverless independientes se propaga consistentemente mediante persistencia compartida'
+    );
+
+    // 1.25 Operaciones públicas de reservas y carta permanecen 100% operativas durante fallo del servicio de revocación
+    mockSbRevokedStatus = 404; // Servicio de revocación caído / tabla inexistente
+
+    const publicCartaFailRes = await mockHttp({
+      method: 'GET',
+      url: '/api/carta'
+    }).run(cartaHandler);
+
+    const publicDatesFailRes = await mockHttp({
+      method: 'GET',
+      url: '/api/closed-dates'
+    }).run(closedDatesHandler);
+
+    assert(
+      publicCartaFailRes.status === 200 && publicDatesFailRes.status === 200,
+      'SIMULATION',
+      '1.25 Consultas públicas de carta y días cerrados funcionan con HTTP 200 aun cuando el servicio de revocación no esté disponible'
+    );
+
+    // Restaurar entorno y cerrar mock server
+    mockSbServer.close();
+    if (prevSbUrlTest !== undefined) process.env.SUPABASE_URL = prevSbUrlTest; else delete process.env.SUPABASE_URL;
+    if (prevSbKeyTest !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = prevSbKeyTest; else delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    // 1.26 Protección Anti-CSRF: orígenes atacantes, subdominios falsos y mutaciones sin cabecera custom bloqueadas
+    const csrfFakeSubdomain = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      headers: { 'Origin': 'https://subdominio-falso.vercel.app' },
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+
+    const csrfSpoofedDomain = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      headers: { 'Origin': 'https://teteriabodhi.es.sitio-atacante.com' },
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+
+    const csrfCookieWithoutHeader = await mockHttp({
+      method: 'PATCH',
+      url: '/api/reservas',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(passToken)}`
+      },
+      body: { id: 'BDH-TEST', status: 'confirmed' }
+    }).run(reservasHandler);
+
+    assert(
+      csrfFakeSubdomain.status === 403 &&
+      csrfSpoofedDomain.status === 403 &&
+      csrfCookieWithoutHeader.status === 401,
+      'SIMULATION',
+      '1.26 Ataques CSRF desde subdominios falsos, dominios sufijados y peticiones cookie sin cabecera custom son rechazados'
+    );
+
+    // 1.27 En entorno Vercel, mutaciones administrativas con Origin ausente son rechazadas con HTTP 403
+    const prevVercelEnvCsrf = process.env.VERCEL;
+    const prevVercelRegionCsrf = process.env.VERCEL_REGION;
+    process.env.VERCEL = '1';
+    process.env.VERCEL_REGION = 'cdg1';
+
+    const mutationWithoutOriginRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-logout',
+      headers: { 'X-Admin-Request': '1' }
+    }).run(adminLogoutHandler);
+
+    if (prevVercelEnvCsrf !== undefined) process.env.VERCEL = prevVercelEnvCsrf; else delete process.env.VERCEL;
+    if (prevVercelRegionCsrf !== undefined) process.env.VERCEL_REGION = prevVercelRegionCsrf; else delete process.env.VERCEL_REGION;
+
+    assert(
+      mutationWithoutOriginRes.status === 403,
+      'SIMULATION',
+      '1.27 En entorno Vercel, mutaciones administrativas con Origin y Referer ausentes son bloqueadas con HTTP 403'
+    );
+
+    // 1.28 Tokens antiguos (sin derivación KDF, expirados >8h o malformados) no pueden eludir la seguridad
+    const oldSecretWithoutKdf = 'test_secret_key_fixed_length_for_tests_12345';
+    const oldTokenPayload = `${Date.now()}.${crypto.randomBytes(16).toString('hex')}`;
+    const oldTokenSig = crypto.createHmac('sha256', oldSecretWithoutKdf).update(oldTokenPayload).digest('hex');
+    const tokenWithoutKdf = `bdh_${oldTokenPayload}.${oldTokenSig}`;
+
+    const oldExpiredPayload = `${Date.now() - 8.5 * 3600 * 1000}.${crypto.randomBytes(16).toString('hex')}`;
+    const oldExpiredSig = crypto.createHmac('sha256', auth.getSessionSecret()).update(oldExpiredPayload).digest('hex');
+    const tokenExpired8hHalf = `bdh_${oldExpiredPayload}.${oldExpiredSig}`;
+
+    assert(
+      auth.verifyToken(tokenWithoutKdf) === false &&
+      auth.verifyToken(tokenExpired8hHalf) === false &&
+      auth.verifyToken('bdh_invalido.123') === false,
+      'UNIT',
+      '1.28 Tokens generados con secreto antiguo sin KDF, con caducidad superior a 8h o malformados son rechazados'
+    );
+
 
     // ========================================================
     // BLOQUE 2: RATE LIMITING DISTRIBUIDO, RGPD & CONCURRENCIA
@@ -611,8 +882,8 @@ async function runTestSuite() {
     );
 
     process.env.NODE_ENV = prevEnvProd;
-    process.env.SUPABASE_URL = prevSbUrl;
-    process.env.SUPABASE_SERVICE_ROLE_KEY = prevSbKey;
+    if (prevSbUrl !== undefined) process.env.SUPABASE_URL = prevSbUrl; else delete process.env.SUPABASE_URL;
+    if (prevSbKey !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = prevSbKey; else delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     // 2.6 Concurrencia masiva: ráfaga de peticiones respeta límite exacto
     const concurrencyKey = `concurrent_${Date.now()}`;

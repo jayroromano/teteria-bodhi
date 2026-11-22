@@ -65,14 +65,23 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     const { token } = extractSessionToken(req);
     const isValid = token ? verifyToken(token) : false;
-    let isRevoked = false;
-    if (isValid && token) {
-      isRevoked = await isTokenRevoked(token);
+    if (!isValid || !token) {
+      return res.status(200).json({ valid: false, isCloudDb: db.isCloudDb() });
     }
-    return res.status(200).json({
-      valid: isValid && !isRevoked,
-      isCloudDb: db.isCloudDb()
-    });
+    try {
+      const isRevoked = await isTokenRevoked(token);
+      return res.status(200).json({
+        valid: !isRevoked,
+        isCloudDb: db.isCloudDb()
+      });
+    } catch (err) {
+      // FAIL-CLOSED: si no se puede verificar en base de datos centralizada, responder 503
+      return res.status(503).json({
+        valid: false,
+        error: 'No se puede verificar el estado de la sesión en el servicio de seguridad.',
+        isCloudDb: db.isCloudDb()
+      });
+    }
   }
 
   // POST: Inicio de sesión con contraseña

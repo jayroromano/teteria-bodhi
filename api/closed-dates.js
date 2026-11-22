@@ -8,7 +8,13 @@ async function isAdmin(req) {
   if (!verifyToken(token)) return false;
   if (!validateAdminOrigin(req)) return false;
   if (source === 'cookie' && !validateCsrfProtection(req)) return false;
-  if (await isTokenRevoked(token)) return false;
+  try {
+    const isRevoked = await isTokenRevoked(token);
+    if (isRevoked) return false;
+  } catch (err) {
+    // FAIL-CLOSED: Si el servicio centralizado de revocación falla, se deniega el acceso administrativo
+    return false;
+  }
   return true;
 }
 

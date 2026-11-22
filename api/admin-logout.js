@@ -23,13 +23,20 @@ module.exports = async function handler(req, res) {
 
   const { token } = extractSessionToken(req);
 
+  // Enviar siempre Set-Cookie con Max-Age=0 para limpiar la cookie en el navegador
+  res.setHeader('Set-Cookie', serializeClearCookie());
+
   if (token && typeof token === 'string' && token.startsWith('bdh_')) {
     const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
-    await revokeToken(token, expiresAt);
+    const revokedSuccess = await revokeToken(token, expiresAt);
+    if (!revokedSuccess) {
+      // Si falla la persistencia compartida en el servidor, no informar falsamente de éxito
+      return res.status(503).json({
+        success: false,
+        error: 'No se pudo revocar la sesión en el servidor centralizado de persistencia.'
+      });
+    }
   }
-
-  // Enviar Set-Cookie con Max-Age=0 para eliminar la cookie en el navegador
-  res.setHeader('Set-Cookie', serializeClearCookie());
 
   return res.status(200).json({
     success: true,
