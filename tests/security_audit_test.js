@@ -208,16 +208,20 @@ async function runTestSuite() {
       body: { password: TEST_ADMIN_PASS }
     }).run(adminLoginHandler);
 
+    const setCookieHeader1 = loginSuccessRes.headers['set-cookie'] || '';
+    const cookieMatch1 = setCookieHeader1.match(/bodhi_admin_session=([^;]+)/);
+    const validToken = cookieMatch1 ? cookieMatch1[1] : null;
+
     assert(
       loginSuccessRes.status === 200 &&
       loginSuccessRes.body.success === true &&
-      typeof loginSuccessRes.body.token === 'string' &&
-      loginSuccessRes.body.token.startsWith('bdh_'),
+      loginSuccessRes.body.token === undefined &&
+      validToken &&
+      validToken.startsWith('bdh_') &&
+      setCookieHeader1.includes('HttpOnly'),
       'SIMULATION',
-      '1.1 Iniciar sesión con contraseña correcta genera token HMAC-SHA256'
+      '1.1 Iniciar sesión con contraseña correcta responde 200 y emite cookie HttpOnly sin exponer token en el cuerpo JSON'
     );
-
-    const validToken = loginSuccessRes.body?.token;
 
     // 1.2 Contraseña incorrecta rechazada
     const loginWrongRes = await mockHttp({
@@ -963,9 +967,33 @@ async function runTestSuite() {
         'SIMULATION',
         '1.36 Host o X-Forwarded-Host manipulados no inyectan ni autorizan nuevos orígenes en Preview'
       );
+
     } finally {
       restoreVercelSnap();
     }
+
+    // 1.37 Verificación estricta de que el token no aparece en la respuesta JSON (VULN-01)
+    const noTokenBodyRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Referer': 'https://teteria-bodhi.vercel.app/admin.html'
+      },
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+
+    assert(
+      noTokenBodyRes.status === 200 &&
+      noTokenBodyRes.body.success === true &&
+      !('token' in noTokenBodyRes.body) &&
+      noTokenBodyRes.body.token === undefined &&
+      typeof noTokenBodyRes.headers['set-cookie'] === 'string' &&
+      noTokenBodyRes.headers['set-cookie'].includes('HttpOnly') &&
+      noTokenBodyRes.headers['set-cookie'].includes('SameSite=Strict'),
+      'SIMULATION',
+      '1.37 POST /api/admin-login nunca expone el token en la respuesta JSON y delega exclusivamente en la cookie HttpOnly'
+    );
 
 
     // ========================================================

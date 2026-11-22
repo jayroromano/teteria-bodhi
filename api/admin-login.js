@@ -126,7 +126,6 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({
         success: true,
         message: 'Acceso autorizado al panel de Tetería Bodhi',
-        token,
         expiresAt,
         isCloudDb: db.isCloudDb()
       });
