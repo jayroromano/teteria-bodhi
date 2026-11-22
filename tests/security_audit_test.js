@@ -748,6 +748,195 @@ async function runTestSuite() {
       '1.28 Tokens generados con secreto antiguo sin KDF, con caducidad superior a 8h o malformados son rechazados'
     );
 
+    // ========================================================
+    // PRUEBAS DE RESOLUCIÓN DEL ERROR EN PREVIEW SEC-AUTH
+    // ========================================================
+    const prevVercelSnap = {
+      VERCEL: process.env.VERCEL,
+      VERCEL_ENV: process.env.VERCEL_ENV,
+      VERCEL_URL: process.env.VERCEL_URL,
+      VERCEL_BRANCH_URL: process.env.VERCEL_BRANCH_URL,
+      NODE_ENV: process.env.NODE_ENV
+    };
+
+    const restoreVercelSnap = () => {
+      for (const [k, v] of Object.entries(prevVercelSnap)) {
+        if (v !== undefined) process.env[k] = v;
+        else delete process.env[k];
+      }
+    };
+
+    try {
+      // 1.29 Simulación de Vercel Preview real: VERCEL_BRANCH_URL asignado a la rama security-audit-sessions
+      process.env.VERCEL_ENV = 'preview';
+      process.env.VERCEL_URL = 'teteria-bodhi-k8646b1n2-jayro4.vercel.app';
+      process.env.VERCEL_BRANCH_URL = 'teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app';
+
+      const previewBranchLoginRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+          'Referer': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app/admin.html',
+          'Host': 'teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        previewBranchLoginRes.status === 200 &&
+        previewBranchLoginRes.body.success === true &&
+        Boolean(previewBranchLoginRes.headers['set-cookie']),
+        'SIMULATION',
+        '1.29 En Vercel Preview, login con Origin de VERCEL_BRANCH_URL es autorizado satisfactoriamente con 200 y Set-Cookie'
+      );
+
+      // 1.30 En Vercel Preview, acceso con host verificado del proyecto en x-forwarded-host es autorizado
+      const previewHostLoginRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-k8646b1n2-jayro4.vercel.app',
+          'Referer': 'https://teteria-bodhi-k8646b1n2-jayro4.vercel.app/admin.html',
+          'X-Forwarded-Host': 'teteria-bodhi-k8646b1n2-jayro4.vercel.app'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        previewHostLoginRes.status === 200 && previewHostLoginRes.body.success === true,
+        'SIMULATION',
+        '1.30 En Vercel Preview, login desde host de despliegue verificado en X-Forwarded-Host es autorizado'
+      );
+
+      // 1.31 En Vercel Preview, orígenes de otros proyectos Vercel o atacantes externos son rechazados con 403
+      const untrustedVercelRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://otro-proyecto.vercel.app',
+          'Referer': 'https://otro-proyecto.vercel.app/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      const attackerPreviewRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi.malicioso.com',
+          'Referer': 'https://teteria-bodhi.malicioso.com/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        untrustedVercelRes.status === 403 &&
+        untrustedVercelRes.body.error === 'Origen no autorizado.' &&
+        attackerPreviewRes.status === 403 &&
+        attackerPreviewRes.body.error === 'Origen no autorizado.',
+        'SIMULATION',
+        '1.31 En Vercel Preview, orígenes no autorizados (*.vercel.app ajenos o atacantes) son bloqueados con HTTP 403'
+      );
+
+      // 1.32 En Vercel Preview, orígenes de localhost están estrictamente prohibidos
+      const localhostInPreviewRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'http://localhost:3000',
+          'Referer': 'http://localhost:3000/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        localhostInPreviewRes.status === 403 && localhostInPreviewRes.body.error === 'Origen no autorizado.',
+        'SIMULATION',
+        '1.32 En Vercel Preview, orígenes locales (localhost) son rechazados estrictamente con HTTP 403'
+      );
+
+      // 1.33 En Vercel Producción (VERCEL_ENV=production), orígenes de preview o localhost son denegados estrictamente con 403
+      process.env.VERCEL_ENV = 'production';
+      process.env.VERCEL_URL = 'teteria-bodhi.vercel.app';
+      delete process.env.VERCEL_BRANCH_URL;
+
+      const prodRejectPreviewRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+          'Referer': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      const prodRejectLocalhostRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'http://localhost:3000',
+          'Referer': 'http://localhost:3000/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        prodRejectPreviewRes.status === 403 &&
+        prodRejectPreviewRes.body.error === 'Origen no autorizado.' &&
+        prodRejectLocalhostRes.status === 403 &&
+        prodRejectLocalhostRes.body.error === 'Origen no autorizado.',
+        'SIMULATION',
+        '1.33 En Producción, orígenes de preview y localhost son denegados estrictamente con HTTP 403'
+      );
+
+      // 1.34 En Vercel Producción, dominios oficiales de producción continúan autorizados con HTTP 200
+      const prodAllowOfficialRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://www.teteriabodhi.es',
+          'Referer': 'https://www.teteriabodhi.es/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        prodAllowOfficialRes.status === 200 && prodAllowOfficialRes.body.success === true,
+        'SIMULATION',
+        '1.34 En Producción, los orígenes oficiales de producción continúan plenamente autorizados'
+      );
+
+      // 1.35 Validación unitaria directa de validateAdminOrigin con runtime completo VERCEL=1 y VERCEL_REGION
+      process.env.VERCEL = '1';
+      process.env.VERCEL_ENV = 'preview';
+      process.env.VERCEL_REGION = 'cdg1';
+      process.env.VERCEL_BRANCH_URL = 'teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app';
+      process.env.VERCEL_URL = 'teteria-bodhi-k8646b1n2-jayro4.vercel.app';
+
+      const reqPreviewValid = {
+        method: 'POST',
+        headers: {
+          'origin': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+          'referer': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app/admin.html'
+        }
+      };
+      const reqPreviewInvalid = {
+        method: 'POST',
+        headers: {
+          'origin': 'https://atacante.vercel.app',
+          'referer': 'https://atacante.vercel.app/admin.html'
+        }
+      };
+      assert(
+        auth.validateAdminOrigin(reqPreviewValid) === true && auth.validateAdminOrigin(reqPreviewInvalid) === false,
+        'UNIT',
+        '1.35 validateAdminOrigin con runtime completo de Vercel autoriza VERCEL_BRANCH_URL y bloquea atacantes'
+      );
+    } finally {
+      restoreVercelSnap();
+    }
+
 
     // ========================================================
     // BLOQUE 2: RATE LIMITING DISTRIBUIDO, RGPD & CONCURRENCIA
@@ -2086,6 +2275,44 @@ async function runTestSuite() {
         closedDatesApiRes.status === 200 && Array.isArray(closedDatesApiBody?.closedDates),
         'INTEGRATION',
         '7.8 Endpoint /api/closed-dates está conectado y devuelve las fechas próximas'
+      );
+
+      // 7.9 En entorno Preview, cabecera Access-Control-Allow-Origin se emite para VERCEL_BRANCH_URL
+      process.env.VERCEL = '1';
+      process.env.VERCEL_ENV = 'preview';
+      process.env.VERCEL_BRANCH_URL = 'teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app';
+      const previewCorsRes = await requestHttp({
+        method: 'OPTIONS',
+        path: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+          'Access-Control-Request-Method': 'POST'
+        }
+      });
+      assert(
+        previewCorsRes.headers['access-control-allow-origin'] === 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+        'INTEGRATION',
+        '7.9 En entorno Preview, preflight OPTIONS desde VERCEL_BRANCH_URL recibe Access-Control-Allow-Origin'
+      );
+
+      // 7.10 En entorno Producción, cabecera Access-Control-Allow-Origin NO se emite para dominios de Preview
+      process.env.VERCEL_ENV = 'production';
+      const prodCorsRejectPreviewRes = await requestHttp({
+        method: 'OPTIONS',
+        path: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+          'Access-Control-Request-Method': 'POST'
+        }
+      });
+      delete process.env.VERCEL;
+      delete process.env.VERCEL_ENV;
+      delete process.env.VERCEL_BRANCH_URL;
+
+      assert(
+        prodCorsRejectPreviewRes.headers['access-control-allow-origin'] === undefined,
+        'INTEGRATION',
+        '7.10 En entorno Producción, preflight OPTIONS desde dominio de preview NO recibe Access-Control-Allow-Origin'
       );
     } finally {
       serverInstance.close();
