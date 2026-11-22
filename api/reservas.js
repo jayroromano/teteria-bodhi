@@ -1,5 +1,5 @@
 const db = require('../lib/db');
-const { verifyToken, checkRateLimit, hashRateLimitKey, getClientIp } = require('../lib/auth');
+const { verifyToken, checkRateLimit, hashRateLimitKey, getClientIp, extractSessionToken, isTokenRevoked, validateAdminOrigin, validateCsrfProtection } = require('../lib/auth');
 const { setCors } = require('../lib/cors');
 const { RESERVATION_MAX_ATTEMPTS, RESERVATION_WINDOW_MS } = require('../lib/limits');
 const https = require('https');
@@ -117,9 +117,20 @@ function parseBody(req) {
   });
 }
 
-function isAdmin(req) {
-  const auth = req.headers['authorization'] || '';
-  return verifyToken(auth);
+async function isAdmin(req) {
+  const { token, source } = extractSessionToken(req);
+  if (!token) return false;
+  if (!verifyToken(token)) return false;
+  if (!validateAdminOrigin(req)) return false;
+  if (source === 'cookie' && !validateCsrfProtection(req)) return false;
+  try {
+    const isRevoked = await isTokenRevoked(token);
+    if (isRevoked) return false;
+  } catch (err) {
+    // FAIL-CLOSED: Si el servicio centralizado de revocación falla, se deniega el acceso administrativo
+    return false;
+  }
+  return true;
 }
 
 // ========================================================
@@ -225,7 +236,7 @@ module.exports = async function handler(req, res) {
     // GET: Listado de reservas, estadísticas o test de conexión
     if (method === 'GET') {
       if (query.health === 'true') {
-        if (!isAdmin(req)) {
+        if (!(await isAdmin(req))) {
           return res.status(401).json({ error: 'No autorizado. Se requiere acceso de administrador.' });
         }
         const testRes = await db.testCloudConnection();
@@ -240,14 +251,14 @@ module.exports = async function handler(req, res) {
       }
 
       if (query.stats === 'true') {
-        if (!isAdmin(req)) {
+        if (!(await isAdmin(req))) {
           return res.status(401).json({ error: 'No autorizado. Se requiere acceso de administrador.' });
         }
         const stats = await db.getStats();
         return res.status(200).json({ success: true, stats });
       }
 
-      if (!isAdmin(req)) {
+      if (!(await isAdmin(req))) {
         return res.status(401).json({
           error: 'No autorizado. Se requiere acceso de administrador.'
         });
@@ -272,7 +283,7 @@ module.exports = async function handler(req, res) {
 
     // POST: Nueva reserva de cliente o creación desde panel admin
     if (method === 'POST') {
-      const isReqAdmin = isAdmin(req);
+      const isReqAdmin = await isAdmin(req);
       const clientIp = getClientIp(req);
 
       // 1. Protección Anti-Spam: Rate Limiting distribuido con IP anonimizada (RGPD)
@@ -401,7 +412,7 @@ module.exports = async function handler(req, res) {
 
     // PATCH: Modificación de reserva restringida a administradores
     if (method === 'PATCH') {
-      if (!isAdmin(req)) {
+      if (!(await isAdmin(req))) {
         return res.status(401).json({ error: 'No autorizado.' });
       }
 
@@ -504,7 +515,7 @@ module.exports = async function handler(req, res) {
 
     // DELETE: Cancelación de reserva restringida a administradores
     if (method === 'DELETE') {
-      if (!isAdmin(req)) {
+      if (!(await isAdmin(req))) {
         return res.status(401).json({ error: 'No autorizado.' });
       }
 

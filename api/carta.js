@@ -1,5 +1,5 @@
 const db = require('../lib/db');
-const { verifyToken } = require('../lib/auth');
+const { verifyToken, extractSessionToken, isTokenRevoked, validateAdminOrigin, validateCsrfProtection } = require('../lib/auth');
 const { setCors } = require('../lib/cors');
 const fs = require('fs');
 const path = require('path');
@@ -62,9 +62,20 @@ function parseBody(req) {
   });
 }
 
-function isAdmin(req) {
-  const auth = req.headers['authorization'] || '';
-  return verifyToken(auth);
+async function isAdmin(req) {
+  const { token, source } = extractSessionToken(req);
+  if (!token) return false;
+  if (!verifyToken(token)) return false;
+  if (!validateAdminOrigin(req)) return false;
+  if (source === 'cookie' && !validateCsrfProtection(req)) return false;
+  try {
+    const isRevoked = await isTokenRevoked(token);
+    if (isRevoked) return false;
+  } catch (err) {
+    // FAIL-CLOSED: Si el servicio centralizado de revocación falla, se deniega el acceso administrativo
+    return false;
+  }
+  return true;
 }
 
 module.exports = async function handler(req, res) {
@@ -101,7 +112,7 @@ module.exports = async function handler(req, res) {
 
     // POST: Añadir nuevo producto (Requiere autenticación admin)
     if (req.method === 'POST') {
-      if (!isAdmin(req)) {
+      if (!(await isAdmin(req))) {
         return res.status(401).json({ error: 'No autorizado para añadir productos a la carta.' });
       }
 
@@ -151,7 +162,7 @@ module.exports = async function handler(req, res) {
 
     // PATCH: Modificar disponibilidad, precio u otros datos del producto (Admin)
     if (req.method === 'PATCH') {
-      if (!isAdmin(req)) {
+      if (!(await isAdmin(req))) {
         return res.status(401).json({ error: 'No autorizado para modificar la carta.' });
       }
 
@@ -232,7 +243,7 @@ module.exports = async function handler(req, res) {
 
     // DELETE: Eliminar producto de la carta (Admin)
     if (req.method === 'DELETE') {
-      if (!isAdmin(req)) {
+      if (!(await isAdmin(req))) {
         return res.status(401).json({ error: 'No autorizado para eliminar productos de la carta.' });
       }
 

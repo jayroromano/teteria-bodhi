@@ -1,9 +1,21 @@
 const db = require('../lib/db');
-const { verifyToken } = require('../lib/auth');
+const { verifyToken, extractSessionToken, isTokenRevoked, validateAdminOrigin, validateCsrfProtection } = require('../lib/auth');
 const { setCors } = require('../lib/cors');
 
-function isAdmin(req) {
-  return verifyToken(req.headers?.authorization || '');
+async function isAdmin(req) {
+  const { token, source } = extractSessionToken(req);
+  if (!token) return false;
+  if (!verifyToken(token)) return false;
+  if (!validateAdminOrigin(req)) return false;
+  if (source === 'cookie' && !validateCsrfProtection(req)) return false;
+  try {
+    const isRevoked = await isTokenRevoked(token);
+    if (isRevoked) return false;
+  } catch (err) {
+    // FAIL-CLOSED: Si el servicio centralizado de revocación falla, se deniega el acceso administrativo
+    return false;
+  }
+  return true;
 }
 
 function getTodayInSpain() {
@@ -44,7 +56,7 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST' && req.method !== 'DELETE') {
       return res.status(405).json({ error: 'Método no permitido.' });
     }
-    if (!isAdmin(req)) return res.status(401).json({ error: 'No autorizado. Se requiere acceso de administrador.' });
+    if (!(await isAdmin(req))) return res.status(401).json({ error: 'No autorizado. Se requiere acceso de administrador.' });
 
     const body = req.method === 'POST' ? await readBody(req) : {};
     const date = String(req.method === 'DELETE' ? (req.query?.date || new URL(req.url, 'http://localhost').searchParams.get('date') || '') : (body.date || '')).trim();

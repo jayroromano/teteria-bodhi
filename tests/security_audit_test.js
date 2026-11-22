@@ -73,6 +73,7 @@ const reservasHandler = require('../api/reservas');
 const cartaHandler = require('../api/carta');
 const businessConfigHandler = require('../api/business-config');
 const closedDatesHandler = require('../api/closed-dates');
+const adminLogoutHandler = require('../api/admin-logout');
 const localApp = require('../server');
 
 let passedCount = 0;
@@ -96,10 +97,16 @@ let mockIpCounter = 1;
 function mockHttp(options = {}) {
   const clientIp = options.ip !== undefined ? options.ip : ('10.0.0.' + (++mockIpCounter));
   const socket = options.socket !== undefined ? options.socket : (clientIp ? { remoteAddress: clientIp } : null);
+  const normalizedReqHeaders = {};
+  if (options.headers && typeof options.headers === 'object') {
+    for (const [k, v] of Object.entries(options.headers)) {
+      normalizedReqHeaders[k.toLowerCase()] = v;
+    }
+  }
   const req = {
     method: options.method || 'GET',
     url: options.url || '/',
-    headers: options.headers || {},
+    headers: normalizedReqHeaders,
     query: options.query || {},
     body: options.body || {},
     socket,
@@ -201,16 +208,20 @@ async function runTestSuite() {
       body: { password: TEST_ADMIN_PASS }
     }).run(adminLoginHandler);
 
+    const setCookieHeader1 = loginSuccessRes.headers['set-cookie'] || '';
+    const cookieMatch1 = setCookieHeader1.match(/bodhi_admin_session=([^;]+)/);
+    const validToken = cookieMatch1 ? cookieMatch1[1] : null;
+
     assert(
       loginSuccessRes.status === 200 &&
       loginSuccessRes.body.success === true &&
-      typeof loginSuccessRes.body.token === 'string' &&
-      loginSuccessRes.body.token.startsWith('bdh_'),
+      loginSuccessRes.body.token === undefined &&
+      validToken &&
+      validToken.startsWith('bdh_') &&
+      setCookieHeader1.includes('HttpOnly'),
       'SIMULATION',
-      '1.1 Iniciar sesión con contraseña correcta genera token HMAC-SHA256'
+      '1.1 Iniciar sesión con contraseña correcta responde 200 y emite cookie HttpOnly sin exponer token en el cuerpo JSON'
     );
-
-    const validToken = loginSuccessRes.body?.token;
 
     // 1.2 Contraseña incorrecta rechazada
     const loginWrongRes = await mockHttp({
@@ -313,6 +324,677 @@ async function runTestSuite() {
 
     process.env.NODE_ENV = prevEnv;
     process.env.ADMIN_SESSION_SECRET = prevSecret;
+    // ========================================================
+    // NUEVAS PRUEBAS DE SEGURIDAD DE SESIONES (VULN-01 a VULN-04)
+    // ========================================================
+
+    // 1.10 (VULN-03) Derivación KDF: Cambiar ADMIN_PASSWORD invalida inmediatamente el token anterior
+    const passToken = auth.generateToken();
+    assert(auth.verifyToken(passToken) === true, 'UNIT', '1.10 Token generado con contraseña actual es verificado como válido');
+
+    const originalPass = process.env.ADMIN_PASSWORD;
+    process.env.ADMIN_PASSWORD = 'NuevaContrasenaDeEmergencia2026!';
+    const isTokenValidAfterPassChange = auth.verifyToken(passToken);
+    process.env.ADMIN_PASSWORD = originalPass;
+    assert(
+      isTokenValidAfterPassChange === false && auth.verifyToken(passToken) === true,
+      'UNIT',
+      '1.11 Cambiar ADMIN_PASSWORD invalida automáticamente e instantáneamente todos los tokens previos (VULN-03)'
+    );
+
+    // 1.12 (VULN-01) POST /api/admin-login emite cookie HttpOnly, Secure y SameSite=Strict
+    const cookieLoginRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      headers: { 'Origin': 'https://teteria-bodhi.vercel.app' },
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+
+    const setCookieHeader = cookieLoginRes.headers['set-cookie'] || '';
+    assert(
+      setCookieHeader.includes('bodhi_admin_session=') &&
+      setCookieHeader.includes('HttpOnly') &&
+      setCookieHeader.includes('SameSite=Strict') &&
+      setCookieHeader.includes('Max-Age=28800'),
+      'SIMULATION',
+      '1.12 POST /api/admin-login emite cookie con HttpOnly, SameSite=Strict y Max-Age=28800 (8h) (VULN-01)'
+    );
+
+    // Extraer token de la cookie emitida
+    const cookieMatch = setCookieHeader.match(/bodhi_admin_session=([^;]+)/);
+    const sessionCookieValue = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+
+    // 1.13 GET /api/admin-login valida autenticación con cookie HttpOnly
+    const checkCookieAuthRes = await mockHttp({
+      method: 'GET',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(sessionCookieValue)}`
+      }
+    }).run(adminLoginHandler);
+    assert(
+      checkCookieAuthRes.status === 200 && checkCookieAuthRes.body.valid === true,
+      'SIMULATION',
+      '1.13 GET /api/admin-login autentica correctamente al cliente mediante la cookie HttpOnly'
+    );
+
+    // 1.14 (VULN-02) POST /api/admin-logout revoca el token en el servidor y borra la cookie
+    const logoutRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-logout',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'X-Admin-Request': '1',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(sessionCookieValue)}`
+      }
+    }).run(adminLogoutHandler);
+
+    const clearCookieHeader = logoutRes.headers['set-cookie'] || '';
+    assert(
+      logoutRes.status === 200 &&
+      logoutRes.body.success === true &&
+      clearCookieHeader.includes('Max-Age=0'),
+      'SIMULATION',
+      '1.14 POST /api/admin-logout revoca la sesión en servidor y envía cabecera Set-Cookie con Max-Age=0 (VULN-02)'
+    );
+
+    // 1.15 (VULN-02) Token revocado es rechazado en peticiones posteriores aunque no haya expirado
+    const checkRevokedTokenRes = await mockHttp({
+      method: 'GET',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(sessionCookieValue)}`
+      }
+    }).run(adminLoginHandler);
+    assert(
+      checkRevokedTokenRes.body.valid === false,
+      'SIMULATION',
+      '1.15 Token previamente revocado es rechazado con valid=false en verificaciones posteriores'
+    );
+
+    // 1.16 Petición administrativa de reservas con token revocado devuelve 401
+    const resWithRevokedCookie = await mockHttp({
+      method: 'GET',
+      url: '/api/reservas',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'X-Admin-Request': '1',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(sessionCookieValue)}`
+      }
+    }).run(reservasHandler);
+    assert(
+      resWithRevokedCookie.status === 401,
+      'SIMULATION',
+      '1.16 Petición a /api/reservas con token revocado es denegada con HTTP 401'
+    );
+
+    // 1.17 Protección Anti-CSRF: Origen no autorizado es bloqueado con 403
+    const csrfBlockedRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://sitio-malicioso-atacante.com'
+      },
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+    assert(
+      csrfBlockedRes.status === 403,
+      'SIMULATION',
+      '1.17 Petición administrativa desde origen cross-site no autorizado es rechazada con HTTP 403 (Anti-CSRF)'
+    );
+
+    // 1.18 (VULN-04) Caducidad máxima de 8 horas
+    const nowTs = Date.now();
+    const token9HoursAgo = `bdh_${nowTs - 9 * 3600 * 1000}.${crypto.randomBytes(16).toString('hex')}`;
+    const sig9h = crypto.createHmac('sha256', auth.getSessionSecret()).update(token9HoursAgo.slice(4)).digest('hex');
+    const fullToken9h = `${token9HoursAgo}.${sig9h}`;
+
+    const token7HoursAgo = `bdh_${nowTs - 7 * 3600 * 1000}.${crypto.randomBytes(16).toString('hex')}`;
+    const sig7h = crypto.createHmac('sha256', auth.getSessionSecret()).update(token7HoursAgo.slice(4)).digest('hex');
+    const fullToken7h = `${token7HoursAgo}.${sig7h}`;
+
+    assert(
+      auth.verifyToken(fullToken9h) === false && auth.verifyToken(fullToken7h) === true,
+      'UNIT',
+      '1.18 Tokens con más de 8 horas son rechazados por expiración, mientras que tokens de 7 horas son válidos (VULN-04)'
+    );
+
+    // 1.19 (VULN-01) js/admin.js no almacena credenciales en localStorage
+    const adminJsScript = fs.readFileSync(path.join(__dirname, '../js/admin.js'), 'utf8');
+    assert(
+      !adminJsScript.includes("localStorage.setItem('bodhi_admin_token'") &&
+      adminJsScript.includes("'X-Admin-Request': '1'"),
+      'STATIC',
+      '1.19 js/admin.js no guarda tokens en localStorage y utiliza cabecera anti-CSRF X-Admin-Request'
+    );
+
+    // 1.20 Script SQL de revocación protege la tabla revoked_tokens
+    const revokedSqlContent = fs.readFileSync(path.join(process.cwd(), 'revoked_tokens.sql'), 'utf8');
+    assert(
+      revokedSqlContent.includes('CREATE TABLE IF NOT EXISTS public.revoked_tokens') &&
+      revokedSqlContent.includes('ENABLE ROW LEVEL SECURITY') &&
+      revokedSqlContent.includes('REVOKE ALL ON public.revoked_tokens FROM PUBLIC') &&
+      revokedSqlContent.includes('GRANT ALL ON public.revoked_tokens TO service_role'),
+      'STATIC',
+      '1.20 Script revoked_tokens.sql define la tabla con RLS forzado y acceso restringido a service_role'
+    );
+
+    // ========================================================
+    // NUEVAS PRUEBAS: FAIL-CLOSED, CSRF, TOKENS ANTIGUOS Y PERSISTENCIA
+    // ========================================================
+
+    // Servidor mock HTTP local para simular estados de Supabase sin violar el aislamiento de red
+    let mockSbRevokedStatus = 404;
+    const mockSharedRevokedDb = new Set();
+
+    const mockSbServer = http.createServer((req, res) => {
+      if (req.url.startsWith('/rest/v1/revoked_tokens')) {
+        if (mockSbRevokedStatus === 404) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ message: 'relation public.revoked_tokens does not exist' }));
+          return;
+        }
+        if (mockSbRevokedStatus === 500) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ message: 'Database connection error' }));
+          return;
+        }
+        if (req.method === 'GET') {
+          const urlObj = new URL(req.url, 'http://127.0.0.1');
+          const tokenHashParam = urlObj.searchParams.get('token_hash');
+          const hash = tokenHashParam ? tokenHashParam.replace(/^eq\./, '') : null;
+          if (hash && mockSharedRevokedDb.has(hash)) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify([{ token_hash: hash }]));
+          } else {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify([]));
+          }
+          return;
+        }
+        if (req.method === 'POST') {
+          let b = '';
+          req.on('data', c => { b += c; });
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(b);
+              if (parsed.token_hash) mockSharedRevokedDb.add(parsed.token_hash);
+              res.writeHead(201, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({}));
+            } catch (e) {
+              res.writeHead(400).end();
+            }
+          });
+          return;
+        }
+      }
+
+      if (req.url.startsWith('/rest/v1/menu_items')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify([{ id: 'test_item', name: 'Té Verde Test', price: 3.5, available: true }]));
+        return;
+      }
+      if (req.url.startsWith('/rest/v1/closed_dates')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify([]));
+        return;
+      }
+      if (req.url.startsWith('/rest/v1/reservations')) {
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify([{ id: 'BDH-PUBTEST-1', name: 'Cliente Test' }]));
+        return;
+      }
+      res.writeHead(404).end();
+    });
+
+    await new Promise((resolve) => mockSbServer.listen(0, '127.0.0.1', resolve));
+    const mockSbPort = mockSbServer.address().port;
+
+    const prevSbUrlTest = process.env.SUPABASE_URL;
+    const prevSbKeyTest = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    process.env.SUPABASE_URL = `http://127.0.0.1:${mockSbPort}`;
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock_service_key_for_fail_closed_test';
+
+    const testActiveToken = auth.generateToken();
+
+    // 1.21 FAIL-CLOSED: Tabla revoked_tokens inexistente (404) deniega autenticación de sesión con 503
+    mockSbRevokedStatus = 404;
+    const failClosedLoginRes = await mockHttp({
+      method: 'GET',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(testActiveToken)}`
+      }
+    }).run(adminLoginHandler);
+
+    const failClosedReservasRes = await mockHttp({
+      method: 'GET',
+      url: '/api/reservas',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'X-Admin-Request': '1',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(testActiveToken)}`
+      }
+    }).run(reservasHandler);
+
+    assert(
+      failClosedLoginRes.status === 503 && failClosedLoginRes.body.valid === false && failClosedReservasRes.status === 401,
+      'SIMULATION',
+      '1.21 En Cloud DB, tabla revoked_tokens inexistente (404) deniega acceso administrativo con HTTP 503 / 401 (Fail-Closed)'
+    );
+
+    // 1.22 FAIL-CLOSED: Supabase caído (500 o caída de red) deniega sesión administrativa de forma segura
+    mockSbRevokedStatus = 500;
+    const supabaseDownLoginRes = await mockHttp({
+      method: 'GET',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(testActiveToken)}`
+      }
+    }).run(adminLoginHandler);
+    assert(
+      supabaseDownLoginRes.status === 503 && supabaseDownLoginRes.body.valid === false,
+      'SIMULATION',
+      '1.22 En Cloud DB, caída de Supabase deniega validación de sesión con HTTP 503 sin fallback inseguro (Fail-Closed)'
+    );
+
+    // 1.23 Error de escritura en revocación responde 503 y NO afirma falsamente éxito
+    mockSbRevokedStatus = 500;
+    const logoutWriteFailRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-logout',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'X-Admin-Request': '1',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(testActiveToken)}`
+      }
+    }).run(adminLogoutHandler);
+
+    assert(
+      logoutWriteFailRes.status === 503 &&
+      logoutWriteFailRes.body.success === false &&
+      (logoutWriteFailRes.headers['set-cookie'] || '').includes('Max-Age=0'),
+      'SIMULATION',
+      '1.23 Fallo al registrar revocación en base de datos devuelve HTTP 503 sin informar falsamente de éxito'
+    );
+
+    // 1.24 Revocación consistente entre instancias independientes sin memoria compartida
+    mockSbRevokedStatus = 200;
+    const crossInstanceToken = auth.generateToken();
+
+    // Instancia A: ejecuta logout y registra en persistencia compartida
+    const instanceALogoutRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-logout',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'X-Admin-Request': '1',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(crossInstanceToken)}`
+      }
+    }).run(adminLogoutHandler);
+
+    // Instancia B: valida el token consultando Supabase (sin usar memoria local)
+    const instanceBLoginRes = await mockHttp({
+      method: 'GET',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(crossInstanceToken)}`
+      }
+    }).run(adminLoginHandler);
+
+    assert(
+      instanceALogoutRes.status === 200 &&
+      instanceALogoutRes.body.success === true &&
+      instanceBLoginRes.body.valid === false,
+      'SIMULATION',
+      '1.24 Revocación entre instancias serverless independientes se propaga consistentemente mediante persistencia compartida'
+    );
+
+    // 1.25 Operaciones públicas de reservas y carta permanecen 100% operativas durante fallo del servicio de revocación
+    mockSbRevokedStatus = 404; // Servicio de revocación caído / tabla inexistente
+
+    const publicCartaFailRes = await mockHttp({
+      method: 'GET',
+      url: '/api/carta'
+    }).run(cartaHandler);
+
+    const publicDatesFailRes = await mockHttp({
+      method: 'GET',
+      url: '/api/closed-dates'
+    }).run(closedDatesHandler);
+
+    assert(
+      publicCartaFailRes.status === 200 && publicDatesFailRes.status === 200,
+      'SIMULATION',
+      '1.25 Consultas públicas de carta y días cerrados funcionan con HTTP 200 aun cuando el servicio de revocación no esté disponible'
+    );
+
+    // Restaurar entorno y cerrar mock server
+    mockSbServer.close();
+    if (prevSbUrlTest !== undefined) process.env.SUPABASE_URL = prevSbUrlTest; else delete process.env.SUPABASE_URL;
+    if (prevSbKeyTest !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = prevSbKeyTest; else delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    // 1.26 Protección Anti-CSRF: orígenes atacantes, subdominios falsos y mutaciones sin cabecera custom bloqueadas
+    const csrfFakeSubdomain = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      headers: { 'Origin': 'https://subdominio-falso.vercel.app' },
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+
+    const csrfSpoofedDomain = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      headers: { 'Origin': 'https://teteriabodhi.es.sitio-atacante.com' },
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+
+    const csrfCookieWithoutHeader = await mockHttp({
+      method: 'PATCH',
+      url: '/api/reservas',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(passToken)}`
+      },
+      body: { id: 'BDH-TEST', status: 'confirmed' }
+    }).run(reservasHandler);
+
+    assert(
+      csrfFakeSubdomain.status === 403 &&
+      csrfSpoofedDomain.status === 403 &&
+      csrfCookieWithoutHeader.status === 401,
+      'SIMULATION',
+      '1.26 Ataques CSRF desde subdominios falsos, dominios sufijados y peticiones cookie sin cabecera custom son rechazados'
+    );
+
+    // 1.27 En entorno Vercel, mutaciones administrativas con Origin ausente son rechazadas con HTTP 403
+    const prevVercelEnvCsrf = process.env.VERCEL;
+    const prevVercelRegionCsrf = process.env.VERCEL_REGION;
+    process.env.VERCEL = '1';
+    process.env.VERCEL_REGION = 'cdg1';
+
+    const mutationWithoutOriginRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-logout',
+      headers: { 'X-Admin-Request': '1' }
+    }).run(adminLogoutHandler);
+
+    if (prevVercelEnvCsrf !== undefined) process.env.VERCEL = prevVercelEnvCsrf; else delete process.env.VERCEL;
+    if (prevVercelRegionCsrf !== undefined) process.env.VERCEL_REGION = prevVercelRegionCsrf; else delete process.env.VERCEL_REGION;
+
+    assert(
+      mutationWithoutOriginRes.status === 403,
+      'SIMULATION',
+      '1.27 En entorno Vercel, mutaciones administrativas con Origin y Referer ausentes son bloqueadas con HTTP 403'
+    );
+
+    // 1.28 Tokens antiguos (sin derivación KDF, expirados >8h o malformados) no pueden eludir la seguridad
+    const oldSecretWithoutKdf = 'test_secret_key_fixed_length_for_tests_12345';
+    const oldTokenPayload = `${Date.now()}.${crypto.randomBytes(16).toString('hex')}`;
+    const oldTokenSig = crypto.createHmac('sha256', oldSecretWithoutKdf).update(oldTokenPayload).digest('hex');
+    const tokenWithoutKdf = `bdh_${oldTokenPayload}.${oldTokenSig}`;
+
+    const oldExpiredPayload = `${Date.now() - 8.5 * 3600 * 1000}.${crypto.randomBytes(16).toString('hex')}`;
+    const oldExpiredSig = crypto.createHmac('sha256', auth.getSessionSecret()).update(oldExpiredPayload).digest('hex');
+    const tokenExpired8hHalf = `bdh_${oldExpiredPayload}.${oldExpiredSig}`;
+
+    assert(
+      auth.verifyToken(tokenWithoutKdf) === false &&
+      auth.verifyToken(tokenExpired8hHalf) === false &&
+      auth.verifyToken('bdh_invalido.123') === false,
+      'UNIT',
+      '1.28 Tokens generados con secreto antiguo sin KDF, con caducidad superior a 8h o malformados son rechazados'
+    );
+
+    // ========================================================
+    // PRUEBAS DE RESOLUCIÓN DEL ERROR EN PREVIEW SEC-AUTH
+    // ========================================================
+    const prevVercelSnap = {
+      VERCEL: process.env.VERCEL,
+      VERCEL_ENV: process.env.VERCEL_ENV,
+      VERCEL_URL: process.env.VERCEL_URL,
+      VERCEL_BRANCH_URL: process.env.VERCEL_BRANCH_URL,
+      NODE_ENV: process.env.NODE_ENV
+    };
+
+    const restoreVercelSnap = () => {
+      for (const [k, v] of Object.entries(prevVercelSnap)) {
+        if (v !== undefined) process.env[k] = v;
+        else delete process.env[k];
+      }
+    };
+
+    try {
+      // 1.29 Simulación de Vercel Preview real: VERCEL_BRANCH_URL asignado a la rama security-audit-sessions
+      process.env.VERCEL_ENV = 'preview';
+      process.env.VERCEL_URL = 'teteria-bodhi-k8646b1n2-jayro4.vercel.app';
+      process.env.VERCEL_BRANCH_URL = 'teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app';
+
+      const previewBranchLoginRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+          'Referer': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app/admin.html',
+          'Host': 'teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        previewBranchLoginRes.status === 200 &&
+        previewBranchLoginRes.body.success === true &&
+        Boolean(previewBranchLoginRes.headers['set-cookie']),
+        'SIMULATION',
+        '1.29 En Vercel Preview, login con Origin de VERCEL_BRANCH_URL es autorizado satisfactoriamente con 200 y Set-Cookie'
+      );
+
+      // 1.30 En Vercel Preview, acceso con Origin de VERCEL_URL de la instancia es autorizado
+      const previewHostLoginRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-k8646b1n2-jayro4.vercel.app',
+          'Referer': 'https://teteria-bodhi-k8646b1n2-jayro4.vercel.app/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        previewHostLoginRes.status === 200 && previewHostLoginRes.body.success === true,
+        'SIMULATION',
+        '1.30 En Vercel Preview, login con Origin de VERCEL_URL es autorizado satisfactoriamente'
+      );
+
+      // 1.31 En Vercel Preview, orígenes de otros proyectos Vercel o atacantes externos son rechazados con 403
+      const untrustedVercelRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://otro-proyecto.vercel.app',
+          'Referer': 'https://otro-proyecto.vercel.app/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      const attackerPreviewRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi.malicioso.com',
+          'Referer': 'https://teteria-bodhi.malicioso.com/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        untrustedVercelRes.status === 403 &&
+        untrustedVercelRes.body.error === 'Origen no autorizado.' &&
+        attackerPreviewRes.status === 403 &&
+        attackerPreviewRes.body.error === 'Origen no autorizado.',
+        'SIMULATION',
+        '1.31 En Vercel Preview, orígenes no autorizados (*.vercel.app ajenos o atacantes) son bloqueados con HTTP 403'
+      );
+
+      // 1.32 En Vercel Preview, orígenes de localhost están estrictamente prohibidos
+      const localhostInPreviewRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'http://localhost:3000',
+          'Referer': 'http://localhost:3000/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        localhostInPreviewRes.status === 403 && localhostInPreviewRes.body.error === 'Origen no autorizado.',
+        'SIMULATION',
+        '1.32 En Vercel Preview, orígenes locales (localhost) son rechazados estrictamente con HTTP 403'
+      );
+
+      // 1.33 En Vercel Producción (VERCEL_ENV=production), orígenes de preview o localhost son denegados estrictamente con 403
+      process.env.VERCEL_ENV = 'production';
+      process.env.VERCEL_URL = 'teteria-bodhi.vercel.app';
+      delete process.env.VERCEL_BRANCH_URL;
+
+      const prodRejectPreviewRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+          'Referer': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      const prodRejectLocalhostRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'http://localhost:3000',
+          'Referer': 'http://localhost:3000/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        prodRejectPreviewRes.status === 403 &&
+        prodRejectPreviewRes.body.error === 'Origen no autorizado.' &&
+        prodRejectLocalhostRes.status === 403 &&
+        prodRejectLocalhostRes.body.error === 'Origen no autorizado.',
+        'SIMULATION',
+        '1.33 En Producción, orígenes de preview y localhost son denegados estrictamente con HTTP 403'
+      );
+
+      // 1.34 En Vercel Producción, dominios oficiales de producción continúan autorizados con HTTP 200
+      const prodAllowOfficialRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://www.teteriabodhi.es',
+          'Referer': 'https://www.teteriabodhi.es/admin.html'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      assert(
+        prodAllowOfficialRes.status === 200 && prodAllowOfficialRes.body.success === true,
+        'SIMULATION',
+        '1.34 En Producción, los orígenes oficiales de producción continúan plenamente autorizados'
+      );
+
+      // 1.35 Validación unitaria directa de validateAdminOrigin con runtime completo VERCEL=1 y VERCEL_REGION
+      process.env.VERCEL = '1';
+      process.env.VERCEL_ENV = 'preview';
+      process.env.VERCEL_REGION = 'cdg1';
+      process.env.VERCEL_BRANCH_URL = 'teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app';
+      process.env.VERCEL_URL = 'teteria-bodhi-k8646b1n2-jayro4.vercel.app';
+
+      const reqPreviewValid = {
+        method: 'POST',
+        headers: {
+          'origin': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+          'referer': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app/admin.html'
+        }
+      };
+      const reqPreviewInvalid = {
+        method: 'POST',
+        headers: {
+          'origin': 'https://atacante.vercel.app',
+          'referer': 'https://atacante.vercel.app/admin.html'
+        }
+      };
+      assert(
+        auth.validateAdminOrigin(reqPreviewValid) === true && auth.validateAdminOrigin(reqPreviewInvalid) === false,
+        'UNIT',
+        '1.35 validateAdminOrigin con runtime completo de Vercel autoriza VERCEL_BRANCH_URL y bloquea atacantes'
+      );
+
+      // 1.36 Cabeceras Host o X-Forwarded-Host manipuladas no permiten autorizar nuevos orígenes arbitrarios
+      const spoofedHostRes = await mockHttp({
+        method: 'POST',
+        url: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-atacante-inventado.vercel.app',
+          'Referer': 'https://teteria-bodhi-atacante-inventado.vercel.app/admin.html',
+          'Host': 'teteria-bodhi-atacante-inventado.vercel.app',
+          'X-Forwarded-Host': 'teteria-bodhi-atacante-inventado.vercel.app'
+        },
+        body: { password: TEST_ADMIN_PASS }
+      }).run(adminLoginHandler);
+
+      const fakeReqWithHeaders = {
+        method: 'POST',
+        headers: {
+          'origin': 'https://teteria-bodhi-subdominio-inyectado.vercel.app',
+          'host': 'teteria-bodhi-subdominio-inyectado.vercel.app',
+          'x-forwarded-host': 'teteria-bodhi-subdominio-inyectado.vercel.app'
+        }
+      };
+
+      assert(
+        spoofedHostRes.status === 403 &&
+        spoofedHostRes.body.error === 'Origen no autorizado.' &&
+        auth.validateAdminOrigin(fakeReqWithHeaders) === false &&
+        !cors.getAllowedOrigins(fakeReqWithHeaders).has('https://teteria-bodhi-subdominio-inyectado.vercel.app'),
+        'SIMULATION',
+        '1.36 Host o X-Forwarded-Host manipulados no inyectan ni autorizan nuevos orígenes en Preview'
+      );
+
+    } finally {
+      restoreVercelSnap();
+    }
+
+    // 1.37 Verificación estricta de que el token no aparece en la respuesta JSON (VULN-01)
+    const noTokenBodyRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Referer': 'https://teteria-bodhi.vercel.app/admin.html'
+      },
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+
+    assert(
+      noTokenBodyRes.status === 200 &&
+      noTokenBodyRes.body.success === true &&
+      !('token' in noTokenBodyRes.body) &&
+      noTokenBodyRes.body.token === undefined &&
+      typeof noTokenBodyRes.headers['set-cookie'] === 'string' &&
+      noTokenBodyRes.headers['set-cookie'].includes('HttpOnly') &&
+      noTokenBodyRes.headers['set-cookie'].includes('SameSite=Strict'),
+      'SIMULATION',
+      '1.37 POST /api/admin-login nunca expone el token en la respuesta JSON y delega exclusivamente en la cookie HttpOnly'
+    );
+
 
     // ========================================================
     // BLOQUE 2: RATE LIMITING DISTRIBUIDO, RGPD & CONCURRENCIA
@@ -447,8 +1129,8 @@ async function runTestSuite() {
     );
 
     process.env.NODE_ENV = prevEnvProd;
-    process.env.SUPABASE_URL = prevSbUrl;
-    process.env.SUPABASE_SERVICE_ROLE_KEY = prevSbKey;
+    if (prevSbUrl !== undefined) process.env.SUPABASE_URL = prevSbUrl; else delete process.env.SUPABASE_URL;
+    if (prevSbKey !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = prevSbKey; else delete process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     // 2.6 Concurrencia masiva: ráfaga de peticiones respeta límite exacto
     const concurrencyKey = `concurrent_${Date.now()}`;
@@ -1651,6 +2333,44 @@ async function runTestSuite() {
         closedDatesApiRes.status === 200 && Array.isArray(closedDatesApiBody?.closedDates),
         'INTEGRATION',
         '7.8 Endpoint /api/closed-dates está conectado y devuelve las fechas próximas'
+      );
+
+      // 7.9 En entorno Preview, cabecera Access-Control-Allow-Origin se emite para VERCEL_BRANCH_URL
+      process.env.VERCEL = '1';
+      process.env.VERCEL_ENV = 'preview';
+      process.env.VERCEL_BRANCH_URL = 'teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app';
+      const previewCorsRes = await requestHttp({
+        method: 'OPTIONS',
+        path: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+          'Access-Control-Request-Method': 'POST'
+        }
+      });
+      assert(
+        previewCorsRes.headers['access-control-allow-origin'] === 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+        'INTEGRATION',
+        '7.9 En entorno Preview, preflight OPTIONS desde VERCEL_BRANCH_URL recibe Access-Control-Allow-Origin'
+      );
+
+      // 7.10 En entorno Producción, cabecera Access-Control-Allow-Origin NO se emite para dominios de Preview
+      process.env.VERCEL_ENV = 'production';
+      const prodCorsRejectPreviewRes = await requestHttp({
+        method: 'OPTIONS',
+        path: '/api/admin-login',
+        headers: {
+          'Origin': 'https://teteria-bodhi-git-security-audit-sessions-jayro4.vercel.app',
+          'Access-Control-Request-Method': 'POST'
+        }
+      });
+      delete process.env.VERCEL;
+      delete process.env.VERCEL_ENV;
+      delete process.env.VERCEL_BRANCH_URL;
+
+      assert(
+        prodCorsRejectPreviewRes.headers['access-control-allow-origin'] === undefined,
+        'INTEGRATION',
+        '7.10 En entorno Producción, preflight OPTIONS desde dominio de preview NO recibe Access-Control-Allow-Origin'
       );
     } finally {
       serverInstance.close();
