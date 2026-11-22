@@ -680,7 +680,7 @@
 
       card.innerHTML = `
         <div class="thumb">
-          <img src="${item.image || 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=400&q=80'}"
+          <img src="${safeImageUrl(item.image)}"
                alt="${escapeHtml(item.name)}" loading="lazy">
         </div>
         <div class="info">
@@ -1074,7 +1074,25 @@
     }, 4500);
   }
 
-  function escapeHtml(str) {
+  
+function safeImageUrl(url, defaultUrl = 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=400&q=80') {
+  if (!url || typeof url !== 'string') return defaultUrl;
+  const trimmed = url.trim();
+  if (/^https:\/\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/i.test(trimmed) && !/[\r\n\t"'<>\x60\\]/.test(trimmed)) {
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol === 'https:') {
+        return escapeHtml(trimmed);
+      }
+    } catch (e) {}
+  }
+  if (/^\/[a-zA-Z0-9_\-./]+\.(png|jpe?g|webp|gif|svg|ico)$/i.test(trimmed) && !trimmed.includes('//') && !/[\r\n\t"'<>\x60\\]/.test(trimmed)) {
+    return escapeHtml(trimmed);
+  }
+  return defaultUrl;
+}
+
+function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>'"]/g, tag => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'

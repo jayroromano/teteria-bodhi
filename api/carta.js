@@ -4,6 +4,38 @@ const { setCors } = require('../lib/cors');
 const fs = require('fs');
 const path = require('path');
 
+
+/**
+ * Valida si una URL de imagen es segura contra inyecciones XSS y protocolos peligrosos.
+ * Debe comenzar por https:// o ser una ruta relativa local que empiece por /
+ * Rechaza esquemas maliciosos (javascript:, data:, vbscript:) y caracteres que rompen HTML.
+ */
+function isValidImageUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (trimmed.length === 0 || trimmed.length > 500) return false;
+
+  // Rechazar caracteres peligrosos de inyección o escape HTML
+  if (/[\r\n\t"'<>\x60\\]/.test(trimmed)) return false;
+
+  // Permitir URLs HTTPS válidas
+  if (/^https:\/\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/i.test(trimmed)) {
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.protocol === 'https:';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Permitir rutas relativas locales seguras (ej. /img/... o /businesses/...)
+  if (/^\/[a-zA-Z0-9_\-./]+\.(png|jpe?g|webp|gif|svg|ico)$/i.test(trimmed) && !trimmed.includes('//')) {
+    return true;
+  }
+
+  return false;
+}
+
 function parseStrictBoolean(val) {
   if (typeof val === 'boolean') return val;
   if (typeof val === 'string') {
@@ -96,7 +128,12 @@ module.exports = async function handler(req, res) {
 
       const cleanCategory = category && typeof category === 'string' ? category.trim().slice(0, 60) : 'Cócteles';
       const cleanDescription = description && typeof description === 'string' ? description.trim().slice(0, 500) : '';
-      const cleanImage = image && typeof image === 'string' ? image.trim().slice(0, 500) : '';
+      if (image !== undefined && image !== null && String(image).trim() !== '') {
+        if (!isValidImageUrl(image)) {
+          return res.status(400).json({ error: 'La URL de la imagen debe ser válida y comenzar con https:// o ruta relativa segura.' });
+        }
+      }
+      const cleanImage = image && typeof image === 'string' && isValidImageUrl(image) ? image.trim() : '';
       const cleanBadge = badge && typeof badge === 'string' ? badge.trim().slice(0, 50) : null;
 
       const created = await db.createMenuItem({
@@ -168,6 +205,9 @@ module.exports = async function handler(req, res) {
         if (typeof image !== 'string' || image.trim().length > 500) {
           return res.status(400).json({ error: 'La URL de la imagen no puede exceder 500 caracteres.' });
         }
+        if (image.trim() !== '' && !isValidImageUrl(image)) {
+          return res.status(400).json({ error: 'La URL de la imagen debe ser válida y comenzar con https:// o ruta relativa segura.' });
+        }
         updates.image = image.trim();
       }
 
@@ -218,3 +258,5 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Error procesando la solicitud de la carta.' });
   }
 };
+
+module.exports.isValidImageUrl = isValidImageUrl;

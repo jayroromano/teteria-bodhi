@@ -513,6 +513,26 @@
   function renderTable() {
     const tbody = $('#reservas-tbody');
     if (!tbody) return;
+
+    if (!tbody.dataset.eventsBound) {
+      tbody.dataset.eventsBound = 'true';
+      tbody.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const action = btn.getAttribute('data-action');
+        const id = btn.getAttribute('data-id');
+        if (!id) return;
+        if (action === 'confirm-res') {
+          window.adminApp.updateStatus(id, 'confirmed');
+        } else if (action === 'cancel-res') {
+          window.adminApp.updateStatus(id, 'cancelled');
+        } else if (action === 'open-notes') {
+          const resItem = allReservations.find(r => r.id === id);
+          window.adminApp.openNotesModal(id, resItem ? resItem.admin_notes : '');
+        }
+      });
+    }
+
     tbody.innerHTML = '';
 
     const list = getFilteredReservations();
@@ -570,18 +590,18 @@
         <td>
           <div class="action-btns">
             ${r.status !== 'confirmed' ? `
-              <button class="action-btn confirm" title="Confirmar reserva" onclick="window.adminApp.updateStatus('${r.id}', 'confirmed')">
+              <button type="button" class="action-btn confirm" data-action="confirm-res" data-id="${escapeAttr(r.id)}" title="Confirmar reserva">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
               </button>
             ` : ''}
-            <a href="${waUrl}" target="_blank" rel="noopener" class="action-btn wa" title="Enviar WhatsApp al cliente">
+            <a href="${escapeAttr(waUrl)}" target="_blank" rel="noopener" class="action-btn wa" title="Enviar WhatsApp al cliente">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.699c.971.53 1.77.781 2.795.782 3.182 0 5.768-2.587 5.769-5.766.001-3.182-2.585-5.768-5.769-5.768zm0-2.172c4.378 0 7.938 3.56 7.939 7.939 0 4.379-3.561 7.939-7.939 7.939-1.398 0-2.456-.372-3.56-1l-5.471 1.434 1.46-5.334c-.71-1.19-1.09-2.072-1.09-3.039 0-4.379 3.56-7.939 7.939-7.939z"/></svg>
             </a>
-            <button class="action-btn" title="Editar notas internas" onclick="window.adminApp.openNotesModal('${r.id}', '${escapeAttr(r.admin_notes || '')}')">
+            <button type="button" class="action-btn" data-action="open-notes" data-id="${escapeAttr(r.id)}" title="Editar notas internas">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
             ${r.status !== 'cancelled' ? `
-              <button class="action-btn cancel" title="Cancelar reserva" onclick="window.adminApp.updateStatus('${r.id}', 'cancelled')">
+              <button type="button" class="action-btn cancel" data-action="cancel-res" data-id="${escapeAttr(r.id)}" title="Cancelar reserva">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             ` : ''}
@@ -627,8 +647,10 @@
     },
 
     openNotesModal(id, currentNotes) {
+      const resItem = allReservations.find(r => r.id === id);
+      const notes = resItem && resItem.admin_notes !== undefined ? resItem.admin_notes : (currentNotes || '');
       $('#modal-res-id').value = id;
-      $('#modal-res-notes').value = currentNotes || '';
+      $('#modal-res-notes').value = notes;
       $('#notes-modal').classList.add('active');
     },
 
@@ -912,10 +934,20 @@
       list.textContent = 'No hay días sin reservas próximos.';
       return;
     }
+    
+    if (!list.dataset.eventsBound) {
+      list.dataset.eventsBound = 'true';
+      list.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action="delete-closed-date"]');
+        if (!btn) return;
+        const date = btn.getAttribute('data-date');
+        if (date) window.adminApp.deleteClosedDate(date);
+      });
+    }
     list.innerHTML = cachedClosedDates.map(item => `
       <article class="closed-date-row">
         <div><strong>${escapeHtml(formatDate(item.date))}</strong><span>${escapeHtml(item.reason)}</span></div>
-        <button type="button" class="btn-secondary" onclick="window.adminApp.deleteClosedDate('${escapeAttr(item.date)}')">Quitar</button>
+        <button type="button" class="btn-secondary" data-action="delete-closed-date" data-date="${escapeAttr(item.date)}">Quitar</button>
       </article>
     `).join('');
   }
@@ -962,6 +994,26 @@
 
     if (countInfo) {
       countInfo.textContent = `${items.length} producto${items.length === 1 ? '' : 's'} ${currentCartaFilter !== 'all' ? `en "${currentCartaFilter}"` : 'en total'}`;
+    }
+
+    if (!box.dataset.eventsBound) {
+      box.dataset.eventsBound = 'true';
+      box.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('button[data-action="toggle-available"]');
+        if (toggleBtn) {
+          const id = toggleBtn.getAttribute('data-id');
+          const isAvail = toggleBtn.getAttribute('data-available') === 'true';
+          if (id) window.adminApp.toggleMenuAvailable(id, isAvail);
+          return;
+        }
+        const deleteBtn = e.target.closest('button[data-action="delete-item"]');
+        if (deleteBtn) {
+          const id = deleteBtn.getAttribute('data-id');
+          const item = cachedCartaItems.find(i => i.id === id);
+          if (id) window.adminApp.deleteMenuItem(id, item ? item.name : 'este producto');
+          return;
+        }
+      });
     }
 
     box.innerHTML = '';
@@ -1013,7 +1065,7 @@
 
       tr.innerHTML = `
         <td>
-          <img src="${imgUrl}" alt="${safeName}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--sand);display:block;" onerror="this.src='https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80'">
+          <img src="${safeImageUrl(imgUrl)}" alt="${escapeAttr(safeName)}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--sand);display:block;" onerror="this.src='https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80'">
         </td>
         <td>
           <div style="font-weight:700;display:flex;align-items:center;flex-wrap:wrap;">${safeName} ${badgeHtml}</div>
@@ -1026,14 +1078,14 @@
         <td>
           <button type="button" class="filter-pill ${item.available ? 'active' : ''}" 
                   style="font-size: 0.8rem; padding: 4px 10px; cursor: pointer;"
-                  onclick="window.adminApp.toggleMenuAvailable('${item.id}', ${item.available})">
+                  data-action="toggle-available" data-id="${escapeAttr(item.id)}" data-available="${Boolean(item.available)}">
             ${item.available ? '✓ Disponible' : '✗ Agotado'}
           </button>
         </td>
         <td>
           <button type="button" class="btn-icon" title="Eliminar producto de la carta" 
                   style="color: var(--danger); border: 1px solid var(--line); padding: 6px; border-radius: 6px; cursor: pointer; background: var(--bg);"
-                  onclick="window.adminApp.deleteMenuItem('${item.id}', '${jsSafeName}')">
+                  data-action="delete-item" data-id="${escapeAttr(item.id)}">
             🗑️
           </button>
         </td>
@@ -1300,9 +1352,27 @@
     return String(s).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c] || c));
   }
 
+  
+  function safeImageUrl(url, defaultUrl = 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80') {
+    if (!url || typeof url !== 'string') return defaultUrl;
+    const trimmed = url.trim();
+    if (/^https:\/\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/i.test(trimmed) && !/[\r\n\t"'<>\x60\\]/.test(trimmed)) {
+      try {
+        const parsed = new URL(trimmed);
+        if (parsed.protocol === 'https:') {
+          return escapeAttr(trimmed);
+        }
+      } catch (e) {}
+    }
+    if (/^\/[a-zA-Z0-9_\-./]+\.(png|jpe?g|webp|gif|svg|ico)$/i.test(trimmed) && !trimmed.includes('//') && !/[\r\n\t"'<>\x60\\]/.test(trimmed)) {
+      return escapeAttr(trimmed);
+    }
+    return defaultUrl;
+  }
+
   function escapeAttr(s) {
     if (!s) return '';
-    return String(s).replace(/"/g, '&quot;');
+    return String(s).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c] || c));
   }
 
   function formatDate(iso) {

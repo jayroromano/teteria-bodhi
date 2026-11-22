@@ -1390,6 +1390,77 @@ async function runTestSuite() {
       const currentCartaMtime = fs.statSync(prodCartaPath).mtimeMs;
       assert(currentCartaMtime === initialProdCartaMtime, 'UNIT', '5.10 Archivo data/carta.json original permanece 100% inalterado');
     }
+    // 5.11 (SEC-06) isValidImageUrl expuesta y operativa para validación estricta de imágenes
+    const isValidImageUrl = cartaHandler.isValidImageUrl;
+    assert(typeof isValidImageUrl === 'function', 'UNIT', '5.11 Función isValidImageUrl expuesta y operativa para SEC-06');
+
+    // 5.12 (SEC-06) isValidImageUrl aprueba URLs HTTPS/relativas y neutraliza esquemas maliciosos o inyecciones
+    const validUnsplash = isValidImageUrl('https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80');
+    const validRelative = isValidImageUrl('/img/bodhi-logo.png');
+    const invalidJsScheme = isValidImageUrl('javascript:alert(1)');
+    const invalidDataScheme = isValidImageUrl('data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==');
+    const invalidVbScheme = isValidImageUrl('vbscript:msgbox(1)');
+    const invalidHttpScheme = isValidImageUrl('http://insecure-domain.com/pic.jpg');
+    const invalidQuotes = isValidImageUrl('https://example.com/pic.jpg" onerror="alert(1)');
+    const invalidApos = isValidImageUrl("https://example.com/pic.jpg' onmouseover='alert(1)");
+    const invalidControlChars = isValidImageUrl("https://example.com/pic.jpg\r\nHeader: value");
+
+    assert(
+      validUnsplash && validRelative &&
+      !invalidJsScheme && !invalidDataScheme && !invalidVbScheme &&
+      !invalidHttpScheme && !invalidQuotes && !invalidApos && !invalidControlChars,
+      'UNIT',
+      '5.12 isValidImageUrl aprueba URLs HTTPS/relativas y neutraliza javascript:, data:, vbscript:, comillas y saltos de línea'
+    );
+
+    // 5.13 (SEC-06) POST /api/carta con URL de imagen maliciosa es rechazado con 400
+    const postBadImg = await mockHttp({
+      method: 'POST',
+      url: '/api/carta',
+      headers: { 'authorization': `Bearer ${validToken}` },
+      body: {
+        name: 'Té Malicioso',
+        price: 4.0,
+        category: 'Tés',
+        image: 'javascript:alert("XSS")'
+      }
+    }).run(cartaHandler);
+    assert(postBadImg.status === 400, 'SIMULATION', '5.13 POST /api/carta con URL maliciosa (javascript:) es rechazado con 400');
+
+    // 5.14 (SEC-06) POST /api/carta con imagen válida se acepta y PATCH con imagen maliciosa se rechaza con 400
+    const postGoodImg = await mockHttp({
+      method: 'POST',
+      url: '/api/carta',
+      headers: { 'authorization': `Bearer ${validToken}` },
+      body: {
+        name: 'Té Matcha Seguro',
+        price: 4.5,
+        category: 'Tés',
+        image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80'
+      }
+    }).run(cartaHandler);
+    assert(postGoodImg.status === 201 && postGoodImg.body?.item?.id, 'SIMULATION', '5.14 POST /api/carta con imagen HTTPS válida es aceptado con 201');
+
+    const goodItemId = postGoodImg.body?.item?.id;
+    const patchBadImg = await mockHttp({
+      method: 'PATCH',
+      url: '/api/carta',
+      headers: { 'authorization': `Bearer ${validToken}` },
+      body: {
+        id: goodItemId,
+        image: 'https://example.com/img.jpg" onerror="alert(document.domain)'
+      }
+    }).run(cartaHandler);
+    assert(patchBadImg.status === 400, 'SIMULATION', '5.15 PATCH /api/carta con inyección en atributo imagen es rechazado con 400');
+
+    // Limpiar producto de prueba
+    if (goodItemId) {
+      await mockHttp({
+        method: 'DELETE',
+        url: `/api/carta?id=${goodItemId}`,
+        headers: { 'authorization': `Bearer ${validToken}` }
+      }).run(cartaHandler);
+    }
 
     // ========================================================
     // BLOQUE 6: ESCAPADO HTML Y SEGURIDAD EN NOTIFICACIONES
@@ -1413,6 +1484,39 @@ async function runTestSuite() {
 
     // 6.3 Valores nulos o indefinidos en escapeHtml
     assert(escapeFn(null) === '' && escapeFn(undefined) === '', 'UNIT', '6.3 escapeHtml maneja valores nulos e indefinidos de forma segura');
+
+    // 6.4 (SEC-05) escapeAttr en js/admin.js escapa comillas simples y dobles
+    const adminJsPath = path.join(__dirname, '../js/admin.js');
+    const adminJsCode = fs.readFileSync(adminJsPath, 'utf8');
+    assert(
+      adminJsCode.includes("&#39;") && adminJsCode.includes("&quot;") && adminJsCode.includes("function escapeAttr"),
+      'STATIC',
+      '6.4 escapeAttr en js/admin.js neutraliza comillas simples (&#39;), dobles (&quot;), ampersand y corchetes angulares'
+    );
+
+    // 6.5 (SEC-05) Eliminación de eventos onclick inline concatenados en js/admin.js
+    const hasUnsafeOnclick = /onclick\s*=\s*["']\s*window\.adminApp/i.test(adminJsCode);
+    assert(!hasUnsafeOnclick, 'STATIC', '6.5 js/admin.js no contiene llamadas inline onclick con cadenas concatenadas');
+
+    // 6.6 (SEC-05) Event delegation y recuperación segura de notas en memoria en openNotesModal
+    assert(
+      adminJsCode.includes('data-action="open-notes"') &&
+      adminJsCode.includes('allReservations.find(') &&
+      adminJsCode.includes('dataset.eventsBound'),
+      'STATIC',
+      '6.6 Panel admin usa delegación de eventos y recupera admin_notes desde allReservations sin interpolación en DOM'
+    );
+
+    // 6.7 (SEC-06) safeImageUrl protege atributos src en js/main.js y js/admin.js
+    const mainJsPath = path.join(__dirname, '../js/main.js');
+    const mainJsCode = fs.readFileSync(mainJsPath, 'utf8');
+    assert(
+      mainJsCode.includes('safeImageUrl(item.image)') &&
+      adminJsCode.includes('safeImageUrl(imgUrl)') &&
+      mainJsCode.includes('function safeImageUrl'),
+      'STATIC',
+      '6.7 safeImageUrl sanea y protege dinámicamente los atributos src de imágenes en frontend y administración'
+    );
 
     // ========================================================
     // BLOQUE 7: PRUEBAS DE INTEGRACIÓN REALES DE CORS EN EXPRESS
