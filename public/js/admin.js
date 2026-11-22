@@ -9,7 +9,7 @@
   const $$ = (s) => document.querySelectorAll(s);
   const isFileProtocol = window.location.protocol === 'file:';
 
-  let authToken = localStorage.getItem('bodhi_admin_token') || '';
+  let authToken = '';
   let knownCodes = new Set();
   let isInitialLoad = true;
   let cachedClosedDates = [];
@@ -186,11 +186,6 @@
   const logoutBtn = $('#logout-btn');
 
   async function checkAuth() {
-    if (!authToken) {
-      showLogin();
-      return;
-    }
-
     if (isFileProtocol) {
       hideLogin();
       updateCloudDbPill(false);
@@ -198,9 +193,12 @@
       return;
     }
 
+    // Limpiar residuos heredados en localStorage (VULN-01)
+    try { localStorage.removeItem('bodhi_admin_token'); } catch (e) {}
+
     try {
       const res = await fetch('/api/admin-login', {
-        headers: { 'Authorization': `Bearer ${authToken}` }
+        headers: { 'X-Admin-Request': '1' }
       });
       const data = await res.json();
       if (res.ok && data.valid) {
@@ -208,8 +206,6 @@
         updateCloudDbPill(data.isCloudDb);
         loadDashboard();
       } else {
-        authToken = '';
-        localStorage.removeItem('bodhi_admin_token');
         showLogin();
       }
     } catch (e) {
@@ -235,7 +231,6 @@
       if (isFileProtocol) {
         if (password) {
           authToken = 'bdh_mock_local_dev';
-          localStorage.setItem('bodhi_admin_token', authToken);
           hideLogin();
           updateCloudDbPill(false);
           loadDashboard();
@@ -248,14 +243,16 @@
       try {
         const res = await fetch('/api/admin-login', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Request': '1'
+          },
           body: JSON.stringify({ password })
         });
         const data = await res.json();
 
         if (res.ok && data.success) {
-          authToken = data.token;
-          localStorage.setItem('bodhi_admin_token', authToken);
+          try { localStorage.removeItem('bodhi_admin_token'); } catch (e) {}
           hideLogin();
           updateCloudDbPill(data.isCloudDb);
           loadDashboard();
@@ -269,10 +266,17 @@
   }
 
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('bodhi_admin_token');
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/api/admin-logout', {
+          method: 'POST',
+          headers: { 'X-Admin-Request': '1' }
+        });
+      } catch (e) {}
+      try { localStorage.removeItem('bodhi_admin_token'); } catch (e) {}
       authToken = '';
       showLogin();
+      showAdminToast('Sesión cerrada y revocada correctamente.', 'info');
     });
   }
 
@@ -283,7 +287,7 @@
     }
     try {
       const res = await fetch('/api/reservas?health=true', {
-        headers: { 'Authorization': 'Bearer ' + authToken }
+        headers: { 'X-Admin-Request': '1' }
       });
       const data = await res.json();
 
@@ -429,7 +433,7 @@
 
     try {
       const res = await fetch('/api/reservas', {
-        headers: { 'Authorization': `Bearer ${authToken}` }
+        headers: { 'X-Admin-Request': '1' }
       });
 
       if (res.status === 401) {
@@ -478,7 +482,7 @@
 
   // Sondeo automático cada 18 segundos para detectar reservas nuevas sin recargar la página
   setInterval(() => {
-    if (authToken) {
+    if (true) {
       loadDashboard(true);
     }
   }, 18000);
@@ -630,7 +634,7 @@
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
+            'X-Admin-Request': '1'
           },
           body: JSON.stringify({ id, status: newStatus })
         });
@@ -664,7 +668,7 @@
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
+            'X-Admin-Request': '1'
           },
           body: JSON.stringify({ id, available: !currentAvailable })
         });
@@ -687,7 +691,7 @@
         const res = await fetch(`/api/carta?id=${encodeURIComponent(id)}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${authToken}`
+            'X-Admin-Request': '1'
           }
         });
         const data = await res.json();
@@ -707,7 +711,7 @@
       try {
         const res = await fetch(`/api/closed-dates?date=${encodeURIComponent(date)}`, {
           method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${authToken}` }
+          headers: { 'X-Admin-Request': '1' }
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo quitar el día sin reservas.');
@@ -740,7 +744,7 @@
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
+            'X-Admin-Request': '1'
           },
           body: JSON.stringify({ id, admin_notes })
         });
@@ -868,7 +872,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
+            'X-Admin-Request': '1'
           },
           body: JSON.stringify(payload)
         });
@@ -915,7 +919,7 @@
     if (!list) return;
     list.textContent = 'Cargando días sin reservas…';
     try {
-      const res = await fetch('/api/closed-dates', { headers: { 'Authorization': `Bearer ${authToken}` } });
+      const res = await fetch('/api/closed-dates', { headers: { 'X-Admin-Request': '1' } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'No se pudieron cargar los días sin reservas.');
       cachedClosedDates = Array.isArray(data.closedDates) ? data.closedDates : [];
@@ -965,7 +969,7 @@
       try {
         const res = await fetch('/api/closed-dates', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Request': '1' },
           body: JSON.stringify({ date, reason })
         });
         const data = await res.json();
@@ -1150,7 +1154,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
+            'X-Admin-Request': '1'
           },
           body: JSON.stringify({ name, category, price, image, description, badge })
         });
@@ -1303,7 +1307,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
+            'X-Admin-Request': '1'
           },
           body: JSON.stringify(payload)
         });

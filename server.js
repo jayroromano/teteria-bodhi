@@ -83,6 +83,7 @@ const adminLoginHandler = require('./api/admin-login');
 const cartaHandler = require('./api/carta');
 const businessConfigHandler = require('./api/business-config');
 const closedDatesHandler = require('./api/closed-dates');
+const adminLogoutHandler = require('./api/admin-logout');
 
 const adaptVercelHandler = (handler) => (req, res) => {
   req.query = req.query || {};
@@ -92,6 +93,7 @@ const adaptVercelHandler = (handler) => (req, res) => {
 app.all('/api/reservas', adaptVercelHandler(reservasHandler));
 app.all('/api/admin-login', adaptVercelHandler(adminLoginHandler));
 app.all('/api/admin/login', adaptVercelHandler(adminLoginHandler));
+app.all('/api/admin-logout', adaptVercelHandler(adminLogoutHandler));
 app.all('/api/carta', adaptVercelHandler(cartaHandler));
 app.all('/api/business-config', adaptVercelHandler(businessConfigHandler));
 app.all('/api/closed-dates', adaptVercelHandler(closedDatesHandler));

@@ -1,8 +1,22 @@
 const db = require('../lib/db');
-const { verifyAdminPassword, generateToken, verifyToken, checkRateLimit, resetRateLimit, hashRateLimitKey, isProduction, getSessionSecret, getClientIp } = require('../lib/auth');
+const {
+  verifyAdminPassword,
+  generateToken,
+  verifyToken,
+  checkRateLimit,
+  resetRateLimit,
+  hashRateLimitKey,
+  isProduction,
+  getSessionSecret,
+  getClientIp,
+  extractSessionToken,
+  serializeSessionCookie,
+  isTokenRevoked,
+  validateAdminOrigin,
+  SESSION_DURATION_MS
+} = require('../lib/auth');
 const { setCors } = require('../lib/cors');
 const { LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS } = require('../lib/limits');
-
 
 function parseBody(req) {
   if (req.body && typeof req.body === 'object') return Promise.resolve(req.body);
@@ -27,12 +41,16 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // Comprobación de seguridad contra orígenes no autorizados
+  if (!validateAdminOrigin(req)) {
+    return res.status(403).json({ error: 'Origen no autorizado.' });
+  }
+
   // Verificación de configuración segura en producción
   if (isProduction()) {
     const hasAdminPassword = Boolean(process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.trim());
     const hasSessionSecret = Boolean(getSessionSecret());
     if (!hasAdminPassword || !hasSessionSecret) {
-      // Diagnóstico seguro: solo indica qué falta, nunca el valor
       console.error('[Seguridad] Error crítico: configuración administrativa incompleta en producción.', {
         hasAdminPassword,
         hasAdminSessionSecret: hasSessionSecret
@@ -43,12 +61,16 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // GET: Verificar si el token actual en cabecera sigue siendo válido
+  // GET: Verificar si la sesión actual (vía cookie o cabecera) sigue siendo válida
   if (req.method === 'GET') {
-    const auth = req.headers['authorization'] || '';
-    const isValid = verifyToken(auth);
+    const { token } = extractSessionToken(req);
+    const isValid = token ? verifyToken(token) : false;
+    let isRevoked = false;
+    if (isValid && token) {
+      isRevoked = await isTokenRevoked(token);
+    }
     return res.status(200).json({
-      valid: isValid,
+      valid: isValid && !isRevoked,
       isCloudDb: db.isCloudDb()
     });
   }
@@ -87,7 +109,10 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
+
+      // Emitir cookie HttpOnly, Secure y SameSite=Strict (VULN-01)
+      res.setHeader('Set-Cookie', serializeSessionCookie(token, Math.floor(SESSION_DURATION_MS / 1000)));
 
       return res.status(200).json({
         success: true,

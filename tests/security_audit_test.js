@@ -73,6 +73,7 @@ const reservasHandler = require('../api/reservas');
 const cartaHandler = require('../api/carta');
 const businessConfigHandler = require('../api/business-config');
 const closedDatesHandler = require('../api/closed-dates');
+const adminLogoutHandler = require('../api/admin-logout');
 const localApp = require('../server');
 
 let passedCount = 0;
@@ -96,10 +97,16 @@ let mockIpCounter = 1;
 function mockHttp(options = {}) {
   const clientIp = options.ip !== undefined ? options.ip : ('10.0.0.' + (++mockIpCounter));
   const socket = options.socket !== undefined ? options.socket : (clientIp ? { remoteAddress: clientIp } : null);
+  const normalizedReqHeaders = {};
+  if (options.headers && typeof options.headers === 'object') {
+    for (const [k, v] of Object.entries(options.headers)) {
+      normalizedReqHeaders[k.toLowerCase()] = v;
+    }
+  }
   const req = {
     method: options.method || 'GET',
     url: options.url || '/',
-    headers: options.headers || {},
+    headers: normalizedReqHeaders,
     query: options.query || {},
     body: options.body || {},
     socket,
@@ -313,6 +320,163 @@ async function runTestSuite() {
 
     process.env.NODE_ENV = prevEnv;
     process.env.ADMIN_SESSION_SECRET = prevSecret;
+    // ========================================================
+    // NUEVAS PRUEBAS DE SEGURIDAD DE SESIONES (VULN-01 a VULN-04)
+    // ========================================================
+
+    // 1.10 (VULN-03) Derivación KDF: Cambiar ADMIN_PASSWORD invalida inmediatamente el token anterior
+    const passToken = auth.generateToken();
+    assert(auth.verifyToken(passToken) === true, 'UNIT', '1.10 Token generado con contraseña actual es verificado como válido');
+
+    const originalPass = process.env.ADMIN_PASSWORD;
+    process.env.ADMIN_PASSWORD = 'NuevaContrasenaDeEmergencia2026!';
+    const isTokenValidAfterPassChange = auth.verifyToken(passToken);
+    process.env.ADMIN_PASSWORD = originalPass;
+    assert(
+      isTokenValidAfterPassChange === false && auth.verifyToken(passToken) === true,
+      'UNIT',
+      '1.11 Cambiar ADMIN_PASSWORD invalida automáticamente e instantáneamente todos los tokens previos (VULN-03)'
+    );
+
+    // 1.12 (VULN-01) POST /api/admin-login emite cookie HttpOnly, Secure y SameSite=Strict
+    const cookieLoginRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      headers: { 'Origin': 'https://teteria-bodhi.vercel.app' },
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+
+    const setCookieHeader = cookieLoginRes.headers['set-cookie'] || '';
+    assert(
+      setCookieHeader.includes('bodhi_admin_session=') &&
+      setCookieHeader.includes('HttpOnly') &&
+      setCookieHeader.includes('SameSite=Strict') &&
+      setCookieHeader.includes('Max-Age=28800'),
+      'SIMULATION',
+      '1.12 POST /api/admin-login emite cookie con HttpOnly, SameSite=Strict y Max-Age=28800 (8h) (VULN-01)'
+    );
+
+    // Extraer token de la cookie emitida
+    const cookieMatch = setCookieHeader.match(/bodhi_admin_session=([^;]+)/);
+    const sessionCookieValue = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+
+    // 1.13 GET /api/admin-login valida autenticación con cookie HttpOnly
+    const checkCookieAuthRes = await mockHttp({
+      method: 'GET',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(sessionCookieValue)}`
+      }
+    }).run(adminLoginHandler);
+    assert(
+      checkCookieAuthRes.status === 200 && checkCookieAuthRes.body.valid === true,
+      'SIMULATION',
+      '1.13 GET /api/admin-login autentica correctamente al cliente mediante la cookie HttpOnly'
+    );
+
+    // 1.14 (VULN-02) POST /api/admin-logout revoca el token en el servidor y borra la cookie
+    const logoutRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-logout',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'X-Admin-Request': '1',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(sessionCookieValue)}`
+      }
+    }).run(adminLogoutHandler);
+
+    const clearCookieHeader = logoutRes.headers['set-cookie'] || '';
+    assert(
+      logoutRes.status === 200 &&
+      logoutRes.body.success === true &&
+      clearCookieHeader.includes('Max-Age=0'),
+      'SIMULATION',
+      '1.14 POST /api/admin-logout revoca la sesión en servidor y envía cabecera Set-Cookie con Max-Age=0 (VULN-02)'
+    );
+
+    // 1.15 (VULN-02) Token revocado es rechazado en peticiones posteriores aunque no haya expirado
+    const checkRevokedTokenRes = await mockHttp({
+      method: 'GET',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(sessionCookieValue)}`
+      }
+    }).run(adminLoginHandler);
+    assert(
+      checkRevokedTokenRes.body.valid === false,
+      'SIMULATION',
+      '1.15 Token previamente revocado es rechazado con valid=false en verificaciones posteriores'
+    );
+
+    // 1.16 Petición administrativa de reservas con token revocado devuelve 401
+    const resWithRevokedCookie = await mockHttp({
+      method: 'GET',
+      url: '/api/reservas',
+      headers: {
+        'Origin': 'https://teteria-bodhi.vercel.app',
+        'X-Admin-Request': '1',
+        'Cookie': `bodhi_admin_session=${encodeURIComponent(sessionCookieValue)}`
+      }
+    }).run(reservasHandler);
+    assert(
+      resWithRevokedCookie.status === 401,
+      'SIMULATION',
+      '1.16 Petición a /api/reservas con token revocado es denegada con HTTP 401'
+    );
+
+    // 1.17 Protección Anti-CSRF: Origen no autorizado es bloqueado con 403
+    const csrfBlockedRes = await mockHttp({
+      method: 'POST',
+      url: '/api/admin-login',
+      headers: {
+        'Origin': 'https://sitio-malicioso-atacante.com'
+      },
+      body: { password: TEST_ADMIN_PASS }
+    }).run(adminLoginHandler);
+    assert(
+      csrfBlockedRes.status === 403,
+      'SIMULATION',
+      '1.17 Petición administrativa desde origen cross-site no autorizado es rechazada con HTTP 403 (Anti-CSRF)'
+    );
+
+    // 1.18 (VULN-04) Caducidad máxima de 8 horas
+    const nowTs = Date.now();
+    const token9HoursAgo = `bdh_${nowTs - 9 * 3600 * 1000}.${crypto.randomBytes(16).toString('hex')}`;
+    const sig9h = crypto.createHmac('sha256', auth.getSessionSecret()).update(token9HoursAgo.slice(4)).digest('hex');
+    const fullToken9h = `${token9HoursAgo}.${sig9h}`;
+
+    const token7HoursAgo = `bdh_${nowTs - 7 * 3600 * 1000}.${crypto.randomBytes(16).toString('hex')}`;
+    const sig7h = crypto.createHmac('sha256', auth.getSessionSecret()).update(token7HoursAgo.slice(4)).digest('hex');
+    const fullToken7h = `${token7HoursAgo}.${sig7h}`;
+
+    assert(
+      auth.verifyToken(fullToken9h) === false && auth.verifyToken(fullToken7h) === true,
+      'UNIT',
+      '1.18 Tokens con más de 8 horas son rechazados por expiración, mientras que tokens de 7 horas son válidos (VULN-04)'
+    );
+
+    // 1.19 (VULN-01) js/admin.js no almacena credenciales en localStorage
+    const adminJsScript = fs.readFileSync(path.join(__dirname, '../js/admin.js'), 'utf8');
+    assert(
+      !adminJsScript.includes("localStorage.setItem('bodhi_admin_token'") &&
+      adminJsScript.includes("'X-Admin-Request': '1'"),
+      'STATIC',
+      '1.19 js/admin.js no guarda tokens en localStorage y utiliza cabecera anti-CSRF X-Admin-Request'
+    );
+
+    // 1.20 Script SQL de revocación protege la tabla revoked_tokens
+    const revokedSqlContent = fs.readFileSync(path.join(process.cwd(), 'revoked_tokens.sql'), 'utf8');
+    assert(
+      revokedSqlContent.includes('CREATE TABLE IF NOT EXISTS public.revoked_tokens') &&
+      revokedSqlContent.includes('ENABLE ROW LEVEL SECURITY') &&
+      revokedSqlContent.includes('REVOKE ALL ON public.revoked_tokens FROM PUBLIC') &&
+      revokedSqlContent.includes('GRANT ALL ON public.revoked_tokens TO service_role'),
+      'STATIC',
+      '1.20 Script revoked_tokens.sql define la tabla con RLS forzado y acceso restringido a service_role'
+    );
+
 
     // ========================================================
     // BLOQUE 2: RATE LIMITING DISTRIBUIDO, RGPD & CONCURRENCIA
