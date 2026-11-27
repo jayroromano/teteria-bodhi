@@ -335,10 +335,14 @@
           </div>
           <form id="holiday-eve-form" class="closed-date-form holiday-eve-form">
             <input id="holiday-eve-editing-date" type="hidden" value="">
-            <label for="holiday-eve-date-input">Fecha (inicio del turno)</label>
-            <input id="holiday-eve-date-input" name="date" type="date" required>
-            <label for="holiday-eve-label-input">Nota o festivo (opcional)</label>
-            <input id="holiday-eve-label-input" name="label" type="text" maxlength="160" placeholder="Víspera de festivo">
+            <div class="holiday-eve-field">
+              <label for="holiday-eve-date-input">Fecha (inicio del turno)</label>
+              <input id="holiday-eve-date-input" name="date" type="date" required>
+            </div>
+            <div class="holiday-eve-field">
+              <label for="holiday-eve-label-input">Nota o festivo (opcional)</label>
+              <input id="holiday-eve-label-input" name="label" type="text" maxlength="160" placeholder="Víspera de festivo">
+            </div>
             <div class="holiday-eve-submit-group">
               <button type="submit" id="holiday-eve-submit-btn" class="btn-primary">Marcar como Víspera de festivo</button>
               <button type="button" id="holiday-eve-cancel-edit" class="btn-secondary" hidden>Cancelar</button>

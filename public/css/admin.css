@@ -722,7 +722,9 @@ table.admin-table tr:hover td {
 .closed-date-row strong { color: var(--ink); }
 .closed-date-row span { font-size: 0.9rem; }
 .closed-date-row button { flex: 0 0 auto; padding: 8px 12px; }
-.holiday-eve-submit-group { grid-column: 3; grid-row: 2; display: flex; gap: 8px; align-items: center; }
+.holiday-eve-form { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr) auto; }
+.holiday-eve-field { display: grid; grid-template-rows: auto 42px; gap: 6px; min-width: 0; }
+.holiday-eve-submit-group { grid-column: 3; grid-row: 1; align-self: end; display: flex; gap: 8px; align-items: center; }
 .holiday-eve-submit-group button { min-height: 42px; white-space: nowrap; }
 .holiday-eve-submit-group [hidden] { display: none; }
 .holiday-eve-actions { display: flex; gap: 8px; flex: 0 0 auto; }
@@ -735,7 +737,13 @@ table.admin-table tr:hover td {
   .closed-date-form input:first-of-type,
   .closed-date-form input:nth-of-type(2),
   .closed-date-form button,
+  .holiday-eve-field,
   .holiday-eve-submit-group { grid-column: 1; grid-row: auto; }
+}
+
+@media (min-width: 681px) and (max-width: 1024px) {
+  .holiday-eve-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .holiday-eve-submit-group { grid-column: 1 / -1; grid-row: auto; justify-self: start; }
 }
 
 /* ================= RESPONSIVE MÓVIL Y TABLET ================= */
