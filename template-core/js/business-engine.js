@@ -327,7 +327,13 @@ window.BusinessEngine = (function () {
         const scheduleTable = contactSec.querySelector('.schedule-table');
         if (scheduleTable && config.schedule && Array.isArray(config.schedule.days)) {
           scheduleTable.innerHTML = '';
-          const todayIdx = new Date().getDay();
+          const madridParts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Europe/Madrid',
+            weekday: 'short'
+          }).formatToParts(new Date());
+          const madridWeekday = (madridParts.find(p => p.type === 'weekday') || {}).value;
+          const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+          const todayIdx = weekdayMap[madridWeekday] ?? new Date().getDay();
           config.schedule.days.forEach(d => {
             const tr = document.createElement('tr');
             if (Array.isArray(d.dayIndices) && d.dayIndices.includes(todayIdx)) {
@@ -336,6 +342,9 @@ window.BusinessEngine = (function () {
             tr.innerHTML = `<td>${d.day}</td><td>${d.hours}</td>`;
             scheduleTable.appendChild(tr);
           });
+          if (typeof window.updateBusinessStatus === 'function') {
+            window.updateBusinessStatus();
+          }
         }
 
         // Mapa Google Maps

@@ -684,9 +684,9 @@ table.admin-table tr:hover td {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  font: 700 0.72rem var(--font-main);
+  font: 700 0.68rem var(--font-main);
   cursor: pointer;
-  padding: 6px 10px;
+  padding: 6px 4px;
   border-radius: 10px;
   transition: all 0.2s;
   flex: 1;
@@ -722,6 +722,10 @@ table.admin-table tr:hover td {
 .closed-date-row strong { color: var(--ink); }
 .closed-date-row span { font-size: 0.9rem; }
 .closed-date-row button { flex: 0 0 auto; padding: 8px 12px; }
+.holiday-eve-submit-group { grid-column: 3; grid-row: 2; display: flex; gap: 8px; align-items: center; }
+.holiday-eve-submit-group button { min-height: 42px; white-space: nowrap; }
+.holiday-eve-submit-group [hidden] { display: none; }
+.holiday-eve-actions { display: flex; gap: 8px; flex: 0 0 auto; }
 
 @media (max-width: 680px) {
   .closed-dates-manager { padding: 20px; }
@@ -730,7 +734,8 @@ table.admin-table tr:hover td {
   .closed-date-form label:nth-of-type(2),
   .closed-date-form input:first-of-type,
   .closed-date-form input:nth-of-type(2),
-  .closed-date-form button { grid-column: 1; grid-row: auto; }
+  .closed-date-form button,
+  .holiday-eve-submit-group { grid-column: 1; grid-row: auto; }
 }
 
 /* ================= RESPONSIVE MÓVIL Y TABLET ================= */

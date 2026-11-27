@@ -165,12 +165,12 @@ header {
   width: 100%;
   max-width: 1720px;
   margin: 0 auto;
-  padding: 0 clamp(20px, 3.5vw, 56px);
+  padding: 0 clamp(16px, 2.8vw, 48px);
   height: 86px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(16px, 2.5vw, 36px);
+  gap: clamp(12px, 1.8vw, 32px);
 }
 
 .header-left {
@@ -238,7 +238,7 @@ header {
 #menu ul, .nav-links {
   display: flex;
   align-items: center;
-  gap: clamp(16px, 2.2vw, 36px);
+  gap: clamp(12px, 1.5vw, 30px);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -247,7 +247,7 @@ header {
 #menu a {
   color: var(--ink);
   font-weight: 600;
-  font-size: 1.02rem;
+  font-size: clamp(0.92rem, 0.98vw, 1.02rem);
   padding: 8px 4px;
   position: relative;
   transition: var(--transition);
@@ -367,10 +367,98 @@ header {
   background: var(--sand);
 }
 
+/* Escritorio compacto (1221px - 1520px) para evitar desbordamiento con 8 enlaces */
+@media (min-width: 1221px) and (max-width: 1520px) {
+  .header-inner {
+    padding: 0 20px;
+    gap: 14px;
+  }
+  .header-left {
+    gap: 10px;
+  }
+  .logo {
+    font-size: 1.5rem;
+    gap: 9px;
+  }
+  .logo-img {
+    width: 38px;
+    height: 38px;
+  }
+  .badge-city {
+    font-size: 0.68rem;
+    padding: 4px 9px;
+  }
+  #menu ul, .nav-links {
+    gap: 13px;
+  }
+  #menu a {
+    font-size: 0.92rem;
+    padding: 8px 2px;
+  }
+  .header-right {
+    gap: 10px;
+  }
+  .status-indicator {
+    font-size: 0.78rem;
+    padding: 5px 10px;
+    gap: 6px;
+  }
+  .theme-toggle {
+    width: 40px;
+    height: 40px;
+  }
+  .btn-nav-reserve {
+    padding: 8px 14px;
+    font-size: 0.84rem;
+  }
+}
+
+/* Escritorio estándar 1280px (1221px - 1360px): ajuste compacto sin recortes */
+@media (min-width: 1221px) and (max-width: 1360px) {
+  .header-inner {
+    padding: 0 16px;
+    gap: 10px;
+  }
+  .badge-city {
+    display: none;
+  }
+  .logo {
+    font-size: 1.42rem;
+    gap: 8px;
+  }
+  .logo-img {
+    width: 36px;
+    height: 36px;
+  }
+  #menu ul, .nav-links {
+    gap: 10px;
+  }
+  #menu a {
+    font-size: 0.87rem;
+    padding: 8px 2px;
+  }
+  .header-right {
+    gap: 8px;
+  }
+  .status-indicator {
+    font-size: 0.74rem;
+    padding: 5px 9px;
+    gap: 6px;
+  }
+  .theme-toggle {
+    width: 38px;
+    height: 38px;
+  }
+  .btn-nav-reserve {
+    padding: 7px 12px;
+    font-size: 0.8rem;
+  }
+}
+
 /* =========================================================
    RESPONSIVE MÓVIL Y TABLET (NATIVO & CÓMODO)
    ========================================================= */
-@media (max-width: 1040px) {
+@media (max-width: 1220px) {
   .header-inner {
     height: 66px;
     padding: 0 16px;
@@ -456,6 +544,9 @@ header {
     border-radius: 10px;
     border: 1px solid var(--line);
   }
+  #horario {
+    scroll-margin-top: 84px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -532,7 +623,7 @@ header {
   display: none;
 }
 
-@media (min-width: 680px) {
+@media (min-width: 1221px) {
   .btn-nav-reserve {
     display: inline-flex;
   }
@@ -1777,6 +1868,10 @@ textarea {
 .contact-dl dd {
   color: var(--mut);
   margin-top: 4px;
+}
+
+#horario {
+  scroll-margin-top: 106px;
 }
 
 .schedule-table {

@@ -482,62 +482,124 @@
   // ==========================================
   // ESTADO EN TIEMPO REAL: ABIERTO / CERRADO
   // ==========================================
-  function updateBusinessStatus() {
-    const statusDot = $('#status-dot');
-    const statusText = $('#status-text');
-    if (!statusDot || !statusText) return;
+  const BODHI_SCHEDULE = {
+    0: { open: 17,   close: 2, openLabel: '17:00', closeLabel: '02:00', rowIndex: 3 }, // Domingos
+    1: { open: 17.5, close: 2, openLabel: '17:30', closeLabel: '02:00', rowIndex: 0 }, // Lunes
+    2: { open: 17.5, close: 2, openLabel: '17:30', closeLabel: '02:00', rowIndex: 0 }, // Martes
+    3: { open: 17.5, close: 2, openLabel: '17:30', closeLabel: '02:00', rowIndex: 0 }, // Miércoles
+    4: { open: 17.5, close: 2, openLabel: '17:30', closeLabel: '02:00', rowIndex: 0 }, // Jueves
+    5: { open: 17.5, close: 3, openLabel: '17:30', closeLabel: '03:00', rowIndex: 1 }, // Viernes
+    6: { open: 17,   close: 3, openLabel: '17:00', closeLabel: '03:00', rowIndex: 2 }  // Sábados
+  };
+  const HOLIDAY_EVE_SCHEDULE = {
+    open: 17,
+    close: 3,
+    openLabel: '17:00',
+    closeLabel: '03:00',
+    rowIndex: 2
+  };
+  let holidayEveDates = new Set();
 
+  function getMadridTimeParts(now = new Date()) {
     // Hora oficial de Jerez (Europe/Madrid), sea cual sea la zona del visitante.
     const parts = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Europe/Madrid',
       weekday: 'short',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
-    }).formatToParts(new Date());
+    }).formatToParts(now);
     const part = (type) => (parts.find(p => p.type === type) || {}).value;
     const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
     const day = weekdayMap[part('weekday')]; // 0: Dom, 1: Lun, ...
     const hour = Number(part('hour')) % 24;
     const min = Number(part('minute'));
-    const timeVal = hour + min / 60;
-
-    // Horario de Bodhi: abre 17:00 (dom/sáb) o 17:30; cierra 03:00 vie/sáb o 02:00 el resto.
-    const isWeekendNight = day === 5 || day === 6;
-    const openHour = (day === 0 || day === 6) ? 17 : 17.5;
-    const closeHour = isWeekendNight ? 3 : 2;
-    const openLabel = openHour === 17 ? '17:00' : '17:30';
-    const closeLabel = closeHour === 3 ? '03:00' : '02:00';
-
-    let isOpen = false;
-    let text = 'Cerrado ahora';
-
-    // Abierto por la tarde-noche o de madrugada (la madrugada cuenta como la noche anterior).
-    if (timeVal >= openHour || timeVal < closeHour) {
-      isOpen = true;
-      text = `Abierto ahora · Cierra a las ${closeLabel}`;
-    } else {
-      text = `Cerrado ahora · Abrimos hoy a las ${openLabel}`;
-    }
-
-    if (isOpen) {
-      statusDot.classList.remove('closed');
-      statusText.textContent = text;
-    } else {
-      statusDot.classList.add('closed');
-      statusText.textContent = text;
-    }
-
-    // Resaltar día actual en la tabla de contacto
-    const rows = $$('.schedule-table tr');
-    const dayMap = [3, 0, 0, 0, 0, 1, 2];
-    const targetRowIndex = dayMap[day];
-    if (rows && rows[targetRowIndex]) {
-      rows[targetRowIndex].classList.add('today');
-    }
+    const dateKey = `${part('year')}-${part('month')}-${part('day')}`;
+    return { day, timeVal: hour + min / 60, dateKey };
   }
 
+  function shiftIsoDate(isoDate, deltaDays) {
+    const [year, month, day] = isoDate.split('-').map(Number);
+    return new Date(Date.UTC(year, month - 1, day + deltaDays)).toISOString().slice(0, 10);
+  }
+
+  function evaluateBodhiStatus(day, timeVal, dateKey = getMadridTimeParts().dateKey, specialDates = holidayEveDates) {
+    const prevDay = (day + 6) % 7;
+    const yesterday = specialDates.has(shiftIsoDate(dateKey, -1))
+      ? HOLIDAY_EVE_SCHEDULE
+      : BODHI_SCHEDULE[prevDay];
+    const today = specialDates.has(dateKey)
+      ? HOLIDAY_EVE_SCHEDULE
+      : BODHI_SCHEDULE[day];
+
+    if (timeVal < yesterday.close) {
+      // Madrugada perteneciente al turno iniciado el día anterior
+      return {
+        isOpen: true,
+        text: `Abierto ahora · Cierra a las ${yesterday.closeLabel}`,
+        activeRowIndex: yesterday.rowIndex,
+        activeDay: prevDay
+      };
+    }
+
+    if (timeVal >= today.open) {
+      // Turno de tarde-noche del día actual
+      return {
+        isOpen: true,
+        text: `Abierto ahora · Cierra a las ${today.closeLabel}`,
+        activeRowIndex: today.rowIndex,
+        activeDay: day
+      };
+    }
+
+    return {
+      isOpen: false,
+      text: `Cerrado ahora · Abrimos hoy a las ${today.openLabel}`,
+      activeRowIndex: today.rowIndex,
+      activeDay: day
+    };
+  }
+
+  function updateBusinessStatus(now = new Date()) {
+    const statusDot = $('#status-dot');
+    const statusText = $('#status-text');
+    const { day, timeVal, dateKey } = getMadridTimeParts(now);
+    const status = evaluateBodhiStatus(day, timeVal, dateKey);
+
+    if (statusDot && statusText) {
+      statusDot.classList.toggle('closed', !status.isOpen);
+      statusText.textContent = status.text;
+    }
+
+    // Resaltar en la tabla el turno en curso (en madrugada abierta, el de la noche anterior)
+    const rows = $$('.schedule-table tr');
+    rows.forEach((row, idx) => {
+      row.classList.toggle('today', idx === status.activeRowIndex);
+    });
+
+    return status;
+  }
+
+  window.updateBusinessStatus = updateBusinessStatus;
+  window.evaluateBodhiStatus = evaluateBodhiStatus;
   updateBusinessStatus();
+  setInterval(() => updateBusinessStatus(), 60000);
+
+  if (!isFileProtocol) {
+    fetch('/api/holiday-eves', { cache: 'no-store' })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!data || !Array.isArray(data.holidayEves)) return;
+        holidayEveDates = new Set(data.holidayEves.map(item => item.date).filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date)));
+        updateBusinessStatus();
+      })
+      .catch(() => {
+        // Si no se puede consultar la configuración, se conserva el horario semanal habitual.
+      });
+  }
 
   // ==========================================
   // CARTA INTERACTIVA
