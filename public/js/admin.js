@@ -13,6 +13,7 @@
   let knownCodes = new Set();
   let isInitialLoad = true;
   let cachedClosedDates = [];
+  let cachedHolidayEves = [];
 
   let allReservations = [
     {
@@ -720,6 +721,25 @@
       } catch (error) {
         showAdminToast(error.message || 'Error eliminando el día sin reservas.', 'danger');
       }
+    },
+
+    async deleteHolidayEve(date) {
+      if (!confirm(`¿Quitar la víspera de festivo del ${formatDate(date)}?`)) return;
+      try {
+        const res = await fetch(`/api/holiday-eves?date=${encodeURIComponent(date)}`, {
+          method: 'DELETE',
+          headers: { 'X-Admin-Request': '1' }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo quitar la víspera de festivo.');
+        if ($('#holiday-eve-editing-date')?.value === date) {
+          resetHolidayEveForm();
+        }
+        showAdminToast('Víspera de festivo eliminada.', 'success');
+        await loadHolidayEves();
+      } catch (error) {
+        showAdminToast(error.message || 'Error eliminando la víspera de festivo.', 'danger');
+      }
     }
   };
 
@@ -986,6 +1006,139 @@
     });
   }
 
+  function formatHolidayEveWeekday(isoDate) {
+    if (!isoDate) return '';
+    const [y, m, d] = isoDate.split('-').map(Number);
+    const utcDate = new Date(Date.UTC(y, m - 1, d));
+    const weekday = new Intl.DateTimeFormat('es-ES', { weekday: 'long', timeZone: 'UTC' }).format(utcDate);
+    return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} · ${formatDate(isoDate)}`;
+  }
+
+  function resetHolidayEveForm() {
+    const formEl = $('#holiday-eve-form');
+    const editingField = $('#holiday-eve-editing-date');
+    const dateField = $('#holiday-eve-date-input');
+    const submitBtn = $('#holiday-eve-submit-btn');
+    const cancelBtn = $('#holiday-eve-cancel-edit');
+    if (formEl) formEl.reset();
+    if (editingField) editingField.value = '';
+    if (dateField) dateField.min = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+    if (submitBtn) submitBtn.textContent = 'Marcar como Víspera de festivo';
+    if (cancelBtn) cancelBtn.hidden = true;
+  }
+
+  function startEditHolidayEve(date) {
+    const item = cachedHolidayEves.find(entry => entry.date === date);
+    if (!item) return;
+    const editingField = $('#holiday-eve-editing-date');
+    const dateField = $('#holiday-eve-date-input');
+    const labelField = $('#holiday-eve-label-input');
+    const submitBtn = $('#holiday-eve-submit-btn');
+    const cancelBtn = $('#holiday-eve-cancel-edit');
+    if (editingField) editingField.value = item.date;
+    if (dateField) {
+      dateField.min = item.date < new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' })
+        ? item.date
+        : new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+      dateField.value = item.date;
+      dateField.focus();
+    }
+    if (labelField) labelField.value = item.label || 'Víspera de festivo';
+    if (submitBtn) submitBtn.textContent = 'Guardar corrección';
+    if (cancelBtn) cancelBtn.hidden = false;
+  }
+
+  async function loadHolidayEves() {
+    const list = $('#holiday-eves-list');
+    if (!list) return;
+    list.textContent = 'Cargando vísperas de festivo…';
+    try {
+      const res = await fetch('/api/holiday-eves', { headers: { 'X-Admin-Request': '1' } });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudieron cargar las vísperas de festivo.');
+      cachedHolidayEves = Array.isArray(data.holidayEves) ? data.holidayEves : [];
+      const setupNotice = $('#holiday-eves-setup-notice');
+      if (setupNotice) setupNotice.hidden = !data.setupRequired;
+      renderHolidayEves();
+    } catch (error) {
+      list.textContent = error.message || 'Error cargando vísperas de festivo.';
+    }
+  }
+
+  function renderHolidayEves() {
+    const list = $('#holiday-eves-list');
+    if (!list) return;
+    if (!cachedHolidayEves.length) {
+      list.textContent = 'No hay vísperas de festivo guardadas.';
+      return;
+    }
+
+    if (!list.dataset.eventsBound) {
+      list.dataset.eventsBound = 'true';
+      list.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('button[data-action="edit-holiday-eve"]');
+        if (editBtn) {
+          const date = editBtn.getAttribute('data-date');
+          if (date) startEditHolidayEve(date);
+          return;
+        }
+        const deleteBtn = e.target.closest('button[data-action="delete-holiday-eve"]');
+        if (deleteBtn) {
+          const date = deleteBtn.getAttribute('data-date');
+          if (date) window.adminApp.deleteHolidayEve(date);
+        }
+      });
+    }
+
+    list.innerHTML = cachedHolidayEves.map(item => `
+      <article class="closed-date-row">
+        <div>
+          <strong>${escapeHtml(formatHolidayEveWeekday(item.date))}</strong>
+          <span>${escapeHtml(item.label || 'Víspera de festivo')} · Horario especial: 17:00 a 03:00 del día siguiente</span>
+        </div>
+        <div class="holiday-eve-actions">
+          <button type="button" class="btn-secondary" data-action="edit-holiday-eve" data-date="${escapeAttr(item.date)}">Editar</button>
+          <button type="button" class="btn-secondary" data-action="delete-holiday-eve" data-date="${escapeAttr(item.date)}">Quitar</button>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  const holidayEveForm = $('#holiday-eve-form');
+  if (holidayEveForm) {
+    const dateField = $('#holiday-eve-date-input');
+    const cancelBtn = $('#holiday-eve-cancel-edit');
+    if (dateField) dateField.min = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+    if (cancelBtn) cancelBtn.addEventListener('click', resetHolidayEveForm);
+
+    holidayEveForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const editingOldDate = $('#holiday-eve-editing-date')?.value.trim() || '';
+      const date = dateField?.value || '';
+      const label = $('#holiday-eve-label-input')?.value.trim() || 'Víspera de festivo';
+      const submit = $('#holiday-eve-submit-btn');
+      if (submit) submit.disabled = true;
+
+      try {
+        const isEdit = Boolean(editingOldDate);
+        const res = await fetch('/api/holiday-eves', {
+          method: isEdit ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Request': '1' },
+          body: JSON.stringify(isEdit ? { oldDate: editingOldDate, newDate: date, label } : { date, label })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'No se pudo guardar la víspera de festivo.');
+        resetHolidayEveForm();
+        showAdminToast(isEdit ? 'Víspera de festivo actualizada.' : 'Víspera de festivo guardada.', 'success');
+        await loadHolidayEves();
+      } catch (error) {
+        showAdminToast(error.message || 'Error guardando la víspera de festivo.', 'danger');
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    });
+  }
+
   function renderCartaTable() {
     const box = $('#carta-manager-tbody');
     const countInfo = $('#carta-count-info');
@@ -1218,6 +1371,7 @@
       'reservas': 'Reservas',
       'carta': 'Gestión de Carta',
       'closed-dates': 'Días sin reservas online',
+      'holiday-eves': 'Vísperas de festivo',
       'db': 'Base de Datos & Vercel'
     };
     const titleEl = $('#page-title');
@@ -1227,6 +1381,7 @@
 
     if (target === 'carta') loadCartaManager();
     if (target === 'closed-dates') loadClosedDates();
+    if (target === 'holiday-eves') loadHolidayEves();
     if (target === 'db') checkDbHealth();
 
     closeSidebar();
