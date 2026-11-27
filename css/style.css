@@ -587,6 +587,11 @@ header {
   color: var(--btnink);
 }
 
+[data-theme="dark"] #menu .mobile-drawer-footer > a.btn.fill {
+  color: #241810 !important;
+  -webkit-text-fill-color: #241810;
+}
+
 .btn.fill:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
